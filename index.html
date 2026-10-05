@@ -326,6 +326,14 @@ select.control{appearance:none;background-image:linear-gradient(45deg,transparen
       </div>
       <div class="log hidden" id="cfgLog"></div>
     </div>
+    <div class="card hidden" id="cfgSync">
+      <div class="badge" style="margin-bottom:10px">Sincronização SharePoint</div>
+      <p class="note" style="margin:0 0 12px">Os RDC ficam no Supabase e são copiados automaticamente para as listas e a biblioteca do SharePoint (validação, revisão, cancelamento e exclusão também).</p>
+      <div class="note" id="syncInfo" style="margin:0 0 12px"></div>
+      <button class="btn ghost" id="btnSyncAtualizar">Atualizar situação</button>
+      <button class="btn ghost" id="btnSyncReprocessar">Tentar de novo os pendentes</button>
+      <button class="btn ghost" id="btnSyncTodos">Copiar todos os RDC (carga inicial)</button>
+    </div>
   </section>
 
   <footer class="footer">Desenvolvido por <b>Fialho Consultoria de Planejamento LTDA.</b></footer>
@@ -1429,6 +1437,29 @@ async function iniciarRevisao(btn) {
   finally { busy(null); }
 }
 
+/* ===================== SINCRONIZAÇÃO SHAREPOINT (administrador) ===================== */
+async function syncAdmin(acao) {
+  const info = $('syncInfo');
+  info.textContent = acao ? 'Enviando…' : 'Consultando…';
+  try {
+    const r = await sbRpc('rdc_sync_admin', { p_nome: admin.nome, p_senha: admin.senha, p_acao: acao || null });
+    if (!r || !r.ok) {
+      const msg = (r && r.erro) || 'Falha ao consultar.';
+      if (/Sessão/.test(msg)) setAdmin(null);
+      info.textContent = msg; return;
+    }
+    info.innerHTML = [
+      r.configurado ? '' : '<b style="color:var(--danger)">⚠ Chamada da função não configurada no Vault (rdc_sync_url / rdc_sync_segredo).</b>',
+      `No SharePoint: <b>${r.no_sharepoint}</b> RDC · Na fila: <b>${r.pendentes}</b> · Com erro: <b>${r.com_erro}</b>${r.desistidos ? ` (${r.desistidos} parados após 10 tentativas)` : ''}`,
+      `Última cópia: ${r.ultima_sync ? fmtDataHora(r.ultima_sync) : '—'}`,
+      r.ultimo_erro ? `Último erro: ${esc(r.ultimo_erro)}` : ''
+    ].filter(Boolean).join('<br>');
+    if (acao) toast(acao === 'todos' ? 'Todos os RDC entraram na fila de cópia.' : 'Pendências enviadas de novo.');
+  } catch (e) {
+    info.textContent = e.status === 404 ? 'Banco sem a sincronização — rode supabase/migracao_v7_sync_sharepoint.sql.' : 'Não foi possível consultar: ' + e.message;
+  }
+}
+
 /* ===================== CONFIGURAÇÕES ===================== */
 function cfgLog(line, reset) {
   const l = $('cfgLog'); l.classList.remove('hidden');
@@ -1444,6 +1475,9 @@ function openConfig() {
   $('btnSaveGlobal').classList.toggle('hidden', !podeGlobal);
   $('btnResetGlobal').classList.toggle('hidden', !podeGlobal || !cfgGlobal.mode);
   $('btnResetCfg').classList.toggle('hidden', !cfgDevice);
+  const verSync = !!admin && CFG.mode === 'supabase';
+  $('cfgSync').classList.toggle('hidden', !verSync);
+  if (verSync) syncAdmin(null);
   $('cfgAdminNome').innerHTML = admin ? `Administrador: <b>${esc(admin.nome)}</b>` : '';
   syncCfgVisibility(); $('cfgLog').classList.add('hidden'); go('scrConfig');
 }
@@ -1565,6 +1599,9 @@ async function boot() {
     location.reload();
   };
   $('btnResetCfg').onclick = () => { localStorage.removeItem('rdc-config'); location.reload(); };
+  $('btnSyncAtualizar').onclick = () => syncAdmin(null);
+  $('btnSyncReprocessar').onclick = () => syncAdmin('reprocessar');
+  $('btnSyncTodos').onclick = () => syncAdmin('todos');
   $('btnSaveGlobal').onclick = () => salvarGlobal({ mode: $('cMode').value, siteUrl: $('cSite').value.trim(), clientId: $('cClient').value.trim(), tenantId: $('cTenant').value.trim(), flowUrl: $('cFlow').value.trim() });
   $('btnResetGlobal').onclick = e => {
     const b = e.currentTarget;

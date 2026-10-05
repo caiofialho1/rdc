@@ -160,7 +160,40 @@ Para treinar sem gravar no banco, use **⚙ → Modo: Demonstração** (exige ad
 
 ---
 
-## Alternativas: SharePoint (se o TI exigir os dados no Microsoft 365)
+## Cópia automática para o SharePoint (recomendado, sem login)
+
+O app continua no modo **Supabase** (todas as funções, sem login). Cada RDC criado, validado, revisado, cancelado ou apagado é copiado para as listas `RDC_Cabecalho`, `RDC_Atividades`, `RDC_Impactos`, `RDC_Fotos` e para a biblioteca `RDC_Evidencias`. A cópia é feita pela Edge Function `supabase/functions/sync-sharepoint`, com credencial de aplicativo. Falha na cópia nunca impede o envio do RDC: ela é repetida a cada 5 minutos.
+
+**1. Registro de app no Entra ID (feito pelo TI / administrador do tenant)**
+1. *Entra ID → Registros de aplicativo → Novo registro* (ex.: `RDC Sync SharePoint`). Anote **ID do aplicativo (cliente)** e **ID do diretório (locatário)**.
+2. *Certificados e segredos → Novo segredo do cliente*. Copie o **valor** (só aparece uma vez).
+3. *Permissões de API → Microsoft Graph → Permissões de aplicativo*:
+   - recomendado: **Sites.Selected**, com consentimento do administrador, e depois liberar **escrita** só no site `pelotizacaoslz`. Exemplo pelo Graph Explorer, com um administrador:
+     `POST https://graph.microsoft.com/v1.0/sites/{id-do-site}/permissions`
+     `{"roles":["write"],"grantedToIdentities":[{"application":{"id":"<ID do aplicativo>","displayName":"RDC Sync SharePoint"}}]}`
+   - alternativa mais simples (acesso a todos os sites): **Sites.ReadWrite.All**, com consentimento do administrador.
+
+**2. Listas no SharePoint**
+As listas precisam existir com as colunas atuais. Uma vez só, num computador: ⚙ → modo **SharePoint** → **Salvar só neste aparelho** → entre com uma conta proprietária do site → **Criar / revisar listas e biblioteca no site** → depois **Tirar a configuração própria deste aparelho**.
+
+**3. Banco**
+Rode `supabase/migracao_v7_sync_sharepoint.sql` no SQL Editor.
+
+**4. Edge Function**
+1. Supabase → *Edge Functions → Deploy a new function → Via Editor*. Nome: `sync-sharepoint`. Cole o conteúdo de `supabase/functions/sync-sharepoint/index.ts` e publique.
+2. Nos detalhes da função, **desligue “Verify JWT”** (a função confere o cabeçalho `x-rdc-sync`).
+3. *Edge Functions → Secrets*: crie `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_CLIENT_SECRET`, `SP_SITE_URL` (`https://caiofialho.sharepoint.com/sites/pelotizacaoslz`) e `RDC_SYNC_SEGREDO` (um texto aleatório longo).
+
+**5. Ligar a chamada automática** (SQL Editor; o segredo é o mesmo `RDC_SYNC_SEGREDO`):
+```sql
+select vault.create_secret('https://ltuzzgdapgfbtxaxigek.supabase.co/functions/v1/sync-sharepoint', 'rdc_sync_url');
+select vault.create_secret('o-mesmo-texto-do-RDC_SYNC_SEGREDO', 'rdc_sync_segredo');
+```
+
+**6. Carga inicial e acompanhamento**
+No app, ⚙ (administrador) → **Sincronização SharePoint** → **Copiar todos os RDC (carga inicial)**. O mesmo painel mostra quantos RDC já estão no SharePoint, a fila, os erros e o último erro.
+
+## Alternativas: SharePoint direto do app (exige login de cada usuário)
 
 O mesmo app grava em listas do SharePoint. Basta trocar `mode` no `CONFIG`:
 
