@@ -290,7 +290,8 @@ select.control{appearance:none;background-image:linear-gradient(45deg,transparen
       <button class="link-danger" id="btnAdminSair">Sair</button>
     </div>
     <div class="card">
-      <p class="note" style="margin:0 0 14px">Área do administrador. Os valores padrão vêm do bloco <b>CONFIG</b> no arquivo <code>index.html</code>; o que for salvo aqui vale só para este aparelho.</p>
+      <p class="note" style="margin:0 0 6px">Área do administrador. O padrão vem do bloco <b>CONFIG</b> do <code>index.html</code>. O administrador pode definir o modo para <b>todos os aparelhos</b>; a URL/chave do Supabase continuam as do arquivo.</p>
+      <p class="note" style="margin:0 0 14px;font-weight:700" id="cfgOrigem"></p>
       <div class="field"><label class="lbl" for="cMode">Modo de conexão</label>
         <select class="control" id="cMode">
           <option value="supabase">Supabase (sem login)</option>
@@ -311,15 +312,17 @@ select.control{appearance:none;background-image:linear-gradient(45deg,transparen
         </div>
       </div>
       <div id="cfgFlow" class="field"><label class="lbl" for="cFlow">URL do gatilho HTTP (Power Automate)</label><textarea class="control" id="cFlow" rows="3"></textarea></div>
-      <button class="btn primary" id="btnSaveCfg">Salvar neste aparelho</button>
-      <button class="btn ghost" id="btnResetCfg">Restaurar padrão do arquivo</button>
+      <button class="btn primary" id="btnSaveGlobal">Salvar para todos os aparelhos</button>
+      <button class="btn ghost" id="btnSaveCfg">Salvar só neste aparelho (teste)</button>
+      <button class="btn ghost" id="btnResetCfg">Tirar a configuração própria deste aparelho</button>
+      <div style="text-align:center;margin-top:8px"><button class="link-danger" id="btnResetGlobal">Remover configuração de todos (voltar ao arquivo)</button></div>
     </div>
     <div class="card" id="cfgTools">
       <div class="badge" style="margin-bottom:10px">Diagnóstico</div>
       <button class="btn ghost" id="btnTest">Testar conexão</button>
       <div id="cfgGraphTools">
-        <button class="btn ghost" id="btnProvision" style="margin-top:10px">Criar listas e biblioteca no site</button>
-        <p class="note">“Criar listas” exige permissão de proprietário do site (escopo Sites.Manage.All).</p>
+        <button class="btn ghost" id="btnProvision" style="margin-top:10px">Criar / revisar listas e biblioteca no site</button>
+        <p class="note">Cria o que falta e, nas listas existentes, acrescenta colunas e opções novas (nada é apagado). Exige permissão de proprietário do site (escopo Sites.Manage.All).</p>
       </div>
       <div class="log hidden" id="cfgLog"></div>
     </div>
@@ -549,8 +552,10 @@ const dOnly = n => ({ name: n, dateTime: { format: 'dateOnly' } });
 const choice = (n, c) => ({ name: n, choice: { choices: c, displayAs: 'dropDownMenu' } });
 const SCHEMA = () => ({
   [CFG.lists.cabecalho]: [txt('Responsavel'), dOnly('DataRDC'), txt('Ativo'), txt('OM'),
-    choice('Status', ['Rascunho','Enviado','Cancelado']), dt('DataHoraEnvio'), txt('EnviadoPor'),
-    num('QtdAtividades'), num('QtdImpactos'), num('QtdFotos'), txt('Area'), txt('AtivoDescricao'), txt('ResponsavelFuncao')],
+    choice('Status', ['Rascunho','Enviado','Validado','Em revisão','Substituído','Cancelado']), dt('DataHoraEnvio'), txt('EnviadoPor'),
+    num('QtdAtividades'), num('QtdImpactos'), num('QtdFotos'), txt('Area'), txt('AtivoDescricao'), txt('ResponsavelFuncao'),
+    // validação e revisão (mesmas colunas de rdc_cabecalho no Supabase)
+    num('Revisao'), txt('RevisaoDe'), txt('SubstituidoPor'), txt('ValidadoPor'), dt('ValidadoEm'), mtxt('ObsValidacao')],
   [CFG.lists.atividades]: [txt('RDC_ID'), num('Ordem'), choice('Disciplina', Object.keys(DISCIPLINAS)), txt('Servico'),
     choice('TipoAndaime', TIPOS_ANDAIME), mtxt('DescricaoOutros'), mtxt('Observacao'),
     dt('InicioAtividade'), dt('FimAtividade'), num('DuracaoMin'), txt('Ativo'), txt('OM'), dOnly('DataRDC'),
@@ -620,8 +625,42 @@ const Store = (() => {
 
 /* ===================== CONFIG EFETIVA ===================== */
 let CFG = { ...CONFIG };
+// Prioridade: configuração própria do aparelho (teste) > definida pelo administrador para todos > arquivo
+const GLOBAL_KEYS = ['mode', 'siteUrl', 'clientId', 'tenantId', 'flowUrl'];
+let cfgGlobal = {}, cfgDevice = null;
 function loadCfg() {
-  try { const o = JSON.parse(localStorage.getItem('rdc-config') || 'null'); if (o) CFG = { ...CONFIG, ...o, lists: CONFIG.lists, foto: CONFIG.foto }; } catch { }
+  try { cfgGlobal = JSON.parse(localStorage.getItem('rdc-config-global') || '{}') || {}; } catch { cfgGlobal = {}; }
+  try { cfgDevice = JSON.parse(localStorage.getItem('rdc-config') || 'null'); } catch { cfgDevice = null; }
+  const g = Object.fromEntries(GLOBAL_KEYS.filter(k => cfgGlobal[k] != null).map(k => [k, cfgGlobal[k]]));
+  CFG = { ...CONFIG, ...g, ...(cfgDevice || {}), lists: CONFIG.lists, foto: CONFIG.foto };
+}
+// Busca a configuração do administrador (no Supabase do arquivo); se mudou, guarda e aplica
+async function atualizarCfgGlobal() {
+  if (!adminDisponivel() || !navigator.onLine) return;
+  try {
+    const g = await sbRpc('rdc_config_obter', {}, CONFIG) || {};
+    if (JSON.stringify(g) === JSON.stringify(cfgGlobal)) return;
+    try { localStorage.setItem('rdc-config-global', JSON.stringify(g)); } catch { return; }
+    if (cfgDevice) return; // aparelho com configuração própria: a do administrador fica guardada, sem efeito aqui
+    if (current === 'scrInicio') location.reload();
+    else toast('O administrador alterou a configuração. Ela vale ao reabrir o app.');
+  } catch (e) { console.warn('Configuração global indisponível', e); }
+}
+async function salvarGlobal(valor) {
+  busy('Salvando para todos os aparelhos…');
+  try {
+    const r = await sbRpc('rdc_config_definir', { p_nome: admin.nome, p_senha: admin.senha, p_valor: valor }, CONFIG);
+    if (!r || !r.ok) {
+      const msg = (r && r.erro) || 'Falha ao salvar.';
+      if (/Sessão/.test(msg)) setAdmin(null);
+      return toast(msg, true);
+    }
+    const g = await sbRpc('rdc_config_obter', {}, CONFIG) || {};
+    try { localStorage.removeItem('rdc-config'); localStorage.setItem('rdc-config-global', JSON.stringify(g)); } catch { }
+    location.reload();
+  } catch (e) {
+    toast(e.status === 404 ? 'Banco sem a configuração global — rode supabase/migracao_v6_config_global.sql.' : 'Não foi possível salvar: ' + e.message, true);
+  } finally { busy(null); }
 }
 
 /* ===================== AUTENTICAÇÃO (MSAL) ===================== */
@@ -1398,6 +1437,13 @@ function cfgLog(line, reset) {
 function openConfig() {
   $('cMode').value = CFG.mode; $('cSbUrl').value = CFG.supabaseUrl; $('cSbKey').value = CFG.supabaseKey; $('cSite').value = CFG.siteUrl; $('cClient').value = CFG.clientId; $('cTenant').value = CFG.tenantId; $('cFlow').value = CFG.flowUrl;
   $('cfgAdmin').classList.toggle('hidden', !admin);
+  $('cfgOrigem').textContent = cfgDevice ? '⚠ Este aparelho usa uma configuração própria (só dele).'
+    : cfgGlobal.mode ? `Em uso: definida pelo administrador para todos${cfgGlobal.alteradoPor ? ` (${cfgGlobal.alteradoPor}, ${fmtDataHora(cfgGlobal.alteradoEm)})` : ''}.`
+    : 'Em uso: padrão do arquivo index.html.';
+  const podeGlobal = !!admin && adminDisponivel();
+  $('btnSaveGlobal').classList.toggle('hidden', !podeGlobal);
+  $('btnResetGlobal').classList.toggle('hidden', !podeGlobal || !cfgGlobal.mode);
+  $('btnResetCfg').classList.toggle('hidden', !cfgDevice);
   $('cfgAdminNome').innerHTML = admin ? `Administrador: <b>${esc(admin.nome)}</b>` : '';
   syncCfgVisibility(); $('cfgLog').classList.add('hidden'); go('scrConfig');
 }
@@ -1432,15 +1478,45 @@ async function testConnection() {
     }
   } catch (e) { cfgLog('✗ ' + e.message); }
 }
+// Lista criada por versão anterior do app: acrescenta só as colunas que faltam (nada é alterado nem apagado)
+async function completarColunas(siteIdV, def) {
+  try {
+    const base = `/sites/${siteIdV}/lists/${encodeURIComponent(def.displayName)}/columns`;
+    const r = await graph(`${base}?$select=id,name,choice&$top=500`, { scopes: SCOPES_ADMIN });
+    const tem = new Map((r.value || []).map(c => [c.name, c]));
+    const faltam = def.columns.filter(c => !tem.has(c.name));
+    for (const col of faltam) {
+      try { await graph(base, { method: 'POST', body: col, scopes: SCOPES_ADMIN }); cfgLog('  ✓ coluna nova: ' + col.name); }
+      catch (e) { cfgLog('  ✗ coluna ' + col.name + ' — ' + e.message.slice(0, 160)); }
+    }
+    // colunas de escolha já existentes: acrescenta as opções novas (ex.: Status Validado/Em revisão), sem tirar nenhuma
+    let opcoes = 0;
+    for (const col of def.columns.filter(c => c.choice && tem.has(c.name))) {
+      const atual = tem.get(col.name), lista = (atual.choice && atual.choice.choices) || [];
+      const novas = col.choice.choices.filter(o => !lista.includes(o));
+      if (!novas.length) continue;
+      opcoes++;
+      try {
+        await graph(`${base}/${atual.id}`, { method: 'PATCH', body: { choice: { ...atual.choice, choices: [...lista, ...novas] } }, scopes: SCOPES_ADMIN });
+        cfgLog(`  ✓ ${col.name}: opções novas ${novas.join(', ')}`);
+      } catch (e) { cfgLog('  ✗ opções de ' + col.name + ' — ' + e.message.slice(0, 160)); }
+    }
+    if (!faltam.length && !opcoes) cfgLog('  colunas em dia');
+  } catch (e) { cfgLog('  ✗ não foi possível ler as colunas — ' + e.message.slice(0, 160)); }
+}
 async function provision() {
-  cfgLog('Criando estrutura no SharePoint…', true);
+  cfgLog('Criando / revisando estrutura no SharePoint…', true);
   try {
     const id = await siteId(SCOPES_ADMIN);
     const defs = Object.entries(SCHEMA()).map(([name, columns]) => ({ displayName: name, columns, list: { template: 'genericList' } }));
     defs.push({ displayName: CFG.lists.biblioteca, list: { template: 'documentLibrary' } });
     for (const def of defs) {
       try { await graph(`/sites/${id}/lists`, { method: 'POST', body: def, scopes: SCOPES_ADMIN }); cfgLog('✓ criada: ' + def.displayName); }
-      catch (e) { cfgLog((e.status === 409 || /already exists|nameAlreadyExists/i.test(e.message) ? '• já existe: ' : '✗ falhou: ') + def.displayName + (e.status === 409 ? '' : ' — ' + e.message.slice(0, 160))); }
+      catch (e) {
+        if (!(e.status === 409 || /already exists|nameAlreadyExists/i.test(e.message))) { cfgLog('✗ falhou: ' + def.displayName + ' — ' + e.message.slice(0, 160)); continue; }
+        cfgLog('• já existe: ' + def.displayName);
+        if (def.columns) await completarColunas(id, def);
+      }
     }
     cfgLog('Concluído.');
   } catch (e) { cfgLog('✗ ' + e.message); }
@@ -1489,12 +1565,19 @@ async function boot() {
     location.reload();
   };
   $('btnResetCfg').onclick = () => { localStorage.removeItem('rdc-config'); location.reload(); };
+  $('btnSaveGlobal').onclick = () => salvarGlobal({ mode: $('cMode').value, siteUrl: $('cSite').value.trim(), clientId: $('cClient').value.trim(), tenantId: $('cTenant').value.trim(), flowUrl: $('cFlow').value.trim() });
+  $('btnResetGlobal').onclick = e => {
+    const b = e.currentTarget;
+    if (!b.classList.contains('armed')) { b.classList.add('armed'); b.textContent = 'Toque de novo para voltar todos ao arquivo'; setTimeout(() => { b.classList.remove('armed'); b.textContent = 'Remover configuração de todos (voltar ao arquivo)'; }, 4000); return; }
+    salvarGlobal(null);
+  };
   $('btnTest').onclick = testConnection;
   $('btnProvision').onclick = provision;
   window.addEventListener('online', () => { renderHome(); processQueue(false); });
   window.addEventListener('offline', renderHome);
 
   await renderHome();
+  atualizarCfgGlobal();
   if (navigator.onLine && (CFG.mode !== 'graph' || account)) processQueue(false);
 }
 boot();

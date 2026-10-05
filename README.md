@@ -32,6 +32,8 @@ Os dados vão para um banco Supabase (Postgres + fotos), que o Planejamento cons
   - **Cancelar RDC** (motivo obrigatório): o RDC fica no histórico como *Cancelado* e sai das views do Power BI. Pode ser reativado com “Reativar e validar” ou “Liberar para revisão”.
   - **Apagar definitivamente** (pede um segundo toque): remove do banco o RDC, as versões anteriores dele e as fotos. Uma cópia dos dados fica na tabela `rdc_exclusoes`, visível só pelo painel do Supabase.
 - **Configurações (⚙) só para o administrador:** pede nome e senha, conferidos no banco. A sessão vale até fechar a aba.
+- **Modo definido pelo administrador para todos os aparelhos:** em ⚙, o administrador escolhe Supabase, SharePoint ou Power Automate e toca em **Salvar para todos os aparelhos**. Cada aparelho aplica a mudança ao abrir o app (ou na hora, se estiver na tela inicial). “Salvar só neste aparelho” continua existindo para testes.
+  - Consulta, validação, revisão, cancelar e apagar só funcionam no modo **Supabase**. No SharePoint, o app só lança e envia RDC, e cada pessoa entra com a conta Microsoft 365.
 - **Funciona sem sinal:** o rascunho é salvo no aparelho o tempo todo. Se o envio falhar, o RDC fica numa fila e é reenviado automaticamente quando a conexão voltar, sem duplicar.
 
 ---
@@ -71,7 +73,7 @@ O script cria:
    - Rodar de novo com o mesmo nome troca a senha.
    - 5 senhas erradas seguidas bloqueiam aquele administrador por 15 minutos.
    - Para desativar: `update public.rdc_admins set ativo = false where nome = 'Caio Fialho';`
-3. Para cancelar/apagar, rode também `supabase/migracao_v5_cancelar_apagar.sql`.
+3. Para cancelar/apagar, rode também `supabase/migracao_v5_cancelar_apagar.sql`; para o modo definido pelo administrador, `supabase/migracao_v6_config_global.sql`.
 4. As views para o Power BI agora deixam de fora as versões *Substituído* (sem horas em dobro) e trazem a coluna `status`.
 
 ### 3. Configurar o app (2 min)
@@ -172,7 +174,7 @@ O mesmo app grava em listas do SharePoint. Basta trocar `mode` no `CONFIG`:
    - plataforma **SPA**, com redirect igual à URL do app;
    - permissões delegadas `User.Read`, `Sites.ReadWrite.All` e `Sites.Manage.All`, com consentimento do administrador.
 2. Preencha `siteUrl`, `clientId` e `tenantId` no `CONFIG`.
-3. Entre no app com uma conta proprietária do site e use **⚙ → Criar listas e biblioteca no site**. Isso cria `RDC_Cabecalho`, `RDC_Atividades`, `RDC_Impactos`, `RDC_Fotos` e a biblioteca `RDC_Evidencias`.
+3. Entre no app com uma conta proprietária do site e use **⚙ → Criar / revisar listas e biblioteca no site**. Em listas que já existem, o botão acrescenta as colunas e as opções de `Status` que faltam em relação ao Supabase (validação e revisão), sem apagar nada. Isso cria `RDC_Cabecalho`, `RDC_Atividades`, `RDC_Impactos`, `RDC_Fotos` e a biblioteca `RDC_Evidencias`.
 
 **`flow`, passo a passo:**
 1. Crie um fluxo com o gatilho “Quando uma solicitação HTTP for recebida”:
