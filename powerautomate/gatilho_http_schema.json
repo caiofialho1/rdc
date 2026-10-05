@@ -1,0 +1,75 @@
+{
+  "type": "object",
+  "properties": {
+    "cabecalho": {
+      "type": "object",
+      "properties": {
+        "Title": { "type": "string" },
+        "Responsavel": { "type": "string" },
+        "DataRDC": { "type": "string" },
+        "Ativo": { "type": "string" },
+        "OM": { "type": "string" },
+        "Status": { "type": "string" },
+        "DataHoraEnvio": { "type": "string" },
+        "EnviadoPor": { "type": "string" },
+        "QtdAtividades": { "type": "integer" },
+        "QtdImpactos": { "type": "integer" },
+        "QtdFotos": { "type": "integer" }
+      }
+    },
+    "atividades": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "Title": { "type": "string" },
+          "RDC_ID": { "type": "string" },
+          "Ordem": { "type": "integer" },
+          "Disciplina": { "type": "string" },
+          "Servico": { "type": "string" },
+          "TipoAndaime": { "type": ["string", "null"] },
+          "DescricaoOutros": { "type": "string" },
+          "Observacao": { "type": "string" },
+          "InicioAtividade": { "type": "string" },
+          "FimAtividade": { "type": "string" },
+          "DuracaoMin": { "type": "integer" },
+          "Ativo": { "type": "string" },
+          "OM": { "type": "string" },
+          "DataRDC": { "type": "string" }
+        }
+      }
+    },
+    "impactos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "Title": { "type": "string" },
+          "RDC_ID": { "type": "string" },
+          "Ordem": { "type": "integer" },
+          "TipoImpacto": { "type": "string" },
+          "InicioImpacto": { "type": "string" },
+          "FimImpacto": { "type": "string" },
+          "DuracaoMin": { "type": "integer" },
+          "Ativo": { "type": "string" },
+          "OM": { "type": "string" },
+          "DataRDC": { "type": "string" }
+        }
+      }
+    },
+    "fotos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "Title": { "type": "string" },
+          "RDC_ID": { "type": "string" },
+          "Atividade_ID": { "type": "string" },
+          "NomeArquivo": { "type": "string" },
+          "DataHoraFoto": { "type": "string" },
+          "ConteudoBase64": { "type": "string" }
+        }
+      }
+    }
+  }
+}

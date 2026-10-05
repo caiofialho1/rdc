@@ -1,0 +1,4 @@
+# cópia de publicação (igual ao index.html da raiz)
+publicar/
+*.code-workspace
+.node_repl_cell_*
