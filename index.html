@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B2545">
+<title>RDC Mobile</title>
+<style>
+:root{
+  --navy:#0B2545; --navy-2:#13315C; --accent:#F2994A; --accent-2:#FFF4EA;
+  --bg:#F2F4F7; --card:#FFFFFF; --text:#101828; --muted:#667085; --line:#D0D5DD;
+  --ok:#12B76A; --ok-bg:#ECFDF3; --danger:#D92D20; --danger-bg:#FEF3F2; --warn-bg:#FFFAEB;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+.app{max-width:560px;margin:0 auto;min-height:100vh;padding-bottom:40px}
+.topbar{position:sticky;top:0;z-index:10;background:var(--navy);color:#fff;padding:12px 16px calc(12px);padding-top:calc(12px + env(safe-area-inset-top));display:flex;align-items:center;gap:12px}
+.topbar .back{background:transparent;border:0;color:#fff;font-size:22px;padding:4px 8px 4px 0;cursor:pointer}
+.topbar h1{font-size:17px;margin:0;line-height:1.15}
+.topbar small{display:block;font-size:12px;opacity:.75;font-weight:500}
+.topbar .spacer{flex:1}
+.topbar .icon-btn{background:rgba(255,255,255,.12);border:0;color:#fff;border-radius:10px;width:38px;height:38px;cursor:pointer;font-size:18px}
+.screen{display:none;padding:16px}
+.screen.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+.card.err{border-color:var(--danger);box-shadow:0 0 0 2px var(--danger-bg)}
+.section-title{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--navy-2);margin:22px 2px 10px}
+.section-title .opt{font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted)}
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+label.lbl{display:block;font-size:13px;font-weight:700;color:#344054;margin-bottom:6px}
+.control{width:100%;min-height:48px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px 12px;outline:none}
+.control:focus{border-color:var(--navy-2);box-shadow:0 0 0 3px rgba(19,49,92,.15)}
+textarea.control{min-height:80px;resize:vertical}
+select.control{appearance:none;background-image:linear-gradient(45deg,transparent 50%,#667085 50%),linear-gradient(135deg,#667085 50%,transparent 50%);background-position:calc(100% - 20px) 21px,calc(100% - 15px) 21px;background-size:5px 5px;background-repeat:no-repeat;padding-right:36px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chips{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.chips.three{grid-template-columns:repeat(3,1fr)}
+.chip{min-height:52px;border:1.5px solid var(--line);background:#fff;border-radius:12px;font-weight:800;cursor:pointer;padding:6px;line-height:1.1}
+.chip small{display:block;font-weight:500;font-size:11px;color:var(--muted);margin-top:2px}
+.chip.sel{border-color:var(--navy);background:var(--navy);color:#fff}
+.chip.sel small{color:#C9D3E3}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.badge{font-weight:800;color:var(--navy);font-size:14px;letter-spacing:.02em}
+.link-danger{border:0;background:transparent;color:var(--danger);font-weight:700;cursor:pointer;padding:6px 0}
+.link-danger.armed{background:var(--danger);color:#fff;border-radius:8px;padding:6px 10px}
+.impact{border-left:4px solid var(--accent)}
+.empty{background:var(--warn-bg);border:1px dashed #F7B27A;color:#7A4A12;font-size:14px}
+.dashed{width:100%;min-height:50px;border:1.5px dashed #98A2B3;background:#fff;border-radius:12px;color:var(--navy);font-weight:800;cursor:pointer;margin-bottom:6px}
+.note{font-size:13px;color:var(--muted);margin:4px 2px 0}
+.dur{font-size:13px;color:var(--muted);margin:-6px 0 14px}
+.dur b{color:var(--navy)}
+.photos{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.thumb{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:#EAECF0}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb button{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(16,24,40,.75);color:#fff;font-size:15px;line-height:1;cursor:pointer}
+.add-photo{aspect-ratio:1;border:1.5px dashed #98A2B3;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;background:#fff;text-align:center}
+.add-photo span{font-size:24px;line-height:1}
+.add-photo input{display:none}
+.btn{width:100%;min-height:54px;border:0;border-radius:12px;font-weight:800;font-size:16px;cursor:pointer;letter-spacing:.02em}
+.btn.primary{background:var(--navy);color:#fff}
+.btn.accent{background:var(--accent);color:#1D1203}
+.btn.ghost{background:#fff;border:1.5px solid var(--line);color:var(--navy)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn + .btn{margin-top:10px}
+.errbox{background:var(--danger-bg);color:var(--danger);border:1px solid #FDA29B;border-radius:10px;padding:12px;font-weight:600;font-size:14px;margin:12px 0}
+.hidden{display:none!important}
+.hero{background:linear-gradient(160deg,var(--navy),var(--navy-2));color:#fff;border-radius:18px;padding:22px 18px;margin-bottom:16px}
+.hero h2{margin:0 0 4px;font-size:22px}
+.hero p{margin:0 0 16px;opacity:.8;font-size:14px}
+.status-line{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:14px;color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:50%;background:#98A2B3;flex:none}
+.dot.on{background:var(--ok)} .dot.off{background:var(--danger)} .dot.wait{background:var(--accent)}
+.hist-item{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #EAECF0;font-size:14px}
+.hist-item:last-child{border-bottom:0}
+.hist-item b{display:block;color:var(--navy)}
+.pill{display:inline-block;font-size:12px;font-weight:700;border-radius:99px;padding:3px 10px;background:#EEF4FF;color:var(--navy-2);white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:#067647}
+.pill.wait{background:var(--accent-2);color:#9C4A00}
+.rv-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #EAECF0;font-size:15px}
+.rv-row:last-child{border-bottom:0}
+.rv-row span{color:var(--muted)}
+.rv-row strong{text-align:right;word-break:break-word}
+.rv-block{padding:12px 0;border-bottom:1px solid #EAECF0}
+.rv-block:first-child{padding-top:0}
+.rv-block:last-child{border-bottom:0;padding-bottom:0}
+.rv-block h4{margin:0 0 6px;font-size:14px;color:var(--navy)}
+.rv-block p{margin:2px 0;font-size:14px}
+.rv-thumbs{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.rv-thumbs img{width:52px;height:52px;object-fit:cover;border-radius:8px}
+.check{display:flex;gap:12px;align-items:flex-start;font-weight:600;cursor:pointer}
+.check input{width:24px;height:24px;flex:none;margin:0;accent-color:var(--navy)}
+.success{text-align:center;padding:32px 16px}
+.success .big{width:84px;height:84px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:42px;color:#fff;background:var(--ok)}
+.success .big.wait{background:var(--accent)}
+.success h2{margin:0 0 6px}
+.success code{font-size:15px;background:#EAECF0;padding:4px 10px;border-radius:8px}
+.pills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:16px 0 24px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#101828;color:#fff;padding:12px 16px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;transition:.25s;z-index:50;max-width:calc(100% - 32px);pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.error{background:var(--danger)}
+.overlay{position:fixed;inset:0;background:rgba(11,37,69,.6);display:flex;align-items:center;justify-content:center;z-index:40;color:#fff;font-weight:700;flex-direction:column;gap:14px;padding:24px;text-align:center}
+.spinner{width:44px;height:44px;border-radius:50%;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.log{font:12px/1.5 ui-monospace,Consolas,monospace;background:#101828;color:#D0D5DD;border-radius:10px;padding:12px;white-space:pre-wrap;max-height:260px;overflow:auto;margin-top:12px}
+.mode-tag{font-size:11px;font-weight:800;background:var(--accent);color:#1D1203;border-radius:6px;padding:2px 6px;margin-left:6px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <button class="back hidden" id="btnBack" aria-label="Voltar">←</button>
+    <div>
+      <h1 id="topTitle">RDC <span id="modeTag" class="mode-tag hidden"></span><small>Relatório de Campo · Produção → Planejamento</small></h1>
+    </div>
+    <div class="spacer"></div>
+    <button class="icon-btn" id="btnConfig" aria-label="Configurações">⚙</button>
+  </header>
+
+  <!-- ===================== INÍCIO ===================== -->
+  <section class="screen active" id="scrInicio">
+    <div class="hero">
+      <h2>Relatório Diário de Campo</h2>
+      <p>Registre atividades, horários, evidências e impactos do dia. Os dados vão direto para a base do Planejamento.</p>
+      <button class="btn accent" id="btnNovo">+ NOVO RDC</button>
+      <button class="btn ghost hidden" id="btnContinuar" style="margin-top:10px">Continuar rascunho</button>
+    </div>
+
+    <div class="status-line" id="connStatus"><span class="dot"></span><span>Verificando…</span></div>
+    <button class="btn ghost hidden" id="btnLogin" style="margin-bottom:14px">Entrar com conta corporativa</button>
+
+    <div class="card hidden" id="pendingCard" style="background:var(--warn-bg);border-color:#F7B27A">
+      <div class="card-head" style="margin-bottom:8px"><span class="badge" id="pendingTitle">RDC pendentes</span></div>
+      <p class="note" style="margin:0 0 12px">Estes relatórios foram salvos no aparelho e ainda não chegaram à base (sem sinal ou falha de envio).</p>
+      <button class="btn primary" id="btnSync">Enviar pendentes agora</button>
+      <div class="note" id="pendingErr"></div>
+    </div>
+
+    <div class="section-title">Enviados neste aparelho</div>
+    <div class="card" id="histList"><div class="note">Nenhum RDC enviado ainda.</div></div>
+  </section>
+
+  <!-- ===================== FORMULÁRIO ===================== -->
+  <section class="screen" id="scrRDC">
+    <div class="section-title">1. Identificação</div>
+    <div class="card" id="cardHeader">
+      <div class="field"><label class="lbl" for="fResponsavel">Responsável *</label><input class="control" id="fResponsavel" data-h="responsavel" autocomplete="name" placeholder="Nome do encarregado / supervisor"></div>
+      <div class="field"><label class="lbl" for="fData">Data *</label><input class="control" type="date" id="fData" data-h="data"></div>
+      <div class="row">
+        <div class="field"><label class="lbl" for="fAtivo">Ativo *</label><input class="control" id="fAtivo" data-h="ativo" placeholder="Ex.: TR-325K-07" autocapitalize="characters"></div>
+        <div class="field"><label class="lbl" for="fOM">OM *</label><input class="control" id="fOM" data-h="om" placeholder="Nº da OM" inputmode="numeric"></div>
+      </div>
+    </div>
+
+    <div class="section-title">2. Atividades executadas</div>
+    <div id="activities"></div>
+    <button class="dashed" id="btnAddAtv">+ ADICIONAR ATIVIDADE</button>
+
+    <div class="section-title">3. Registro de impactos <span class="opt">(opcional)</span></div>
+    <div id="impacts"></div>
+    <button class="dashed" id="btnAddImp">+ REGISTRAR IMPACTO</button>
+    <p class="note">Registre interferências, paralisações, aguardo de liberação, bloqueios ou outras ocorrências que afetaram a execução.</p>
+
+    <div class="errbox hidden" id="formError"></div>
+    <div style="margin-top:22px"><button class="btn primary" id="btnRevisar">REVISAR E ENVIAR</button></div>
+  </section>
+
+  <!-- ===================== REVISÃO ===================== -->
+  <section class="screen" id="scrRevisao">
+    <div class="section-title">Identificação</div>
+    <div class="card" id="rvHeader"></div>
+    <div class="section-title">Atividades</div>
+    <div class="card" id="rvActivities"></div>
+    <div class="section-title">Registro de impactos</div>
+    <div class="card" id="rvImpacts"></div>
+    <div class="card">
+      <label class="check"><input type="checkbox" id="chkConfirm"> Confirmo que as informações estão corretas.</label>
+    </div>
+    <button class="btn primary" id="btnEnviar" disabled>CONFIRMAR E ENVIAR</button>
+    <button class="btn ghost" id="btnVoltarEditar">VOLTAR E EDITAR</button>
+  </section>
+
+  <!-- ===================== SUCESSO ===================== -->
+  <section class="screen" id="scrSucesso">
+    <div class="success">
+      <div class="big" id="sucIcon">✓</div>
+      <h2 id="sucTitle">RDC enviado</h2>
+      <p class="note" id="sucMsg"></p>
+      <p><code id="sucCode"></code></p>
+      <div class="pills" id="sucPills"></div>
+      <button class="btn primary" id="btnNovo2">+ NOVO RDC</button>
+      <button class="btn ghost" id="btnHome">VOLTAR AO INÍCIO</button>
+    </div>
+  </section>
+
+  <!-- ===================== CONFIGURAÇÕES ===================== -->
+  <section class="screen" id="scrConfig">
+    <div class="card">
+      <p class="note" style="margin:0 0 14px">Área do administrador. Os valores padrão vêm do bloco <b>CONFIG</b> no arquivo <code>index.html</code>; o que for salvo aqui vale só para este aparelho.</p>
+      <div class="field"><label class="lbl" for="cMode">Modo de conexão</label>
+        <select class="control" id="cMode">
+          <option value="supabase">Supabase (sem login)</option>
+          <option value="demo">Demonstração (salva só no aparelho)</option>
+          <option value="graph">SharePoint direto (login Microsoft 365)</option>
+          <option value="flow">Power Automate (sem login)</option>
+        </select>
+      </div>
+      <div id="cfgSupabase">
+        <div class="field"><label class="lbl" for="cSbUrl">URL do projeto Supabase</label><input class="control" id="cSbUrl" placeholder="https://xxxxxxxx.supabase.co"></div>
+        <div class="field"><label class="lbl" for="cSbKey">Chave pública (publishable / anon)</label><textarea class="control" id="cSbKey" rows="2"></textarea></div>
+      </div>
+      <div id="cfgGraph">
+        <div class="field"><label class="lbl" for="cSite">URL do site SharePoint</label><input class="control" id="cSite" placeholder="https://empresa.sharepoint.com/sites/Pelotizacao"></div>
+        <div class="row">
+          <div class="field"><label class="lbl" for="cClient">Client ID (App)</label><input class="control" id="cClient"></div>
+          <div class="field"><label class="lbl" for="cTenant">Tenant ID</label><input class="control" id="cTenant"></div>
+        </div>
+      </div>
+      <div id="cfgFlow" class="field"><label class="lbl" for="cFlow">URL do gatilho HTTP (Power Automate)</label><textarea class="control" id="cFlow" rows="3"></textarea></div>
+      <button class="btn primary" id="btnSaveCfg">Salvar neste aparelho</button>
+      <button class="btn ghost" id="btnResetCfg">Restaurar padrão do arquivo</button>
+    </div>
+    <div class="card" id="cfgTools">
+      <div class="badge" style="margin-bottom:10px">Diagnóstico</div>
+      <button class="btn ghost" id="btnTest">Testar conexão</button>
+      <div id="cfgGraphTools">
+        <button class="btn ghost" id="btnProvision" style="margin-top:10px">Criar listas e biblioteca no site</button>
+        <p class="note">“Criar listas” exige permissão de proprietário do site (escopo Sites.Manage.All).</p>
+      </div>
+      <div class="log hidden" id="cfgLog"></div>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="overlay hidden" id="overlay"><div class="spinner"></div><div id="overlayMsg">Enviando…</div></div>
+
+<script>
+/* =====================================================================
+   CONFIGURAÇÃO — edite este bloco antes de distribuir o app
+   mode:
+     'supabase' -> grava no Supabase (Postgres + fotos); usuário não precisa de login
+     'demo'     -> não envia; guarda no aparelho (para testar o fluxo)
+     'graph'    -> grava direto no SharePoint via Microsoft Graph (usuário entra com conta M365)
+     'flow'     -> envia para um fluxo Power Automate (gatilho HTTP); usuário não precisa de login
+   ===================================================================== */
+const CONFIG = {
+  mode: 'supabase',
+  // Supabase: Project Settings -> API (URL do projeto e chave publishable/anon)
+  supabaseUrl: 'https://ltuzzgdapgfbtxaxigek.supabase.co',
+  supabaseKey: 'sb_publishable_seUPg9HXoSjV8bwEY619XA_Q1JeWamW',
+  supabaseBucket: 'rdc-evidencias',
+  // SharePoint / Power Automate
+  siteUrl: 'https://SEUTENANT.sharepoint.com/sites/SEUSITE',
+  clientId: '',
+  tenantId: '',
+  flowUrl: '',
+  lists: {
+    cabecalho: 'RDC_Cabecalho',
+    atividades: 'RDC_Atividades',
+    impactos: 'RDC_Impactos',
+    fotos: 'RDC_Fotos',
+    biblioteca: 'RDC_Evidencias'
+  },
+  foto: { maxLado: 1600, qualidade: 0.8, minPorAtividade: 1 }
+};
+
+/* ===================== CATÁLOGO ===================== */
+const DISCIPLINAS = {
+  'PAC': { sub: 'Pintura', servicos: [
+    'LIMPEZA COM ÁGUA','LIMPEZA COM SOLVENTE','TRATAMENTO ST3','JATO SA1','JATO SA2 1/2',
+    'PRIMER EPÓXI','PRIMER ELASTÔMERO','ACABAMENTO PU','ACABAMENTO ELASTÔMERO','OUTROS'] },
+  'REC': { sub: 'Recuperação', servicos: [
+    'FABRICAÇÃO','DESMONTAGEM DE ESTRUTURA','MONTAGEM DE ESTRUTURA METÁLICA','OUTROS'] },
+  'TEL/COB': { sub: 'Telhado / cobertura', servicos: [
+    'DESMONTAGEM DE TELHA - COBERTURA','DESMONTAGEM DE TELHA - TAPAMENTO','MONTAGEM DE TELHA - COBERTURA',
+    'MONTAGEM DE TELHA - TAPAMENTO','DESMONTAGEM DE RUFO','MONTAGEM DE RUFO','DESMONTAGEM CUMEEIRA',
+    'MONTAGEM CUMEEIRA','FIXAÇÃO E CALAFETAÇÃO DE TELHAS','OUTROS'] },
+  'ANDAIME': { sub: 'Andaime', servicos: [
+    'MONTAGEM DE ANDAIME','DESMONTAGEM DE ANDAIME','MONTAGEM DE TUBO-VIDA','DESMONTAGEM DE TUBO-VIDA','OUTROS'] }
+};
+const TIPOS_ANDAIME = ['APOIADO','SUSPENSO','BALANÇO'];
+const SERVICOS_COM_TIPO = ['MONTAGEM DE ANDAIME','DESMONTAGEM DE ANDAIME'];
+
+/* ===================== ESQUEMA SHAREPOINT ===================== */
+const txt = n => ({ name: n, text: {} });
+const mtxt = n => ({ name: n, text: { allowMultipleLines: true } });
+const num = n => ({ name: n, number: {} });
+const dt = n => ({ name: n, dateTime: { format: 'dateTime' } });
+const dOnly = n => ({ name: n, dateTime: { format: 'dateOnly' } });
+const choice = (n, c) => ({ name: n, choice: { choices: c, displayAs: 'dropDownMenu' } });
+const SCHEMA = () => ({
+  [CFG.lists.cabecalho]: [txt('Responsavel'), dOnly('DataRDC'), txt('Ativo'), txt('OM'),
+    choice('Status', ['Rascunho','Enviado','Cancelado']), dt('DataHoraEnvio'), txt('EnviadoPor'),
+    num('QtdAtividades'), num('QtdImpactos'), num('QtdFotos')],
+  [CFG.lists.atividades]: [txt('RDC_ID'), num('Ordem'), choice('Disciplina', Object.keys(DISCIPLINAS)), txt('Servico'),
+    choice('TipoAndaime', TIPOS_ANDAIME), mtxt('DescricaoOutros'), mtxt('Observacao'),
+    dt('InicioAtividade'), dt('FimAtividade'), num('DuracaoMin'), txt('Ativo'), txt('OM'), dOnly('DataRDC')],
+  [CFG.lists.impactos]: [txt('RDC_ID'), num('Ordem'), mtxt('TipoImpacto'), dt('InicioImpacto'), dt('FimImpacto'),
+    num('DuracaoMin'), txt('Ativo'), txt('OM'), dOnly('DataRDC')],
+  [CFG.lists.fotos]: [txt('RDC_ID'), txt('Atividade_ID'), txt('NomeArquivo'), mtxt('URLArquivo'), dt('DataHoraFoto')]
+});
+
+/* ===================== UTILITÁRIOS ===================== */
+const $ = id => document.getElementById(id);
+const pad = (n, l = 2) => String(n).padStart(l, '0');
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+const fmtDate = iso => iso ? iso.split('-').reverse().join('/') : '';
+const toMin = t => { if (!t) return null; const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+function duration(ini, fim) {
+  const a = toMin(ini), b = toMin(fim);
+  if (a == null || b == null) return null;
+  return b > a ? b - a : b + 1440 - a; // fim <= início => virou o dia
+}
+const fmtDur = m => m == null ? '' : `${Math.floor(m / 60)}h${pad(m % 60)}`;
+// Data + hora local -> ISO UTC; se fim <= início, soma 1 dia
+function toISO(date, time, nextDay) {
+  const d = new Date(`${date}T${time}:00`);
+  if (nextDay) d.setDate(d.getDate() + 1);
+  return d.toISOString();
+}
+
+let toastTimer;
+function toast(msg, isError) {
+  const t = $('toast');
+  t.textContent = msg; t.className = 'toast show' + (isError ? ' error' : '');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.className = 'toast', 3200);
+}
+function busy(msg) { $('overlayMsg').textContent = msg || 'Enviando…'; $('overlay').classList.toggle('hidden', !msg); }
+
+/* ===================== ARMAZENAMENTO LOCAL (IndexedDB) ===================== */
+const Store = (() => {
+  const mem = new Map(); let dbp;
+  function open() {
+    if (!dbp) dbp = new Promise((res, rej) => {
+      try {
+        const r = indexedDB.open('rdc-mobile', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('kv');
+        r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+      } catch (e) { rej(e); }
+    });
+    return dbp;
+  }
+  async function get(k) {
+    try {
+      const db = await open();
+      return await new Promise((res, rej) => { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+    } catch { return mem.get(k); }
+  }
+  async function set(k, v) {
+    try {
+      const db = await open();
+      await new Promise((res, rej) => { const tx = db.transaction('kv', 'readwrite'); tx.objectStore('kv').put(v, k); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+    } catch { mem.set(k, v); }
+  }
+  return { get, set };
+})();
+
+/* ===================== CONFIG EFETIVA ===================== */
+let CFG = { ...CONFIG };
+function loadCfg() {
+  try { const o = JSON.parse(localStorage.getItem('rdc-config') || 'null'); if (o) CFG = { ...CONFIG, ...o, lists: CONFIG.lists, foto: CONFIG.foto }; } catch { }
+}
+
+/* ===================== AUTENTICAÇÃO (MSAL) ===================== */
+const SCOPES_RW = ['User.Read', 'Sites.ReadWrite.All'];
+const SCOPES_ADMIN = ['Sites.Manage.All'];
+let msal = null, account = null;
+
+function loadScript(src) {
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Falha ao carregar ' + src)); document.head.appendChild(s); });
+}
+async function initAuth() {
+  if (CFG.mode !== 'graph') return;
+  if (!CFG.clientId || !CFG.tenantId) throw new Error('Client ID / Tenant ID não configurados');
+  if (!window.msal) await loadScript('https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.27.0/lib/msal-browser.min.js');
+  msal = new window.msal.PublicClientApplication({
+    auth: { clientId: CFG.clientId, authority: `https://login.microsoftonline.com/${CFG.tenantId}`, redirectUri: location.origin + location.pathname },
+    cache: { cacheLocation: 'localStorage' }
+  });
+  await msal.initialize();
+  const r = await msal.handleRedirectPromise();
+  account = (r && r.account) || msal.getAllAccounts()[0] || null;
+  if (account) msal.setActiveAccount(account);
+}
+function login() { return msal.loginRedirect({ scopes: SCOPES_RW, prompt: 'select_account' }); }
+async function getToken(scopes = SCOPES_RW) {
+  if (!msal) throw new Error('Login não inicializado');
+  if (!account) { await login(); throw new Error('Redirecionando para login…'); }
+  try {
+    return (await msal.acquireTokenSilent({ scopes, account })).accessToken;
+  } catch (e) {
+    await msal.acquireTokenRedirect({ scopes, account });
+    throw new Error('Redirecionando para autenticação…');
+  }
+}
+
+/* ===================== MICROSOFT GRAPH ===================== */
+async function graph(path, { method = 'GET', body, scopes, contentType } = {}) {
+  const token = await getToken(scopes);
+  const url = path.startsWith('http') ? path : 'https://graph.microsoft.com/v1.0' + path;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const isBlob = body instanceof Blob;
+    const r = await fetch(url, {
+      method,
+      headers: { Authorization: 'Bearer ' + token, ...(body ? { 'Content-Type': contentType || (isBlob ? body.type : 'application/json') } : {}) },
+      body: body ? (isBlob ? body : JSON.stringify(body)) : undefined
+    });
+    if (r.status === 429 || r.status === 503 || r.status === 504) {
+      await sleep((Number(r.headers.get('Retry-After')) || 2 ** attempt) * 1000); continue;
+    }
+    if (!r.ok) {
+      const t = await r.text(); const e = new Error(`Graph ${r.status}: ${t.slice(0, 300)}`); e.status = r.status; throw e;
+    }
+    return r.status === 204 ? null : r.json();
+  }
+  throw new Error('SharePoint ocupado (limite de tentativas). Tente novamente.');
+}
+let siteIdCache = null, driveIdCache = null;
+async function siteId(scopes) {
+  if (siteIdCache) return siteIdCache;
+  const u = new URL(CFG.siteUrl);
+  const s = await graph(`/sites/${u.hostname}:${u.pathname.replace(/\/$/, '') || '/'}`, { scopes });
+  return siteIdCache = s.id;
+}
+async function driveId() {
+  if (driveIdCache) return driveIdCache;
+  const d = await graph(`/sites/${await siteId()}/lists/${encodeURIComponent(CFG.lists.biblioteca)}/drive`);
+  return driveIdCache = d.id;
+}
+const addItem = async (list, fields) =>
+  (await graph(`/sites/${await siteId()}/lists/${encodeURIComponent(list)}/items`, { method: 'POST', body: { fields } })).id;
+
+/* ===================== MONTAGEM DO REGISTRO ===================== */
+function buildRecord(d) {
+  const now = new Date();
+  const code = `RDC-${d.data.replace(/-/g, '')}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}-${uid().slice(0, 4).toUpperCase()}`;
+  const dataRDC = `${d.data}T12:00:00Z`; // meio-dia UTC evita troca de dia por fuso
+  const base = { Ativo: d.ativo.trim(), OM: d.om.trim(), DataRDC: dataRDC };
+  const fotos = [];
+  const atividades = d.atividades.map((a, i) => {
+    const key = `${code}-A${pad(i + 1)}`;
+    const dur = duration(a.horaInicio, a.horaFim);
+    a.fotos.forEach((f, j) => fotos.push({
+      Title: `${key}-F${pad(j + 1)}`, RDC_ID: code, Atividade_ID: key,
+      NomeArquivo: `${key}-F${pad(j + 1)}.jpg`, DataHoraFoto: new Date(f.ts).toISOString(), dataUrl: f.dataUrl
+    }));
+    return {
+      Title: key, RDC_ID: code, Ordem: i + 1, Disciplina: a.disciplina, Servico: a.servico,
+      TipoAndaime: a.tipoAndaime || null, DescricaoOutros: a.servico === 'OUTROS' ? a.outros.trim() : '',
+      Observacao: a.observacao.trim(),
+      InicioAtividade: toISO(d.data, a.horaInicio), FimAtividade: toISO(d.data, a.horaFim, toMin(a.horaFim) <= toMin(a.horaInicio)),
+      DuracaoMin: dur, ...base
+    };
+  });
+  const impactos = d.impactos.map((x, i) => ({
+    Title: `${code}-I${pad(i + 1)}`, RDC_ID: code, Ordem: i + 1, TipoImpacto: x.descricao.trim(),
+    InicioImpacto: toISO(d.data, x.horaInicio), FimImpacto: toISO(d.data, x.horaFim, toMin(x.horaFim) <= toMin(x.horaInicio)),
+    DuracaoMin: duration(x.horaInicio, x.horaFim), ...base
+  }));
+  const header = {
+    Title: code, Responsavel: d.responsavel.trim(), DataRDC: dataRDC, Ativo: base.Ativo, OM: base.OM,
+    Status: 'Rascunho', EnviadoPor: (account && (account.username || account.name)) || d.responsavel.trim(),
+    QtdAtividades: atividades.length, QtdImpactos: impactos.length, QtdFotos: fotos.length
+  };
+  return { code, createdAt: now.toISOString(), header, atividades, impactos, fotos, progress: {} };
+}
+const stripNulls = o => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== null && v !== undefined && v !== ''));
+
+/* ===================== ENVIO (por modo) ===================== */
+async function sendGraph(rec, saveProgress) {
+  const p = rec.progress; p.atv ||= {}; p.imp ||= {}; p.fot ||= {};
+  if (!p.headerId) { p.headerId = await addItem(CFG.lists.cabecalho, stripNulls(rec.header)); await saveProgress(); }
+  for (const a of rec.atividades) if (!p.atv[a.Title]) { await addItem(CFG.lists.atividades, stripNulls(a)); p.atv[a.Title] = 1; await saveProgress(); }
+  for (const x of rec.impactos) if (!p.imp[x.Title]) { await addItem(CFG.lists.impactos, stripNulls(x)); p.imp[x.Title] = 1; await saveProgress(); }
+  for (const f of rec.fotos) {
+    if (p.fot[f.Title]) continue;
+    const blob = await (await fetch(f.dataUrl)).blob();
+    const path = `${rec.code}/${f.Atividade_ID}/${f.NomeArquivo}`.split('/').map(encodeURIComponent).join('/');
+    const item = await graph(`/drives/${await driveId()}/root:/${path}:/content`, { method: 'PUT', body: blob, contentType: 'image/jpeg' });
+    const { dataUrl, ...meta } = f;
+    await addItem(CFG.lists.fotos, { ...meta, URLArquivo: item.webUrl });
+    p.fot[f.Title] = 1; await saveProgress();
+  }
+  await graph(`/sites/${await siteId()}/lists/${encodeURIComponent(CFG.lists.cabecalho)}/items/${p.headerId}/fields`,
+    { method: 'PATCH', body: { Status: 'Enviado', DataHoraEnvio: new Date().toISOString() } });
+}
+async function sendFlow(rec) {
+  if (!CFG.flowUrl) throw new Error('URL do Power Automate não configurada');
+  const payload = {
+    cabecalho: { ...rec.header, Status: 'Enviado', DataHoraEnvio: new Date().toISOString() },
+    atividades: rec.atividades, impactos: rec.impactos,
+    fotos: rec.fotos.map(({ dataUrl, ...m }) => ({ ...m, ConteudoBase64: dataUrl.split(',')[1] }))
+  };
+  const r = await fetch(CFG.flowUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  if (!r.ok) {
+    const body = (await r.text()).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    throw new Error(`Power Automate respondeu ${r.status}${body && !/^\W/.test(body) ? ': ' + body.slice(0, 160) : ''}`);
+  }
+}
+async function sendDemo() { await sleep(700); }
+
+/* ----- Supabase: fotos no Storage + uma chamada RPC transacional (idempotente) ----- */
+const sbBase = () => CFG.supabaseUrl.trim().replace(/\/+$/, '');
+const sbHeaders = (extra = {}) => {
+  const k = CFG.supabaseKey.trim(); // chave legada (JWT "eyJ…") também vai no Authorization
+  return { apikey: k, ...(k.startsWith('eyJ') ? { Authorization: 'Bearer ' + k } : {}), ...extra };
+};
+async function sbFetch(path, opts) {
+  if (!CFG.supabaseUrl || !CFG.supabaseKey) throw new Error('Supabase não configurado (URL/chave) — veja ⚙');
+  const r = await fetch(sbBase() + path, opts);
+  if (!r.ok) {
+    const t = await r.text(); let m = t;
+    try { const j = JSON.parse(t); m = j.message || j.error || t; } catch { }
+    const e = new Error(`Supabase ${r.status}: ${String(m).slice(0, 200)}`); e.status = r.status; e.body = t; throw e;
+  }
+  return r;
+}
+async function sendSupabase(rec, saveProgress) {
+  const p = rec.progress; p.fot ||= {};
+  const bucket = CFG.supabaseBucket;
+  for (const f of rec.fotos) {
+    if (p.fot[f.Title]) continue;
+    const path = `${rec.header.DataRDC.slice(0, 7)}/${rec.code}/${f.NomeArquivo}`;
+    const blob = await (await fetch(f.dataUrl)).blob();
+    try {
+      await sbFetch(`/storage/v1/object/${bucket}/${path.split('/').map(encodeURIComponent).join('/')}`,
+        { method: 'POST', headers: sbHeaders({ 'Content-Type': 'image/jpeg' }), body: blob });
+    } catch (e) {
+      if (!(e.status === 409 || /Duplicate|already exists/i.test(e.body || ''))) throw e; // já enviada em tentativa anterior
+    }
+    p.fot[f.Title] = path; await saveProgress();
+  }
+  const payload = {
+    cabecalho: { ...rec.header, Status: 'Enviado' },
+    atividades: rec.atividades, impactos: rec.impactos,
+    fotos: rec.fotos.map(({ dataUrl, ...m }) => ({ ...m, Caminho: p.fot[m.Title] }))
+  };
+  await sbFetch('/rest/v1/rpc/registrar_rdc',
+    { method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ payload }) });
+}
+
+/* ===================== FILA OFFLINE ===================== */
+let syncing = false;
+async function processQueue(showUI) {
+  if (syncing) return { sent: 0, left: (await Store.get('queue') || []).length };
+  syncing = true; let sent = 0, lastErr = null;
+  try {
+    let queue = await Store.get('queue') || [];
+    for (const rec of [...queue]) {
+      try {
+        if (showUI) busy(`Enviando ${rec.code}…`);
+        const save = async () => { queue = queue.map(q => q.code === rec.code ? rec : q); await Store.set('queue', queue); };
+        if (CFG.mode === 'supabase') await sendSupabase(rec, save);
+        else if (CFG.mode === 'graph') await sendGraph(rec, save);
+        else if (CFG.mode === 'flow') await sendFlow(rec);
+        else await sendDemo(rec);
+        queue = queue.filter(q => q.code !== rec.code); await Store.set('queue', queue);
+        await addHistory(rec, 'Enviado'); sent++;
+      } catch (e) {
+        lastErr = e; console.error(e);
+        rec.lastError = e.message; await Store.set('queue', queue.map(q => q.code === rec.code ? rec : q));
+        if (!navigator.onLine || /Redirecionando/.test(e.message)) break;
+      }
+    }
+    return { sent, left: queue.length, error: lastErr };
+  } finally { syncing = false; if (showUI) busy(null); renderHome(); }
+}
+async function addHistory(rec, status) {
+  const h = (await Store.get('history') || []).filter(x => x.code !== rec.code);
+  h.unshift({ code: rec.code, data: rec.header.DataRDC.slice(0, 10), ativo: rec.header.Ativo, om: rec.header.OM,
+    atv: rec.atividades.length, imp: rec.impactos.length, fot: rec.fotos.length, status, at: new Date().toISOString() });
+  await Store.set('history', h.slice(0, 40));
+}
+
+/* ===================== ESTADO DO RASCUNHO ===================== */
+let draft = null;
+const newActivity = () => ({ id: uid(), disciplina: '', servico: '', tipoAndaime: '', outros: '', observacao: '', horaInicio: '', horaFim: '', fotos: [] });
+const newImpact = () => ({ id: uid(), descricao: '', horaInicio: '', horaFim: '' });
+function newDraft() {
+  const last = localStorage.getItem('rdc-responsavel') || (account && account.name) || '';
+  return { responsavel: last, data: todayISO(), ativo: '', om: '', atividades: [newActivity()], impactos: [] };
+}
+let saveTimer;
+function saveDraft() { clearTimeout(saveTimer); saveTimer = setTimeout(() => Store.set('draft', draft), 400); }
+
+/* ===================== NAVEGAÇÃO ===================== */
+const TITLES = { scrInicio: 'RDC', scrRDC: 'Novo RDC', scrRevisao: 'RDC · Revisão', scrSucesso: 'RDC', scrConfig: 'Configurações' };
+const BACK = { scrRDC: 'scrInicio', scrRevisao: 'scrRDC', scrConfig: 'scrInicio' };
+let current = 'scrInicio';
+function go(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+  current = id;
+  $('topTitle').firstChild.nodeValue = TITLES[id] + ' ';
+  $('btnBack').classList.toggle('hidden', !BACK[id]);
+  $('btnConfig').classList.toggle('hidden', id !== 'scrInicio');
+  window.scrollTo(0, 0);
+}
+
+/* ===================== TELA INÍCIO ===================== */
+async function renderHome() {
+  const hasDraft = !!(await Store.get('draft'));
+  $('btnContinuar').classList.toggle('hidden', !hasDraft);
+  $('btnNovo').textContent = hasDraft ? '+ NOVO RDC (descartar rascunho)' : '+ NOVO RDC';
+
+  const queue = await Store.get('queue') || [];
+  $('pendingCard').classList.toggle('hidden', !queue.length);
+  $('pendingTitle').textContent = `${queue.length} RDC pendente${queue.length > 1 ? 's' : ''} de envio`;
+  const le = queue.find(q => q.lastError);
+  $('pendingErr').textContent = le ? 'Último erro: ' + le.lastError : '';
+
+  const hist = await Store.get('history') || [];
+  const rows = [...queue.map(q => ({ code: q.code, data: q.header.DataRDC.slice(0, 10), ativo: q.header.Ativo, om: q.header.OM, status: 'Pendente' })), ...hist];
+  $('histList').innerHTML = rows.length ? rows.map(h => `<div class="hist-item"><div><b>${esc(h.ativo)} · OM ${esc(h.om)}</b>${fmtDate(h.data)} · <span style="color:var(--muted)">${esc(h.code)}</span></div><div><span class="pill ${h.status === 'Enviado' ? 'ok' : 'wait'}">${h.status}</span></div></div>`).join('')
+    : '<div class="note">Nenhum RDC enviado ainda.</div>';
+
+  const st = $('connStatus'); let dot = 'dot', msg;
+  if (CFG.mode === 'demo') { dot += ' wait'; msg = 'Modo demonstração — nada é enviado ao servidor.'; }
+  else if (CFG.mode === 'supabase' && (!CFG.supabaseUrl || !CFG.supabaseKey)) { dot += ' off'; msg = 'Supabase não configurado (veja ⚙).'; }
+  else if (CFG.mode === 'supabase') { dot += navigator.onLine ? ' on' : ' off'; msg = navigator.onLine ? 'Conectado · dados enviados ao banco RDC' : 'Sem conexão — os RDC ficam salvos no aparelho.'; }
+  else if (CFG.mode === 'flow') { dot += navigator.onLine ? ' on' : ' off'; msg = navigator.onLine ? 'Conectado · envio via Power Automate' : 'Sem conexão — os RDC ficam salvos no aparelho.'; }
+  else if (!msal) { dot += ' off'; msg = 'SharePoint não configurado (veja ⚙).'; }
+  else if (!account) { dot += ' off'; msg = 'Entre com sua conta para enviar ao SharePoint.'; }
+  else { dot += navigator.onLine ? ' on' : ' off'; msg = (navigator.onLine ? 'Conectado como ' : 'Sem conexão · ') + (account.name || account.username); }
+  st.innerHTML = `<span class="${dot}"></span><span>${esc(msg)}</span>`;
+  $('btnLogin').classList.toggle('hidden', !(CFG.mode === 'graph' && msal && !account));
+  $('modeTag').textContent = CFG.mode === 'demo' ? 'DEMO' : '';
+  $('modeTag').classList.toggle('hidden', CFG.mode !== 'demo');
+}
+
+/* ===================== FORMULÁRIO ===================== */
+function fillHeader() {
+  document.querySelectorAll('[data-h]').forEach(el => el.value = draft[el.dataset.h] || '');
+}
+function activityHTML(a, i) {
+  const disc = DISCIPLINAS[a.disciplina];
+  const needsTipo = a.disciplina === 'ANDAIME' && SERVICOS_COM_TIPO.includes(a.servico);
+  const dur = duration(a.horaInicio, a.horaFim);
+  return `<div class="card" data-atv="${a.id}">
+    <div class="card-head"><span class="badge">ATIVIDADE ${pad(i + 1)}</span><button class="link-danger" data-act="del-atv">Excluir</button></div>
+    <div class="field"><label class="lbl">Disciplina *</label>
+      <div class="chips">${Object.entries(DISCIPLINAS).map(([k, v]) => `<button type="button" class="chip ${a.disciplina === k ? 'sel' : ''}" data-act="disc" data-val="${esc(k)}">${esc(k)}<small>${esc(v.sub)}</small></button>`).join('')}</div>
+    </div>
+    ${disc ? `<div class="field"><label class="lbl">Serviço *</label>
+      <select class="control" data-f="servico"><option value="">Selecione o serviço…</option>${disc.servicos.map(s => `<option ${a.servico === s ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select></div>` : ''}
+    ${needsTipo ? `<div class="field"><label class="lbl">Tipo de andaime *</label>
+      <div class="chips three">${TIPOS_ANDAIME.map(t => `<button type="button" class="chip ${a.tipoAndaime === t ? 'sel' : ''}" data-act="tipo" data-val="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>` : ''}
+    ${a.servico === 'OUTROS' ? `<div class="field"><label class="lbl">Descreva o serviço executado *</label><textarea class="control" data-f="outros" placeholder="Descreva o serviço">${esc(a.outros)}</textarea></div>` : ''}
+    <div class="row">
+      <div class="field"><label class="lbl">Horário de início *</label><input type="time" class="control" data-f="horaInicio" value="${esc(a.horaInicio)}"></div>
+      <div class="field"><label class="lbl">Horário de fim *</label><input type="time" class="control" data-f="horaFim" value="${esc(a.horaFim)}"></div>
+    </div>
+    <div class="dur" data-dur>${dur != null ? `Duração: <b>${fmtDur(dur)}</b>${toMin(a.horaFim) <= toMin(a.horaInicio) ? ' (termina no dia seguinte)' : ''}` : ''}</div>
+    <div class="field"><label class="lbl">Observação / descrição complementar</label><textarea class="control" data-f="observacao" placeholder="Local, quantidade, equipe, observações…">${esc(a.observacao)}</textarea></div>
+    <div class="field"><label class="lbl">Evidências (fotos) *</label>
+      <div class="photos">
+        ${a.fotos.map(f => `<div class="thumb"><img src="${f.dataUrl}" alt=""><button type="button" data-act="del-foto" data-val="${f.id}" aria-label="Remover foto">×</button></div>`).join('')}
+        <label class="add-photo"><span>📷</span>Adicionar<input type="file" accept="image/*" multiple data-act="foto"></label>
+      </div>
+    </div>
+  </div>`;
+}
+function impactHTML(x, i) {
+  const dur = duration(x.horaInicio, x.horaFim);
+  return `<div class="card impact" data-imp="${x.id}">
+    <div class="card-head"><span class="badge">IMPACTO ${pad(i + 1)}</span><button class="link-danger" data-act="del-imp">Excluir</button></div>
+    <div class="field"><label class="lbl">Tipo / descrição do impacto *</label><textarea class="control" data-f="descricao" placeholder="Ex.: Aguardando liberação operacional">${esc(x.descricao)}</textarea></div>
+    <div class="row">
+      <div class="field"><label class="lbl">Início *</label><input type="time" class="control" data-f="horaInicio" value="${esc(x.horaInicio)}"></div>
+      <div class="field"><label class="lbl">Fim *</label><input type="time" class="control" data-f="horaFim" value="${esc(x.horaFim)}"></div>
+    </div>
+    <div class="dur" data-dur style="margin:0">${dur != null ? `Duração: <b>${fmtDur(dur)}</b>` : ''}</div>
+  </div>`;
+}
+function renderActivities() { $('activities').innerHTML = draft.atividades.map(activityHTML).join(''); }
+function renderImpacts() {
+  $('impacts').innerHTML = draft.impactos.length ? draft.impactos.map(impactHTML).join('')
+    : '<div class="card empty"><b>Sem impactos registrados.</b><br>Use “Registrar impacto” somente quando alguma ocorrência afetou a execução.</div>';
+}
+function openForm() { fillHeader(); renderActivities(); renderImpacts(); $('formError').classList.add('hidden'); go('scrRDC'); }
+
+function stampPhoto(file) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const s = Math.min(1, CFG.foto.maxLado / Math.max(img.width, img.height));
+      const w = Math.round(img.width * s), h = Math.round(img.height * s);
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      const g = c.getContext('2d'); g.drawImage(img, 0, 0, w, h);
+      // carimbo de data/hora + ativo/OM
+      const d = new Date(), fs = Math.max(14, Math.round(w / 45));
+      const label = `${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}  ${draft.ativo || ''} ${draft.om ? '· OM ' + draft.om : ''}`.trim();
+      g.font = `bold ${fs}px system-ui,sans-serif`;
+      const tw = g.measureText(label).width;
+      g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, h - fs * 1.8, tw + fs * 1.2, fs * 1.8);
+      g.fillStyle = '#fff'; g.fillText(label, fs * 0.6, h - fs * 0.55);
+      URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg', CFG.foto.qualidade));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('Não foi possível ler a imagem')); };
+    img.src = url;
+  });
+}
+
+function bindForm() {
+  document.querySelectorAll('[data-h]').forEach(el => el.addEventListener('input', () => {
+    draft[el.dataset.h] = el.value;
+    if (el.dataset.h === 'responsavel') localStorage.setItem('rdc-responsavel', el.value);
+    saveDraft();
+  }));
+
+  const handleInput = (e, list, attr, rerender) => {
+    const card = e.target.closest(`[${attr}]`); const f = e.target.dataset.f;
+    if (!card || !f) return;
+    const item = draft[list].find(x => x.id === card.getAttribute(attr));
+    item[f] = e.target.value; saveDraft();
+    if (f === 'servico') { if (!SERVICOS_COM_TIPO.includes(item.servico)) item.tipoAndaime = ''; rerender(); }
+    if (f === 'horaInicio' || f === 'horaFim') {
+      const d = duration(item.horaInicio, item.horaFim);
+      card.querySelector('[data-dur]').innerHTML = d != null ? `Duração: <b>${fmtDur(d)}</b>${list === 'atividades' && toMin(item.horaFim) <= toMin(item.horaInicio) ? ' (termina no dia seguinte)' : ''}` : '';
+    }
+  };
+  $('activities').addEventListener('input', e => { if (e.target.tagName !== 'SELECT') handleInput(e, 'atividades', 'data-atv', renderActivities); });
+  $('activities').addEventListener('change', async e => {
+    if (e.target.tagName === 'SELECT') return handleInput(e, 'atividades', 'data-atv', renderActivities);
+    if (e.target.dataset.act !== 'foto') return;
+    const a = draft.atividades.find(x => x.id === e.target.closest('[data-atv]').dataset.atv);
+    const files = [...e.target.files]; if (!files.length) return;
+    busy('Processando fotos…');
+    try { for (const f of files) a.fotos.push({ id: uid(), dataUrl: await stampPhoto(f), ts: Date.now() }); }
+    catch (err) { toast(err.message, true); }
+    finally { busy(null); }
+    renderActivities(); saveDraft();
+  });
+  $('activities').addEventListener('click', e => {
+    const btn = e.target.closest('[data-act]'); if (!btn) return;
+    const a = draft.atividades.find(x => x.id === btn.closest('[data-atv]').dataset.atv);
+    const act = btn.dataset.act;
+    if (act === 'disc') { if (a.disciplina !== btn.dataset.val) { a.disciplina = btn.dataset.val; a.servico = ''; a.tipoAndaime = ''; a.outros = ''; } }
+    else if (act === 'tipo') a.tipoAndaime = btn.dataset.val;
+    else if (act === 'del-foto') a.fotos = a.fotos.filter(f => f.id !== btn.dataset.val);
+    else if (act === 'del-atv') {
+      if (!btn.classList.contains('armed')) { btn.classList.add('armed'); btn.textContent = 'Confirmar exclusão'; setTimeout(() => { btn.classList.remove('armed'); btn.textContent = 'Excluir'; }, 3000); return; }
+      draft.atividades = draft.atividades.filter(x => x !== a);
+    } else return;
+    renderActivities(); saveDraft();
+  });
+
+  $('impacts').addEventListener('input', e => handleInput(e, 'impactos', 'data-imp', renderImpacts));
+  $('impacts').addEventListener('click', e => {
+    const btn = e.target.closest('[data-act="del-imp"]'); if (!btn) return;
+    if (!btn.classList.contains('armed')) { btn.classList.add('armed'); btn.textContent = 'Confirmar exclusão'; setTimeout(() => { btn.classList.remove('armed'); btn.textContent = 'Excluir'; }, 3000); return; }
+    const id = btn.closest('[data-imp]').dataset.imp;
+    draft.impactos = draft.impactos.filter(x => x.id !== id); renderImpacts(); saveDraft();
+  });
+
+  $('btnAddAtv').onclick = () => { draft.atividades.push(newActivity()); renderActivities(); saveDraft(); $('activities').lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  $('btnAddImp').onclick = () => { draft.impactos.push(newImpact()); renderImpacts(); saveDraft(); $('impacts').lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  $('btnRevisar').onclick = review;
+}
+
+/* ===================== VALIDAÇÃO ===================== */
+function validate() {
+  const d = draft;
+  if (!d.responsavel.trim() || !d.data || !d.ativo.trim() || !d.om.trim()) return { msg: 'Preencha Responsável, Data, Ativo e OM.', el: $('cardHeader') };
+  if (!d.atividades.length) return { msg: 'Adicione pelo menos uma atividade.', el: $('btnAddAtv') };
+  for (const [i, a] of d.atividades.entries()) {
+    const el = document.querySelector(`[data-atv="${a.id}"]`), n = `Atividade ${pad(i + 1)}`;
+    if (!a.disciplina || !a.servico) return { msg: `Selecione disciplina e serviço da ${n}.`, el };
+    if (a.disciplina === 'ANDAIME' && SERVICOS_COM_TIPO.includes(a.servico) && !a.tipoAndaime) return { msg: `Selecione o tipo de andaime da ${n}.`, el };
+    if (a.servico === 'OUTROS' && !a.outros.trim()) return { msg: `Descreva o serviço “OUTROS” da ${n}.`, el };
+    if (!a.horaInicio || !a.horaFim) return { msg: `Informe horário de início e fim da ${n}.`, el };
+    if (a.horaInicio === a.horaFim) return { msg: `Início e fim iguais na ${n}.`, el };
+    if (a.fotos.length < CFG.foto.minPorAtividade) return { msg: `Adicione pelo menos ${CFG.foto.minPorAtividade} foto na ${n}.`, el };
+  }
+  for (const [i, x] of d.impactos.entries()) {
+    const el = document.querySelector(`[data-imp="${x.id}"]`);
+    if (!x.descricao.trim() || !x.horaInicio || !x.horaFim) return { msg: `Complete descrição, início e fim do Impacto ${pad(i + 1)}.`, el };
+  }
+  return null;
+}
+
+/* ===================== REVISÃO ===================== */
+function review() {
+  document.querySelectorAll('.card.err').forEach(c => c.classList.remove('err'));
+  const err = validate();
+  if (err) {
+    $('formError').textContent = err.msg; $('formError').classList.remove('hidden');
+    if (err.el) { err.el.classList.add('err'); err.el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    toast(err.msg, true); return;
+  }
+  $('formError').classList.add('hidden');
+  const d = draft;
+  $('rvHeader').innerHTML = [['Responsável', d.responsavel], ['Data', fmtDate(d.data)], ['Ativo', d.ativo], ['OM', d.om]]
+    .map(([k, v]) => `<div class="rv-row"><span>${k}</span><strong>${esc(v)}</strong></div>`).join('');
+  $('rvActivities').innerHTML = d.atividades.map((a, i) => `<div class="rv-block">
+      <h4>ATIVIDADE ${pad(i + 1)} · ${esc(a.disciplina)}</h4>
+      <p><b>${esc(a.servico)}</b>${a.tipoAndaime ? ' · ' + esc(a.tipoAndaime) : ''}</p>
+      ${a.servico === 'OUTROS' ? `<p>${esc(a.outros)}</p>` : ''}
+      <p>${esc(a.horaInicio)} → ${esc(a.horaFim)} · <b>${fmtDur(duration(a.horaInicio, a.horaFim))}</b></p>
+      ${a.observacao ? `<p style="color:var(--muted)">${esc(a.observacao)}</p>` : ''}
+      <div class="rv-thumbs">${a.fotos.map(f => `<img src="${f.dataUrl}" alt="">`).join('')}</div>
+    </div>`).join('');
+  $('rvImpacts').innerHTML = d.impactos.length ? d.impactos.map((x, i) => `<div class="rv-block">
+      <h4>IMPACTO ${pad(i + 1)}</h4><p>${esc(x.descricao)}</p>
+      <p>${esc(x.horaInicio)} → ${esc(x.horaFim)} · <b>${fmtDur(duration(x.horaInicio, x.horaFim))}</b></p></div>`).join('')
+    : '<div class="note">Nenhum impacto registrado neste RDC.</div>';
+  $('chkConfirm').checked = false; $('btnEnviar').disabled = true;
+  go('scrRevisao');
+}
+
+/* ===================== ENVIAR ===================== */
+async function submit() {
+  const rec = buildRecord(draft);
+  const queue = await Store.get('queue') || [];
+  queue.push(rec); await Store.set('queue', queue);
+  draft = null; await Store.set('draft', null);
+  const res = await processQueue(true);
+  const ok = !(await Store.get('queue') || []).some(q => q.code === rec.code);
+  $('sucIcon').textContent = ok ? '✓' : '⏳'; $('sucIcon').className = 'big' + (ok ? '' : ' wait');
+  $('sucTitle').textContent = ok ? 'RDC enviado' : 'RDC salvo no aparelho';
+  $('sucMsg').textContent = ok
+    ? (CFG.mode === 'demo' ? 'Modo demonstração: registro guardado apenas neste aparelho.' : 'Os dados foram gravados na base do Planejamento.')
+    : 'Não foi possível enviar agora' + (res.error ? ` (${res.error.message})` : '') + '. Ele será reenviado automaticamente quando houver conexão.';
+  $('sucCode').textContent = rec.code;
+  $('sucPills').innerHTML = `<span class="pill">${rec.atividades.length} atividade(s)</span><span class="pill">${rec.fotos.length} foto(s)</span><span class="pill">${rec.impactos.length} impacto(s)</span>`;
+  go('scrSucesso');
+}
+
+/* ===================== CONFIGURAÇÕES ===================== */
+function cfgLog(line, reset) {
+  const l = $('cfgLog'); l.classList.remove('hidden');
+  l.textContent = (reset ? '' : l.textContent) + line + '\n'; l.scrollTop = l.scrollHeight;
+}
+function openConfig() {
+  $('cMode').value = CFG.mode; $('cSbUrl').value = CFG.supabaseUrl; $('cSbKey').value = CFG.supabaseKey; $('cSite').value = CFG.siteUrl; $('cClient').value = CFG.clientId; $('cTenant').value = CFG.tenantId; $('cFlow').value = CFG.flowUrl;
+  syncCfgVisibility(); $('cfgLog').classList.add('hidden'); go('scrConfig');
+}
+function syncCfgVisibility() {
+  const m = $('cMode').value;
+  $('cfgSupabase').classList.toggle('hidden', m !== 'supabase');
+  $('cfgGraph').classList.toggle('hidden', m !== 'graph'); $('cfgGraphTools').classList.toggle('hidden', m !== 'graph');
+  $('cfgTools').classList.toggle('hidden', m !== 'graph' && m !== 'supabase');
+  $('cfgFlow').classList.toggle('hidden', m !== 'flow');
+}
+async function testConnection() {
+  if (CFG.mode === 'supabase') {
+    cfgLog('Testando Supabase…', true);
+    try {
+      const r = await sbFetch('/rest/v1/rpc/rdc_ping', { method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json' }), body: '{}' });
+      cfgLog('✓ Banco respondeu: ' + await r.text());
+      cfgLog('✓ Pronto para receber RDC.');
+    } catch (e) {
+      cfgLog('✗ ' + e.message);
+      if (e.status === 404) cfgLog('→ Rode o script supabase/schema.sql no SQL Editor do projeto.');
+      if (e.status === 401) cfgLog('→ Confira a chave pública (publishable/anon).');
+    }
+    return;
+  }
+  if (CFG.mode !== 'graph') return cfgLog('Salve o modo “Supabase” ou “SharePoint” antes de testar.', true);
+  cfgLog('Resolvendo site…', true);
+  try {
+    const id = await siteId(); cfgLog('✓ Site: ' + id);
+    for (const name of Object.values(CFG.lists)) {
+      try { await graph(`/sites/${id}/lists/${encodeURIComponent(name)}?$select=id`); cfgLog('✓ ' + name); }
+      catch (e) { cfgLog((e.status === 404 ? '✗ não encontrada: ' : '✗ erro: ') + name + (e.status === 404 ? '' : ' — ' + e.message)); }
+    }
+  } catch (e) { cfgLog('✗ ' + e.message); }
+}
+async function provision() {
+  cfgLog('Criando estrutura no SharePoint…', true);
+  try {
+    const id = await siteId(SCOPES_ADMIN);
+    const defs = Object.entries(SCHEMA()).map(([name, columns]) => ({ displayName: name, columns, list: { template: 'genericList' } }));
+    defs.push({ displayName: CFG.lists.biblioteca, list: { template: 'documentLibrary' } });
+    for (const def of defs) {
+      try { await graph(`/sites/${id}/lists`, { method: 'POST', body: def, scopes: SCOPES_ADMIN }); cfgLog('✓ criada: ' + def.displayName); }
+      catch (e) { cfgLog((e.status === 409 || /already exists|nameAlreadyExists/i.test(e.message) ? '• já existe: ' : '✗ falhou: ') + def.displayName + (e.status === 409 ? '' : ' — ' + e.message.slice(0, 160))); }
+    }
+    cfgLog('Concluído.');
+  } catch (e) { cfgLog('✗ ' + e.message); }
+}
+
+/* ===================== INICIALIZAÇÃO ===================== */
+async function boot() {
+  loadCfg();
+  try { await initAuth(); } catch (e) { console.warn(e); toast(e.message, true); }
+  bindForm();
+
+  $('btnBack').onclick = () => go(BACK[current]);
+  $('btnConfig').onclick = openConfig;
+  $('btnLogin').onclick = () => login();
+  $('btnNovo').onclick = $('btnNovo2').onclick = async () => { draft = newDraft(); await Store.set('draft', draft); openForm(); };
+  $('btnContinuar').onclick = async () => { draft = await Store.get('draft'); openForm(); };
+  $('btnHome').onclick = () => { go('scrInicio'); renderHome(); };
+  $('btnVoltarEditar').onclick = () => go('scrRDC');
+  $('chkConfirm').onchange = e => $('btnEnviar').disabled = !e.target.checked;
+  $('btnEnviar').onclick = submit;
+  $('btnSync').onclick = async () => {
+    const r = await processQueue(true);
+    toast(r.left ? `${r.sent} enviado(s), ${r.left} pendente(s)` : 'Todos os RDC foram enviados', !!r.left);
+  };
+  $('cMode').onchange = syncCfgVisibility;
+  $('btnSaveCfg').onclick = () => {
+    localStorage.setItem('rdc-config', JSON.stringify({ mode: $('cMode').value, supabaseUrl: $('cSbUrl').value.trim(), supabaseKey: $('cSbKey').value.trim(), siteUrl: $('cSite').value.trim(), clientId: $('cClient').value.trim(), tenantId: $('cTenant').value.trim(), flowUrl: $('cFlow').value.trim() }));
+    location.reload();
+  };
+  $('btnResetCfg').onclick = () => { localStorage.removeItem('rdc-config'); location.reload(); };
+  $('btnTest').onclick = testConnection;
+  $('btnProvision').onclick = provision;
+  window.addEventListener('online', () => { renderHome(); processQueue(false); });
+  window.addEventListener('offline', renderHome);
+
+  await renderHome();
+  if (navigator.onLine && (CFG.mode !== 'graph' || account)) processQueue(false);
+}
+boot();
+</script>
+</body>
+</html>
