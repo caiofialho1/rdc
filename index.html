@@ -133,6 +133,7 @@ select.control{appearance:none;background-image:linear-gradient(45deg,transparen
 .status-card{display:flex;flex-direction:column;gap:6px;font-size:14px}
 .status-card .pill{align-self:flex-start;font-size:13px}
 .btn.danger{background:var(--danger);color:#fff}
+.btn.ghost.warn{color:var(--danger);border-color:#FDA29B}
 </style>
 </head>
 <body>
@@ -236,6 +237,7 @@ select.control{appearance:none;background-image:linear-gradient(45deg,transparen
           <option value="Enviado">Aguardando validação</option>
           <option value="Validado">Validado</option>
           <option value="Em revisão">Revisão liberada</option>
+          <option value="Cancelado">Cancelado</option>
           <option value="Substituído">Substituído (versões antigas)</option>
         </select>
       </div>
@@ -255,9 +257,14 @@ select.control{appearance:none;background-image:linear-gradient(45deg,transparen
     <div class="card" id="dtImpacts"></div>
     <div class="card hidden" id="dtAdmin">
       <div class="badge" style="margin-bottom:10px">Validação do administrador</div>
-      <div class="field"><label class="lbl" for="vObs">Observação / motivo da revisão</label><textarea class="control" id="vObs" placeholder="Obrigatório para liberar revisão: diga o que precisa ser corrigido"></textarea></div>
+      <div class="field"><label class="lbl" for="vObs">Observação / motivo</label><textarea class="control" id="vObs" placeholder="Obrigatório para liberar revisão ou cancelar: diga o motivo"></textarea></div>
       <button class="btn primary" id="btnValidar">✓ VALIDAR (SEM REVISÃO)</button>
       <button class="btn danger" id="btnLiberarRev">↺ LIBERAR PARA REVISÃO</button>
+      <button class="btn ghost warn" id="btnCancelarRdc">✕ CANCELAR RDC</button>
+      <div style="border-top:1px solid #EAECF0;margin-top:16px;padding-top:12px;text-align:center">
+        <button class="link-danger" id="btnApagarRdc">🗑 Apagar definitivamente</button>
+        <p class="note" id="apagarNota">Remove o RDC, as versões anteriores e as fotos. Não pode ser desfeito.</p>
+      </div>
     </div>
     <button class="btn accent hidden" id="btnRevisarRdc">REVISAR ESTE RDC</button>
     <button class="btn ghost hidden" id="btnAdminEntrar">Entrar como administrador para validar</button>
@@ -1196,11 +1203,12 @@ const STATUS_INFO = {
   'Enviado': ['Aguardando validação', 'wait'], 'Validado': ['Validado', 'ok'], 'Em revisão': ['Revisão liberada', 'rev'],
   'Substituído': ['Substituído', 'muted'], 'Cancelado': ['Cancelado', 'muted']
 };
-const STATUS_ATIVOS = ['Enviado', 'Validado', 'Em revisão']; // os que o administrador ainda pode decidir
+const STATUS_ATIVOS = ['Enviado', 'Validado', 'Em revisão', 'Cancelado']; // os que o administrador ainda pode decidir (cancelado pode ser reativado)
 const statusPill = s => { const [t, c] = STATUS_INFO[s] || [s, '']; return `<span class="pill ${c}">${esc(t)}</span>`; };
 const fmtHora = iso => { if (!iso) return ''; const d = new Date(iso); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 const fmtDataHora = iso => iso ? new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '';
 const rvRow = ([k, v]) => `<div class="rv-row"><span>${k}</span><strong>${esc(v)}</strong></div>`;
+const semConsultaV5 = e => e.status === 404 ? 'Banco sem a exclusão de RDC — rode supabase/migracao_v5_cancelar_apagar.sql.' : null;
 const semConsultaV4 = e => e.status === 404 ? 'Banco sem a consulta de RDC — rode supabase/migracao_v4_admin_validacao.sql.' : null;
 
 const Q_LIMITE = 30;
@@ -1260,11 +1268,12 @@ async function openDetalhe(code) {
 function renderDetalhe() {
   const d = detalhe, ativo = STATUS_ATIVOS.includes(d.Status);
   const liberouRev = d.Status === 'Em revisão' || !!d.SubstituidoPor;
+  const decisao = d.Status === 'Cancelado' ? 'Cancelado' : liberouRev ? 'Revisão liberada' : 'Validado';
   $('dtStatus').innerHTML = [statusPill(d.Status),
     `<span><b>${esc(d.Title)}</b>${d.Revisao ? ` · revisão ${d.Revisao}` : ''}</span>`,
     `<span class="note" style="margin:0">Recebido em ${fmtDataHora(d.RecebidoEm)}</span>`,
-    d.ValidadoPor ? `<span>${liberouRev ? 'Revisão liberada' : 'Validado'} por <b>${esc(d.ValidadoPor)}</b> em ${fmtDataHora(d.ValidadoEm)}</span>` : '',
-    d.ObsValidacao ? `<span>${liberouRev ? 'Motivo' : 'Obs.'}: ${esc(d.ObsValidacao)}</span>` : '',
+    d.ValidadoPor ? `<span>${decisao} por <b>${esc(d.ValidadoPor)}</b> em ${fmtDataHora(d.ValidadoEm)}</span>` : '',
+    d.ObsValidacao ? `<span>${liberouRev || d.Status === 'Cancelado' ? 'Motivo' : 'Obs.'}: ${esc(d.ObsValidacao)}</span>` : '',
     d.RevisaoDe ? `<span>Substitui o <a href="#" data-code="${esc(d.RevisaoDe)}">${esc(d.RevisaoDe)}</a></span>` : '',
     d.SubstituidoPor ? `<span>Substituído pelo <a href="#" data-code="${esc(d.SubstituidoPor)}">${esc(d.SubstituidoPor)}</a></span>` : ''
   ].join('');
@@ -1292,25 +1301,62 @@ function renderDetalhe() {
   $('vObs').value = '';
   $('btnValidar').disabled = d.Status === 'Validado';
   $('btnLiberarRev').disabled = d.Status === 'Em revisão';
+  $('btnCancelarRdc').disabled = d.Status === 'Cancelado';
+  $('btnValidar').textContent = d.Status === 'Cancelado' ? '✓ REATIVAR E VALIDAR' : '✓ VALIDAR (SEM REVISÃO)';
+  $('apagarNota').textContent = d.RevisaoDe ? 'Remove o RDC, as versões anteriores dele e as fotos. Não pode ser desfeito.' : 'Remove o RDC e as fotos. Não pode ser desfeito.';
+  desarmar($('btnApagarRdc'));
   $('btnRevisarRdc').classList.toggle('hidden', d.Status !== 'Em revisão');
   $('btnAdminEntrar').classList.toggle('hidden', !!admin || !ativo || !adminDisponivel());
 }
 
 async function validar(decisao) {
   const obs = $('vObs').value.trim();
-  if (decisao === 'Em revisão' && !obs) { toast('Escreva o motivo da revisão.', true); return $('vObs').focus(); }
-  busy(decisao === 'Validado' ? 'Validando…' : 'Liberando revisão…');
+  if (decisao !== 'Validado' && !obs) { toast(`Escreva o motivo ${decisao === 'Cancelado' ? 'do cancelamento' : 'da revisão'}.`, true); return $('vObs').focus(); }
+  busy({ 'Validado': 'Validando…', 'Em revisão': 'Liberando revisão…', 'Cancelado': 'Cancelando…' }[decisao]);
   try {
     const r = await sbRpc('rdc_validar', { p_nome: admin.nome, p_senha: admin.senha, p_codigo: detalhe.Title, p_decisao: decisao, p_obs: obs || null });
     if (!r || !r.ok) {
       const msg = (r && r.erro) || 'Falha na validação.';
       if (/Sessão/.test(msg)) setAdmin(null);
       toast(msg, true);
-    } else toast(decisao === 'Validado' ? 'RDC validado.' : 'Revisão liberada.');
+    } else toast({ 'Validado': 'RDC validado.', 'Em revisão': 'Revisão liberada.', 'Cancelado': 'RDC cancelado.' }[decisao]);
     const d = await sbRpc('rdc_detalhe', { p_codigo: detalhe.Title });
     if (d) detalhe = d;
     renderDetalhe();
   } catch (e) { toast(semConsultaV4(e) || 'Não foi possível gravar: ' + e.message, true); }
+  finally { busy(null); }
+}
+
+const ROTULO_APAGAR = '🗑 Apagar definitivamente';
+function desarmar(btn) { clearTimeout(btn._t); btn.classList.remove('armed'); btn.textContent = ROTULO_APAGAR; }
+// Exclusão definitiva: o banco apaga o RDC (e versões anteriores) e libera as fotos; o app apaga as fotos do Storage
+async function apagarRdc(btn) {
+  if (!btn.classList.contains('armed')) {
+    btn.classList.add('armed'); btn.textContent = 'Toque de novo para APAGAR';
+    btn._t = setTimeout(() => desarmar(btn), 4000); return;
+  }
+  desarmar(btn);
+  busy('Apagando RDC…');
+  try {
+    const r = await sbRpc('rdc_apagar', { p_nome: admin.nome, p_senha: admin.senha, p_codigo: detalhe.Title });
+    if (!r || !r.ok) {
+      const msg = (r && r.erro) || 'Falha ao apagar.';
+      if (/Sessão/.test(msg)) { setAdmin(null); renderDetalhe(); }
+      return toast(msg, true);
+    }
+    let fotosOk = true;
+    try {
+      for (let i = 0; i < r.fotos.length; i += 100) // fotos liberadas, inclusive sobras de exclusões anteriores
+        await sbFetch(`/storage/v1/object/${CFG.supabaseBucket}`, { method: 'DELETE', headers: sbHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ prefixes: r.fotos.slice(i, i + 100) }) });
+    } catch (e) { fotosOk = false; console.warn(e); }
+    const hist = (await Store.get('history') || []).filter(h => !r.apagados.includes(h.code));
+    await Store.set('history', hist);
+    toast(fotosOk ? 'RDC apagado.' : 'RDC apagado. Algumas fotos ficaram no armazenamento e serão removidas na próxima exclusão.', !fotosOk);
+    detalhe = null;
+    const to = BACK.scrDetalhe || 'scrConsulta';
+    go(to);
+    if (to === 'scrConsulta') carregarConsulta(true); else renderHome();
+  } catch (e) { toast(semConsultaV5(e) || 'Não foi possível apagar: ' + e.message, true); }
   finally { busy(null); }
 }
 
@@ -1422,6 +1468,8 @@ async function boot() {
   $('dtActivities').addEventListener('click', e => { if (e.target.matches('img[src]')) window.open(e.target.src, '_blank'); });
   $('btnValidar').onclick = () => validar('Validado');
   $('btnLiberarRev').onclick = () => validar('Em revisão');
+  $('btnCancelarRdc').onclick = () => validar('Cancelado');
+  $('btnApagarRdc').onclick = e => apagarRdc(e.currentTarget);
   $('btnRevisarRdc').onclick = e => iniciarRevisao(e.currentTarget);
   $('btnAdminEntrar').onclick = () => requireAdmin(() => { renderDetalhe(); go('scrDetalhe'); });
   $('btnLogin').onclick = () => login();

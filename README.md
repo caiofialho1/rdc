@@ -28,6 +28,9 @@ Os dados vão para um banco Supabase (Postgres + fotos), que o Planejamento cons
   - Situações: *Aguardando validação* → *Validado* ou *Revisão liberada*.
   - Com a revisão liberada, aparece o botão **Revisar este RDC**, que abre o RDC (com fotos) no formulário. Ao enviar, a nova versão substitui a anterior (que fica como *Substituído*, só no histórico) e volta para *Aguardando validação*.
   - Sem a liberação, o banco recusa qualquer revisão.
+- **Cancelar ou apagar (só o administrador):**
+  - **Cancelar RDC** (motivo obrigatório): o RDC fica no histórico como *Cancelado* e sai das views do Power BI. Pode ser reativado com “Reativar e validar” ou “Liberar para revisão”.
+  - **Apagar definitivamente** (pede um segundo toque): remove do banco o RDC, as versões anteriores dele e as fotos. Uma cópia dos dados fica na tabela `rdc_exclusoes`, visível só pelo painel do Supabase.
 - **Configurações (⚙) só para o administrador:** pede nome e senha, conferidos no banco. A sessão vale até fechar a aba.
 - **Funciona sem sinal:** o rascunho é salvo no aparelho o tempo todo. Se o envio falhar, o RDC fica numa fila e é reenviado automaticamente quando a conexão voltar, sem duplicar.
 
@@ -57,7 +60,7 @@ O script cria:
 | Bucket `rdc-evidencias` | fotos em `AAAA-MM/{RDC}/{RDC}-A01-F01.jpg` (privado) |
 | `vw_rdc_atividades`, `vw_rdc_impactos`, `vw_rdc_resumo` | visões prontas para consulta e Power BI, em horário local |
 
-**Segurança:** a chave usada pelo app consegue **enviar** RDC e fotos e **consultar** os RDC emitidos (somente leitura, pelas funções `rdc_listar`/`rdc_detalhe`). Ela não altera nem apaga nada. Validar ou liberar revisão exige nome e senha de administrador, conferidos no banco (`rdc_validar`). **Quem tiver o link consegue ver os RDC e as fotos**: não divulgue o link fora da equipe.
+**Segurança:** a chave usada pelo app consegue **enviar** RDC e fotos e **consultar** os RDC emitidos (somente leitura, pelas funções `rdc_listar`/`rdc_detalhe`). Ela não altera nem apaga nada. Validar, liberar revisão, cancelar (`rdc_validar`) ou apagar (`rdc_apagar`) exige nome e senha de administrador, conferidos no banco. O app só consegue apagar fotos de RDC que o administrador apagou. **Quem tiver o link consegue ver os RDC e as fotos**: não divulgue o link fora da equipe.
 
 ### 2b. Atualizar um banco já existente (v4) e cadastrar o administrador
 1. Se o banco já estava em uso, rode `supabase/migracao_v4_admin_validacao.sql` no SQL Editor (instalação nova: o `schema.sql` já inclui tudo).
@@ -68,7 +71,8 @@ O script cria:
    - Rodar de novo com o mesmo nome troca a senha.
    - 5 senhas erradas seguidas bloqueiam aquele administrador por 15 minutos.
    - Para desativar: `update public.rdc_admins set ativo = false where nome = 'Caio Fialho';`
-3. As views para o Power BI agora deixam de fora as versões *Substituído* (sem horas em dobro) e trazem a coluna `status`.
+3. Para cancelar/apagar, rode também `supabase/migracao_v5_cancelar_apagar.sql`.
+4. As views para o Power BI agora deixam de fora as versões *Substituído* (sem horas em dobro) e trazem a coluna `status`.
 
 ### 3. Configurar o app (2 min)
 1. No Supabase, abra **Project Settings → API Keys** e copie a **Publishable key** (`sb_publishable_…`). Se o projeto mostrar só as chaves antigas, use a **anon public**.
