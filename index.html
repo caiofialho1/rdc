@@ -161,18 +161,26 @@ input.control::-webkit-calendar-picker-indicator{margin-left:2px}
 .gps a{color:var(--navy-2);font-weight:700}
 /* galeria de RDC emitidos */
 .toolbar{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.grp{border-bottom:1px solid #EAECF0}
-.grp:last-child{border-bottom:0}
-.grp>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;cursor:pointer;font-weight:800;color:var(--navy)}
+.grp{margin-bottom:8px}
+.grp:last-child{margin-bottom:0}
+.grp>summary{list-style:none;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;padding:10px 12px;cursor:pointer;font-weight:800;color:#fff;background:var(--navy);border-radius:10px}
 .grp>summary::-webkit-details-marker{display:none}
-.grp>summary::before{content:'▸';color:var(--muted);margin-right:6px;transition:transform .15s}
+.grp>summary::before{content:'▸';color:rgba(255,255,255,.7);margin-right:2px;transition:transform .15s}
 .grp[open]>summary::before{transform:rotate(90deg)}
 .grp>summary .g-nome{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.grp>summary small{font-weight:600;color:var(--muted);white-space:nowrap}
-.grp .hist-item:first-of-type{border-top:1px solid #EAECF0}
+.grp>summary small{font-weight:600;color:rgba(255,255,255,.85);white-space:nowrap}
+.grp[open]>summary{margin-bottom:4px}
 .grp>summary .who{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
-.grp>summary .who .avatar{width:40px;height:40px}
-.grp>summary .who span{display:block;font-weight:500;font-size:12px;color:var(--muted)}
+.grp>summary .who .avatar{width:40px;height:40px;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
+.grp>summary .who span{display:block;font-weight:500;font-size:12px;color:rgba(255,255,255,.75)}
+.grp>summary .who b{color:#fff}
+.farois{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px;padding-left:18px}
+.farol{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#fff;background:rgba(255,255,255,.12);border-radius:99px;padding:3px 10px 3px 7px;white-space:nowrap}
+.farol i{width:10px;height:10px;border-radius:50%;flex:none;box-shadow:0 0 0 2px rgba(255,255,255,.25)}
+.farol.ok i{background:var(--ok)}
+.farol.wait i{background:#FDB022}
+.farol.rev i{background:#F04438}
+.farol.muted i{background:#98A2B3}
 .hist-item.sem-foto{padding-left:22px}
 /* formulário em etapas */
 .passos{position:sticky;top:calc(62px + env(safe-area-inset-top));z-index:5;background:var(--bg);margin:-16px -16px 6px;padding:10px 16px 8px}
@@ -1746,6 +1754,13 @@ const AGRUPAR = {
 const itemRdc = (r, semFoto) => `<div class="hist-item click${semFoto ? ' sem-foto' : ''}" data-code="${esc(r.codigo)}"><div class="who">${semFoto ? '' : avatarLider(r.responsavel)}<div>${semFoto
   ? `<b>${fmtDate(r.data_rdc)} · ${esc(r.ativo)}</b>OM ${esc(r.om)}`
   : `<b>${esc(r.ativo)} · OM ${esc(r.om)}</b>${fmtDate(r.data_rdc)} · ${esc(r.responsavel)}`}<br><span class="meta">${r.contrato ? esc(r.contrato_nome || nomeContrato(r.contrato) || r.contrato) + ' · ' : ''}${esc(r.codigo)}${r.revisao ? ` · rev. ${r.revisao}` : ''}${r.hh != null ? ` · ${fmtH(r.hh)} HH` : ''}${Number(r.horas_impacto) > 0 ? ` · impacto ${fmtH(r.horas_impacto)}` : ''}</span></div></div><div>${statusPill(r.status)}</div></div>`;
+// faróis do grupo: total de RDC por situação (verde validado, amarelo aguardando, vermelho revisão, cinza cancelado/substituído)
+const FAROL_ORDEM = ['Validado', 'Enviado', 'Em revisão', 'Cancelado', 'Substituído'];
+function farois(rows) {
+  const n = {}; for (const r of rows) n[r.status] = (n[r.status] || 0) + 1;
+  const ks = [...FAROL_ORDEM.filter(k => n[k]), ...Object.keys(n).filter(k => !FAROL_ORDEM.includes(k))];
+  return `<span class="farois">${ks.map(k => { const [t, c] = STATUS_INFO[k] || [k, 'muted']; return `<span class="farol ${c}" title="${esc(t)}"><i></i>${n[k]} ${esc(t)}</span>`; }).join('')}</span>`;
+}
 function renderConsulta() {
   const list = $('qList'), por = $('qAgrupar').value;
   if (!qRows.length) { list.innerHTML = '<div class="note">Nenhum RDC encontrado.</div>'; return; }
@@ -1762,7 +1777,7 @@ function renderConsulta() {
     const g = grupos.get(k), hh = g.rows.reduce((s, r) => s + (Number(r.hh) || 0), 0), resp = por === 'responsavel';
     const titulo = resp ? `<span class="who">${avatarLider(k)}<span class="g-nome"><b style="font-weight:800">${esc(g.nome)}</b><span>${esc(funcaoLider(k) || '')}</span></span></span>` : `<span class="g-nome">${esc(g.nome)}</span>`;
     const rows = resp ? [...g.rows].sort((a, b) => b.data_rdc.localeCompare(a.data_rdc) || b.recebido_em.localeCompare(a.recebido_em)) : g.rows;
-    return `<details class="grp"${abertos ? ' open' : ''}><summary>${titulo}<small>${g.rows.length} RDC${hh ? ` · ${fmtH(hh)} HH` : ''}</small></summary>${rows.map(r => itemRdc(r, resp)).join('')}</details>`;
+    return `<details class="grp"${abertos ? ' open' : ''}><summary>${titulo}<small>${g.rows.length} RDC${hh ? ` · ${fmtH(hh)} HH` : ''}</small>${por === 'status' ? '' : farois(g.rows)}</summary>${rows.map(r => itemRdc(r, resp)).join('')}</details>`;
   }).join('');
 }
 async function carregarConsulta(reset) {
