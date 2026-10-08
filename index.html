@@ -19,13 +19,15 @@ html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-u
 button,input,select,textarea{font:inherit;color:inherit}
 .app{max-width:560px;margin:0 auto;min-height:100vh;padding-bottom:40px}
 .topbar{position:sticky;top:0;z-index:10;background:var(--navy);color:#fff;padding:12px 16px calc(12px);padding-top:calc(12px + env(safe-area-inset-top));display:flex;align-items:center;gap:12px}
-.topbar .back{background:transparent;border:0;color:#fff;font-size:22px;padding:4px 8px 4px 0;cursor:pointer}
+.topbar .back{position:relative;background:transparent;border:0;color:#fff;font-size:22px;min-width:38px;min-height:38px;padding:4px 8px 4px 0;cursor:pointer}
 .lockup{margin:0;display:flex;flex-direction:column;gap:2px;min-width:0}
 .lk-sigla{display:flex;align-items:center;font-size:20px;font-weight:800;line-height:1;letter-spacing:.06em}
 .lk-nome{font-size:13px;font-weight:500;line-height:1.2;color:rgba(255,255,255,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sr-only{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .topbar .spacer{flex:1}
-.topbar .icon-btn{background:rgba(255,255,255,.12);border:0;color:#fff;border-radius:10px;width:38px;height:38px;cursor:pointer;font-size:18px}
+.topbar .icon-btn{position:relative;background:rgba(255,255,255,.12);border:0;color:#fff;border-radius:10px;width:38px;height:38px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.topbar .icon-btn::after,.topbar .back::after{content:'';position:absolute;inset:-5px}
+.topbar .icon-btn .ic{width:20px;height:20px}
 .screen{display:none;padding:16px}
 .screen.active{display:block}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px}
@@ -48,8 +50,8 @@ select.control{appearance:none;background-image:linear-gradient(45deg,transparen
 .chip.sel small{color:#C9D3E3}
 .card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .badge{font-weight:800;color:var(--navy);font-size:14px;letter-spacing:.02em}
-.link-danger{border:0;background:transparent;color:var(--danger);font-weight:700;cursor:pointer;padding:6px 0}
-.link-danger.armed{background:var(--danger);color:#fff;border-radius:8px;padding:6px 10px}
+.link-danger{border:0;background:transparent;color:var(--danger);font-weight:700;cursor:pointer;min-height:48px;padding:12px 8px;display:inline-flex;align-items:center;gap:6px}
+.link-danger.armed{background:var(--danger);color:#fff;border-radius:8px;padding:12px 12px}
 .impact{border-left:4px solid var(--accent)}
 .empty{background:var(--warn-bg);border:1px dashed #F7B27A;color:#7A4A12;font-size:14px}
 .dashed{width:100%;min-height:50px;border:1.5px dashed #98A2B3;background:#fff;border-radius:12px;color:var(--navy);font-weight:800;cursor:pointer;margin-bottom:6px}
@@ -59,7 +61,8 @@ select.control{appearance:none;background-image:linear-gradient(45deg,transparen
 .photos{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .thumb{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:#EAECF0}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.thumb button{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(16,24,40,.75);color:#fff;font-size:15px;line-height:1;cursor:pointer}
+.thumb button{position:absolute;top:4px;right:4px;width:36px;height:36px;border-radius:50%;border:0;background:rgba(16,24,40,.8);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.thumb button::after{content:'';position:absolute;inset:-6px}
 .add-photo{aspect-ratio:1;border:1.5px dashed #98A2B3;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;background:#fff;text-align:center}
 .add-photo span{font-size:24px;line-height:1}
 .add-photo input{display:none}
@@ -113,8 +116,8 @@ select.control{appearance:none;background-image:linear-gradient(45deg,transparen
 .ef-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 8px 6px 12px;font-size:15px}
 .ef-row + .ef-row{border-top:1px solid #EAECF0}
 .stepper{display:flex;align-items:center;gap:4px;flex:none}
-.stepper button{width:40px;height:40px;border:1px solid var(--line);background:#fff;border-radius:10px;font-size:20px;font-weight:700;color:var(--navy);cursor:pointer;line-height:1}
-.stepper input{width:46px;height:40px;text-align:center;border:1px solid var(--line);border-radius:10px;font-weight:700;-moz-appearance:textfield}
+.stepper button{width:48px;height:48px;border:1px solid var(--line);background:#fff;border-radius:10px;font-size:20px;font-weight:700;color:var(--navy);cursor:pointer;line-height:1}
+.stepper input{width:48px;height:48px;text-align:center;border:1px solid var(--line);border-radius:10px;font-weight:700;-moz-appearance:textfield}
 .stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .ef-total{float:right;font-weight:600;color:var(--muted)}
 .ef-total b{color:var(--navy)}
@@ -156,14 +159,14 @@ input.control::-webkit-calendar-picker-indicator{margin-left:2px}
 .chips.yn{grid-template-columns:repeat(2,1fr)}
 .sub-block{border-top:1px dashed var(--line);margin-top:4px;padding-top:12px}
 /* GPS */
-.gps{display:flex;align-items:center;gap:8px;min-height:44px;border:1px solid var(--line);border-radius:10px;background:#F9FAFB;padding:8px 12px;font-size:14px;color:var(--muted)}
+.gps{display:flex;align-items:center;gap:8px;min-height:48px;border:1px solid var(--line);border-radius:10px;background:#F9FAFB;padding:8px 12px;font-size:14px;color:var(--muted)}
 .gps.ok{color:var(--text)}
 .gps a{color:var(--navy-2);font-weight:700}
 /* galeria de RDC emitidos */
 .toolbar{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .grp{margin-bottom:8px}
 .grp:last-child{margin-bottom:0}
-.grp>summary{list-style:none;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;padding:10px 12px;cursor:pointer;font-weight:800;color:#fff;background:var(--navy-2);border-radius:10px}
+.grp>summary{min-height:48px;list-style:none;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;padding:10px 12px;cursor:pointer;font-weight:800;color:#fff;background:var(--navy-2);border-radius:10px}
 .grp>summary::-webkit-details-marker{display:none}
 .grp>summary::before{content:'▸';color:rgba(255,255,255,.7);margin-right:2px;transition:transform .15s}
 .grp[open]>summary::before{transform:rotate(90deg)}
@@ -185,7 +188,7 @@ input.control::-webkit-calendar-picker-indicator{margin-left:2px}
 /* formulário em etapas */
 .passos{position:sticky;top:calc(62px + env(safe-area-inset-top));z-index:5;background:var(--bg);margin:-16px -16px 6px;padding:10px 16px 8px}
 .passos ol{list-style:none;margin:8px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
-.passos button{width:100%;border:0;background:transparent;padding:2px 0;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;line-height:1.15;text-align:center}
+.passos button{width:100%;min-height:48px;border:0;background:transparent;padding:2px 0;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;line-height:1.15;text-align:center}
 .passos i{font-style:normal;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px}
 .passos li.feito i{background:var(--ok);border-color:var(--ok);color:#fff}
 .passos li.atual button{color:var(--navy)}
@@ -202,7 +205,7 @@ input.control::-webkit-calendar-picker-indicator{margin-left:2px}
 /* responsáveis */
 .periodo{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .atalhos{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.atalhos button{border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:6px 14px;font-weight:700;color:var(--navy);cursor:pointer}
+.atalhos button{border:1.5px solid var(--line);background:#fff;border-radius:99px;min-height:48px;padding:6px 16px;font-weight:700;color:var(--navy);cursor:pointer}
 .atalhos button.sel{background:var(--navy);border-color:var(--navy);color:#fff}
 .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
@@ -214,7 +217,7 @@ input.control::-webkit-calendar-picker-indicator{margin-left:2px}
 .resp-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px;font-size:12px;color:var(--muted)}
 .resp-nums b{display:block;font-size:16px;color:var(--navy);font-variant-numeric:tabular-nums}
 .dias{display:flex;gap:3px;flex-wrap:wrap;margin-top:10px}
-.dia{width:22px;height:22px;border-radius:5px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;background:var(--danger-bg);color:var(--danger)}
+.dia{width:24px;height:24px;border-radius:5px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;background:var(--danger-bg);color:var(--danger)}
 .dia.ok{background:var(--ok-bg);color:#067647}
 .dia.fds{background:#F2F4F7;color:#98A2B3}
 .legenda{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
@@ -223,7 +226,7 @@ input.control::-webkit-calendar-picker-indicator{margin-left:2px}
 .thumb img,.rv-thumbs img{cursor:zoom-in}
 .lb{position:fixed;inset:0;z-index:60;background:#0B0F17;color:#fff;display:flex;flex-direction:column;touch-action:pan-y}
 .lb-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(10px + env(safe-area-inset-top)) 12px 10px 16px;font-weight:700;font-size:14px}
-.lb-top button{width:44px;height:44px;border:0;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;font-size:26px;cursor:pointer;line-height:1}
+.lb-top button{width:48px;height:48px;border:0;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;font-size:26px;cursor:pointer;line-height:1}
 .lb-stage{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
 .lb-stage img{max-width:100%;max-height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none}
 .lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:64px;border:0;border-radius:12px;background:rgba(255,255,255,.14);color:#fff;font-size:34px;cursor:pointer;line-height:1}
@@ -235,6 +238,14 @@ input.control::-webkit-calendar-picker-indicator{margin-left:2px}
 .lb-strip{display:flex;gap:6px;overflow-x:auto;padding:6px 12px calc(12px + env(safe-area-inset-bottom))}
 .lb-strip img{width:52px;height:52px;flex:none;object-fit:cover;border-radius:8px;opacity:.5;border:2px solid transparent;cursor:pointer;background:#1D2939}
 .lb-strip img.sel{opacity:1;border-color:var(--accent)}
+/* foco visível (teclado / acessibilidade do celular) */
+button:focus-visible,summary:focus-visible,a:focus-visible,[role=button]:focus-visible,.add-photo:focus-within{outline:2px solid var(--navy-2);outline-offset:2px}
+.topbar :focus-visible,.hero :focus-visible,.grp>summary:focus-visible,.lb :focus-visible{outline-color:#fff}
+/* ícones de linha (Lucide, MIT) */
+.ic{width:1.15em;height:1.15em;vertical-align:-.2em;flex:none}
+.btn .ic,.dashed .ic{margin-right:6px}
+.add-photo .ic{width:26px;height:26px;margin-bottom:2px}
+.success .big .ic{width:44px;height:44px}
 </style>
 </head>
 <body>
@@ -247,7 +258,7 @@ input.control::-webkit-calendar-picker-indicator{margin-left:2px}
       <h1 class="lockup"><span class="lk-sigla">RDC <span id="modeTag" class="mode-tag hidden"></span><span id="adminTag" class="mode-tag admin hidden">ADMIN</span></span><span class="sr-only"> – </span><span class="lk-nome">Relatório Diário de Campo</span></h1>
     </div>
     <div class="spacer"></div>
-    <button class="icon-btn" id="btnConfig" aria-label="Configurações">⚙</button>
+    <button class="icon-btn" id="btnConfig" aria-label="Configurações" data-ic="settings"></button>
   </header>
 
   <!-- ===================== INÍCIO ===================== -->
@@ -255,7 +266,7 @@ input.control::-webkit-calendar-picker-indicator{margin-left:2px}
     <div class="hero">
       <h2>Lançamento do dia</h2>
       <p>Atividades, horários, efetivo, fotos e impactos vão direto para a base do Planejamento.</p>
-      <button class="btn accent" id="btnNovo">+ NOVO RDC</button>
+      <button class="btn accent" id="btnNovo">+ Novo RDC</button>
       <button class="btn ghost hidden" id="btnContinuar" style="margin-top:10px">Continuar rascunho</button>
     </div>
 
@@ -265,12 +276,12 @@ input.control::-webkit-calendar-picker-indicator{margin-left:2px}
     <div class="card hidden" id="pendingCard" style="background:var(--warn-bg);border-color:#F7B27A">
       <div class="card-head" style="margin-bottom:8px"><span class="badge" id="pendingTitle">RDC pendentes</span></div>
       <p class="note" style="margin:0 0 12px">Estes relatórios foram salvos no aparelho e ainda não chegaram à base (sem sinal ou falha de envio).</p>
-      <button class="btn primary" id="btnSync">Enviar pendentes agora</button>
+      <button class="btn ghost" id="btnSync">Enviar pendentes agora</button>
       <div class="note" id="pendingErr"></div>
     </div>
 
     <div id="wrapEmitidos">
-      <div class="nav-row"><button class="btn ghost" id="btnResp">👥 RESPONSÁVEIS · HH E IMPACTO</button></div>
+      <div class="nav-row"><button class="btn ghost" id="btnResp" data-ic="users">Responsáveis · HH e impacto</button></div>
       <div class="section-title">RDC emitidos</div>
       <div class="card">
         <div class="field"><label class="lbl" for="qBusca">Buscar</label><input class="control" id="qBusca" type="search" placeholder="OM, ativo, responsável ou código"></div>
@@ -339,7 +350,7 @@ input.control::-webkit-calendar-picker-indicator{margin-left:2px}
     <div class="section-title">2. PTS e bloqueio</div>
     <div class="card" id="cardPts">
       <div class="field"><label class="lbl">Teve PTS? *</label>
-        <div class="chips yn" data-yn="pts"><button type="button" class="chip" data-val="S">SIM</button><button type="button" class="chip" data-val="N">NÃO</button></div>
+        <div class="chips yn" data-yn="pts"><button type="button" class="chip" data-val="S">Sim</button><button type="button" class="chip" data-val="N">Não</button></div>
       </div>
       <div class="sub-block hidden" id="wrapPts">
         <div class="row">
@@ -349,7 +360,7 @@ input.control::-webkit-calendar-picker-indicator{margin-left:2px}
         <div class="dur" id="ptsEspera"></div>
       </div>
       <div class="field" style="margin-top:6px"><label class="lbl">Teve bloqueio? *</label>
-        <div class="chips yn" data-yn="bloqueio"><button type="button" class="chip" data-val="S">SIM</button><button type="button" class="chip" data-val="N">NÃO</button></div>
+        <div class="chips yn" data-yn="bloqueio"><button type="button" class="chip" data-val="S">Sim</button><button type="button" class="chip" data-val="N">Não</button></div>
       </div>
       <div class="sub-block hidden" id="wrapBloq">
         <div class="field"><label class="lbl" for="fBloqAtivo">Ativo bloqueado *</label><input class="control" id="fBloqAtivo" data-h="bloqueioAtivo" list="dlBloqAtivo" placeholder="TAG ou descrição do ativo" autocapitalize="characters"><datalist id="dlBloqAtivo"></datalist></div>
@@ -361,21 +372,21 @@ input.control::-webkit-calendar-picker-indicator{margin-left:2px}
     <div class="passo" data-passo="3">
     <div class="section-title">3. Atividades executadas</div>
     <div id="activities"></div>
-    <button class="dashed" id="btnAddAtv">+ ADICIONAR ATIVIDADE</button>
+    <button class="dashed" id="btnAddAtv">+ Adicionar atividade</button>
     </div>
 
     <div class="passo" data-passo="4">
     <div class="section-title">4. Registro de impactos <span class="opt">(opcional)</span></div>
     <div id="impacts"></div>
-    <button class="dashed" id="btnAddImp">+ REGISTRAR IMPACTO</button>
+    <button class="dashed" id="btnAddImp">+ Registrar impacto</button>
     <p class="note">Registre interferências, paralisações, aguardo de liberação, bloqueios ou outras ocorrências que afetaram a execução. Sem impactos, é só avançar.</p>
     </div>
 
     <div class="errbox hidden" id="formError"></div>
     <div class="passo-nav">
-      <button class="btn ghost" id="btnPassoVoltar">← VOLTAR</button>
-      <button class="btn primary" id="btnPassoAvancar">AVANÇAR →</button>
-      <button class="btn primary hidden" id="btnRevisar">REVISAR E ENVIAR</button>
+      <button class="btn ghost" id="btnPassoVoltar">← Voltar</button>
+      <button class="btn primary" id="btnPassoAvancar">Avançar →</button>
+      <button class="btn primary hidden" id="btnRevisar">Revisar e enviar</button>
     </div>
   </section>
 
@@ -392,20 +403,20 @@ input.control::-webkit-calendar-picker-indicator{margin-left:2px}
     <div class="card">
       <label class="check"><input type="checkbox" id="chkConfirm"> Confirmo que as informações estão corretas.</label>
     </div>
-    <button class="btn primary" id="btnEnviar" disabled>CONFIRMAR E ENVIAR</button>
-    <button class="btn ghost" id="btnVoltarEditar">VOLTAR E EDITAR</button>
+    <button class="btn primary" id="btnEnviar" disabled>Confirmar e enviar</button>
+    <button class="btn ghost" id="btnVoltarEditar">Voltar e editar</button>
   </section>
 
   <!-- ===================== SUCESSO ===================== -->
   <section class="screen" id="scrSucesso">
     <div class="success">
-      <div class="big" id="sucIcon">✓</div>
+      <div class="big" id="sucIcon"></div>
       <h2 id="sucTitle">RDC enviado</h2>
       <p class="note" id="sucMsg"></p>
       <p><code id="sucCode"></code></p>
       <div class="pills" id="sucPills"></div>
-      <button class="btn primary" id="btnNovo2">+ NOVO RDC</button>
-      <button class="btn ghost" id="btnHome">VOLTAR AO INÍCIO</button>
+      <button class="btn primary" id="btnNovo2">+ Novo RDC</button>
+      <button class="btn ghost" id="btnHome">Voltar ao início</button>
     </div>
   </section>
 
@@ -441,15 +452,15 @@ input.control::-webkit-calendar-picker-indicator{margin-left:2px}
     <div class="card hidden" id="dtAdmin">
       <div class="badge" style="margin-bottom:10px">Validação do administrador</div>
       <div class="field"><label class="lbl" for="vObs">Observação / motivo</label><textarea class="control" id="vObs" placeholder="Obrigatório para liberar revisão ou cancelar: diga o motivo"></textarea></div>
-      <button class="btn primary" id="btnValidar">✓ VALIDAR (SEM REVISÃO)</button>
-      <button class="btn danger" id="btnLiberarRev">↺ LIBERAR PARA REVISÃO</button>
-      <button class="btn ghost warn" id="btnCancelarRdc">✕ CANCELAR RDC</button>
+      <button class="btn primary" id="btnValidar">Validar sem revisão</button>
+      <button class="btn ghost warn" id="btnLiberarRev" data-ic="undo">Liberar para revisão</button>
+      <button class="btn ghost warn" id="btnCancelarRdc" data-ic="x">Cancelar RDC</button>
       <div class="badge" style="margin:18px 0 6px">Edição do administrador</div>
-      <button class="btn ghost" id="btnEditarDados">✎ EDITAR DADOS (contrato, data, OM, PTS…)</button>
-      <button class="btn ghost" id="btnEditarTudo">✎ EDITAR TUDO (atividades, fotos, impactos)</button>
+      <button class="btn ghost" id="btnEditarDados" data-ic="pencil">Editar dados (contrato, data, OM, PTS…)</button>
+      <button class="btn ghost" id="btnEditarTudo" data-ic="pencil">Editar tudo (atividades, fotos, impactos)</button>
       <p class="note">“Editar dados” altera este RDC no lugar. “Editar tudo” grava uma nova versão no lugar desta, mantendo a situação (validado continua validado).</p>
       <div style="border-top:1px solid #EAECF0;margin-top:16px;padding-top:12px;text-align:center">
-        <button class="link-danger" id="btnApagarRdc">🗑 Apagar definitivamente</button>
+        <button class="link-danger" id="btnApagarRdc"></button>
         <p class="note" id="apagarNota">Remove o RDC, as versões anteriores e as fotos. Não pode ser desfeito.</p>
       </div>
     </div>
@@ -476,10 +487,10 @@ input.control::-webkit-calendar-picker-indicator{margin-left:2px}
         <div class="field"><label class="lbl" for="eBloqHora">Horário do bloqueio</label><input class="control" type="time" id="eBloqHora"></div>
       </div>
       <div class="field"><label class="lbl" for="eMotivo">Motivo da edição <span class="opt-lbl">(opcional)</span></label><textarea class="control" id="eMotivo" placeholder="Ex.: contrato não informado no envio"></textarea></div>
-      <button class="btn primary" id="btnSalvarEdicao">SALVAR ALTERAÇÕES</button>
-      <button class="btn ghost" id="btnFecharEdicao">CANCELAR</button>
+      <button class="btn primary" id="btnSalvarEdicao">Salvar alterações</button>
+      <button class="btn ghost" id="btnFecharEdicao">Descartar edição</button>
     </div>
-    <button class="btn accent hidden" id="btnRevisarRdc">REVISAR ESTE RDC</button>
+    <button class="btn accent hidden" id="btnRevisarRdc">Revisar este RDC</button>
     <button class="btn ghost hidden" id="btnAdminEntrar">Entrar como administrador para validar</button>
     <p class="note" style="margin-top:12px">Consulta somente leitura. Um RDC emitido só pode ser corrigido quando o administrador libera a revisão.</p>
   </section>
@@ -492,7 +503,7 @@ input.control::-webkit-calendar-picker-indicator{margin-left:2px}
       <div class="field"><label class="lbl" for="aNome">Nome</label><input class="control" id="aNome" autocomplete="username"></div>
       <div class="field"><label class="lbl" for="aSenha">Senha</label><input class="control" id="aSenha" type="password" autocomplete="current-password"></div>
       <div class="errbox hidden" id="adminErr"></div>
-      <button class="btn primary" id="btnAdminLogin">ENTRAR</button>
+      <button class="btn primary" id="btnAdminLogin">Entrar como administrador</button>
     </div>
   </section>
 
@@ -829,6 +840,23 @@ const SCHEMA = () => ({
 
 /* ===================== UTILITÁRIOS ===================== */
 const $ = id => document.getElementById(id);
+// ícones de linha (Lucide, licença MIT), no lugar de emoji: aparecem iguais em todo celular
+const ICONES = {
+  settings: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>',
+  camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+  pencil: '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  undo: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>'
+};
+const ico = n => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONES[n]}</svg>`;
+
 const pad = (n, l = 2) => String(n).padStart(l, '0');
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -1082,7 +1110,7 @@ const sbHeaders = (extra = {}, cfg = CFG) => {
   return { apikey: k, ...(k.startsWith('eyJ') ? { Authorization: 'Bearer ' + k } : {}), ...extra };
 };
 async function sbFetch(path, opts, cfg = CFG) {
-  if (!cfg.supabaseUrl || !cfg.supabaseKey) throw new Error('Supabase não configurado (URL/chave) — veja ⚙');
+  if (!cfg.supabaseUrl || !cfg.supabaseKey) throw new Error('Supabase não configurado (URL/chave) — abra as Configurações.');
   const r = await fetch(sbBase(cfg) + path, opts);
   if (!r.ok) {
     const t = await r.text(); let m = t;
@@ -1114,7 +1142,7 @@ async function sendSupabase(rec, saveProgress) {
     fotos: rec.fotos.map(({ dataUrl, ...m }) => ({ ...m, Caminho: p.fot[m.Title] }))
   };
   if (rec.adminEdit) { // edição completa do administrador: a senha é conferida no banco (não fica guardada na fila)
-    if (!admin) throw new Error('Entre como administrador (⚙) para enviar a edição.');
+    if (!admin) throw new Error('Entre como administrador (Configurações) para enviar a edição.');
     const r = await sbRpc('rdc_admin_registrar', { p_nome: admin.nome, p_senha: admin.senha, payload });
     if (!r || !r.ok) { const m = (r && r.erro) || 'Falha ao gravar a edição.'; if (/Sessão/.test(m)) setAdmin(null); throw new Error(m); }
     return;
@@ -1220,7 +1248,7 @@ async function adminLogin() {
 async function renderHome() {
   const hasDraft = !!(await Store.get('draft'));
   $('btnContinuar').classList.toggle('hidden', !hasDraft);
-  $('btnNovo').textContent = hasDraft ? '+ NOVO RDC (descartar rascunho)' : '+ NOVO RDC';
+  $('btnNovo').textContent = hasDraft ? '+ Novo RDC (descartar rascunho)' : '+ Novo RDC';
 
   const queue = await Store.get('queue') || [];
   $('pendingCard').classList.toggle('hidden', !queue.length);
@@ -1235,15 +1263,15 @@ async function renderHome() {
   const hist = await Store.get('history') || [];
   const rows = [...queue.map(q => ({ code: q.code, data: q.header.DataRDC.slice(0, 10), ativo: q.header.Ativo, om: q.header.OM, status: 'Pendente' })), ...hist];
   const podeAbrir = h => h.status === 'Enviado' && CFG.mode === 'supabase';
-  $('histList').innerHTML = rows.length ? rows.map(h => `<div class="hist-item${podeAbrir(h) ? ' click' : ''}"${podeAbrir(h) ? ` data-code="${esc(h.code)}"` : ''}><div><b>${esc(h.ativo)} · OM ${esc(h.om)}</b>${fmtDate(h.data)} · <span style="color:var(--muted)">${esc(h.code)}</span></div><div><span class="pill ${h.status === 'Enviado' ? 'ok' : 'wait'}">${h.status}</span></div></div>`).join('')
+  $('histList').innerHTML = rows.length ? rows.map(h => `<div class="hist-item${podeAbrir(h) ? ' click' : ''}"${podeAbrir(h) ? ` data-code="${esc(h.code)}" role="button" tabindex="0"` : ''}><div><b>${esc(h.ativo)} · OM ${esc(h.om)}</b>${fmtDate(h.data)} · <span style="color:var(--muted)">${esc(h.code)}</span></div><div><span class="pill ${h.status === 'Enviado' ? 'ok' : 'wait'}">${h.status}</span></div></div>`).join('')
     : '<div class="note">Nenhum RDC enviado ainda.</div>';
 
   const st = $('connStatus'); let dot = 'dot', msg;
   if (CFG.mode === 'demo') { dot += ' wait'; msg = 'Modo demonstração — nada é enviado ao servidor.'; }
-  else if (CFG.mode === 'supabase' && (!CFG.supabaseUrl || !CFG.supabaseKey)) { dot += ' off'; msg = 'Supabase não configurado (veja ⚙).'; }
+  else if (CFG.mode === 'supabase' && (!CFG.supabaseUrl || !CFG.supabaseKey)) { dot += ' off'; msg = 'Supabase não configurado (abra as Configurações).'; }
   else if (CFG.mode === 'supabase') { dot += navigator.onLine ? ' on' : ' off'; msg = navigator.onLine ? 'Conectado · dados enviados ao banco RDC' : 'Sem conexão — os RDC ficam salvos no aparelho.'; }
   else if (CFG.mode === 'flow') { dot += navigator.onLine ? ' on' : ' off'; msg = navigator.onLine ? 'Conectado · envio via Power Automate' : 'Sem conexão — os RDC ficam salvos no aparelho.'; }
-  else if (!msal) { dot += ' off'; msg = 'SharePoint não configurado (veja ⚙).'; }
+  else if (!msal) { dot += ' off'; msg = 'SharePoint não configurado (abra as Configurações).'; }
   else if (!account) { dot += ' off'; msg = 'Entre com sua conta para enviar ao SharePoint.'; }
   else { dot += navigator.onLine ? ' on' : ' off'; msg = (navigator.onLine ? 'Conectado como ' : 'Sem conexão · ') + (account.name || account.username); }
   st.innerHTML = `<span class="${dot}"></span><span>${esc(msg)}</span>`;
@@ -1311,7 +1339,7 @@ function activityHTML(a, i) {
   const needsTipo = a.disciplina === 'ANDAIME' && SERVICOS_COM_TIPO.includes(a.servico);
   const dur = duration(a.horaInicio, a.horaFim);
   return `<div class="card" data-atv="${a.id}">
-    <div class="card-head"><span class="badge">ATIVIDADE ${pad(i + 1)}</span><button class="link-danger" data-act="del-atv">Excluir</button></div>
+    <div class="card-head"><span class="badge">Atividade ${pad(i + 1)}</span><button class="link-danger" data-act="del-atv">Excluir</button></div>
     <div class="field"><label class="lbl">Disciplina *</label>
       <div class="chips">${Object.entries(DISCIPLINAS).map(([k, v]) => `<button type="button" class="chip ${a.disciplina === k ? 'sel' : ''}" data-act="disc" data-val="${esc(k)}">${esc(k)}<small>${esc(v.sub)}</small></button>`).join('')}</div>
     </div>
@@ -1337,8 +1365,8 @@ function activityHTML(a, i) {
     <div class="field"><label class="lbl">Observações <span class="opt-lbl">(opcional — somente informações complementares)</span></label><textarea class="control" data-f="observacao" placeholder="Informações complementares, se houver">${esc(a.observacao)}</textarea></div>
     <div class="field"><label class="lbl">Evidências (fotos) *</label>
       <div class="photos">
-        ${a.fotos.map((f, j) => `<div class="thumb"><img src="${f.dataUrl}" alt="Foto ${j + 1}" data-ver="${j}"><button type="button" data-act="del-foto" data-val="${f.id}" aria-label="Remover foto">×</button></div>`).join('')}
-        <label class="add-photo"><span>📷</span>Adicionar<input type="file" accept="image/*" multiple data-act="foto"></label>
+        ${a.fotos.map((f, j) => `<div class="thumb"><img src="${f.dataUrl}" alt="Foto ${j + 1}" data-ver="${j}"><button type="button" data-act="del-foto" data-val="${f.id}" aria-label="Remover foto ${j + 1}">${ico('x')}</button></div>`).join('')}
+        <label class="add-photo">${ico('camera')}Adicionar<input type="file" accept="image/*" multiple data-act="foto"></label>
       </div>
     </div>
     <div class="field"><label class="lbl">Localização (GPS) <span class="opt-lbl">(preenchida ao tirar a foto)</span></label>${gpsHTML(gpsAtividade(a), a.fotos.length)}</div>
@@ -1349,13 +1377,13 @@ const gpsAtividade = a => [...a.fotos].reverse().map(f => f.gps).find(Boolean) |
 const fmtGps = g => `${g.lat.toFixed(6)}, ${g.lng.toFixed(6)}${g.acc ? ` (±${g.acc} m)` : ''}`;
 const mapaUrl = g => `https://www.google.com/maps?q=${g.lat},${g.lng}`;
 function gpsHTML(g, nFotos) {
-  if (g) return `<div class="gps ok">📍 <span style="flex:1">${fmtGps(g)}${g.fonte === 'foto' ? ' · da foto' : ''}</span><a href="${mapaUrl(g)}" target="_blank" rel="noopener">Mapa</a></div>`;
-  return `<div class="gps">📍 ${nFotos ? 'Fotos sem localização. Ligue o GPS e permita a localização para o app.' : 'Será preenchida ao tirar a primeira foto.'}</div>`;
+  if (g) return `<div class="gps ok">${ico('pin')}<span style="flex:1">${fmtGps(g)}${g.fonte === 'foto' ? ' · da foto' : ''}</span><a href="${mapaUrl(g)}" target="_blank" rel="noopener">Mapa</a></div>`;
+  return `<div class="gps">${ico('pin')}<span>${nFotos ? 'Fotos sem localização. Ligue o GPS e permita a localização para o app.' : 'Será preenchida ao tirar a primeira foto.'}</span></div>`;
 }
 function impactHTML(x, i) {
   const dur = duration(x.horaInicio, x.horaFim);
   return `<div class="card impact" data-imp="${x.id}">
-    <div class="card-head"><span class="badge">IMPACTO ${pad(i + 1)}</span><button class="link-danger" data-act="del-imp">Excluir</button></div>
+    <div class="card-head"><span class="badge">Impacto ${pad(i + 1)}</span><button class="link-danger" data-act="del-imp">Excluir</button></div>
     <div class="field"><label class="lbl">Tipo / descrição do impacto *</label><textarea class="control" data-f="descricao" placeholder="Ex.: Aguardando liberação operacional">${esc(x.descricao)}</textarea></div>
     <div class="row">
       <div class="field"><label class="lbl">Início *</label><input type="time" class="control" data-f="horaInicio" value="${esc(x.horaInicio)}"></div>
@@ -1693,7 +1721,7 @@ function review() {
       <p>${esc(a.horaInicio)} → ${esc(a.horaFim)} · <b>${fmtDur(duration(a.horaInicio, a.horaFim))}</b></p>
       <p><b>Efetivo: ${efetivoTotal(a)}</b> — ${FUNCOES.filter(([k]) => Number((a.efetivo || {})[k]) > 0).map(([k, rot]) => `${rot} ${a.efetivo[k]}`).join(' · ')}</p>
       ${a.observacao ? `<p style="color:var(--muted)">${esc(a.observacao)}</p>` : ''}
-      ${gpsAtividade(a) ? `<p>📍 ${fmtGps(gpsAtividade(a))}</p>` : ''}
+      ${gpsAtividade(a) ? `<p>${ico('pin')} ${fmtGps(gpsAtividade(a))}</p>` : ''}
       <div class="rv-thumbs">${a.fotos.map(f => `<img src="${f.dataUrl}" alt="" data-g="${galRev.findIndex(x => x.src === f.dataUrl)}">`).join('')}</div>
     </div>`).join('');
   $('rvImpacts').innerHTML = d.impactos.length ? d.impactos.map((x, i) => `<div class="rv-block">
@@ -1712,7 +1740,7 @@ async function submit() {
   draft = null; await Store.set('draft', null);
   const res = await processQueue(true);
   const ok = !(await Store.get('queue') || []).some(q => q.code === rec.code);
-  $('sucIcon').textContent = ok ? '✓' : '⏳'; $('sucIcon').className = 'big' + (ok ? '' : ' wait');
+  $('sucIcon').innerHTML = ico(ok ? 'check' : 'clock'); $('sucIcon').className = 'big' + (ok ? '' : ' wait');
   $('sucTitle').textContent = ok ? 'RDC enviado' : 'RDC salvo no aparelho';
   $('sucMsg').textContent = ok
     ? (CFG.mode === 'demo' ? 'Modo demonstração: registro guardado apenas neste aparelho.'
@@ -1751,7 +1779,7 @@ const AGRUPAR = {
   status: r => [r.status, (STATUS_INFO[r.status] || [r.status])[0]]
 };
 // semFoto: dentro do grupo do responsável (foto e nome já estão no título do grupo), a data vem primeiro
-const itemRdc = (r, semFoto) => `<div class="hist-item click${semFoto ? ' sem-foto' : ''}" data-code="${esc(r.codigo)}"><div class="who">${semFoto ? '' : avatarLider(r.responsavel)}<div>${semFoto
+const itemRdc = (r, semFoto) => `<div class="hist-item click${semFoto ? ' sem-foto' : ''}" data-code="${esc(r.codigo)}" role="button" tabindex="0"><div class="who">${semFoto ? '' : avatarLider(r.responsavel)}<div>${semFoto
   ? `<b>${fmtDate(r.data_rdc)} · ${esc(r.ativo)}</b>OM ${esc(r.om)}`
   : `<b>${esc(r.ativo)} · OM ${esc(r.om)}</b>${fmtDate(r.data_rdc)} · ${esc(r.responsavel)}`}<br><span class="meta">${r.contrato ? esc(r.contrato_nome || nomeContrato(r.contrato) || r.contrato) + ' · ' : ''}${esc(r.codigo)}${r.revisao ? ` · rev. ${r.revisao}` : ''}${r.hh != null ? ` · ${fmtH(r.hh)} HH` : ''}${Number(r.horas_impacto) > 0 ? ` · impacto ${fmtH(r.horas_impacto)}` : ''}</span></div></div><div>${statusPill(r.status)}</div></div>`;
 // faróis do grupo: total de RDC por situação (verde validado, amarelo aguardando, vermelho revisão, cinza cancelado/substituído)
@@ -1836,7 +1864,7 @@ async function mostrarFoto() {
   $('lbPrev').disabled = galIdx === 0; $('lbNext').disabled = galIdx === gal.length - 1;
   const quando = it.data ? fmtDataHora(typeof it.data === 'number' ? new Date(it.data).toISOString() : it.data) : '';
   $('lbCap').innerHTML = [`<b>${esc(it.titulo || '')}</b>${quando ? ' · ' + quando : ''}`,
-    it.gps ? `📍 ${fmtGps(it.gps)}${it.gps.fonte === 'foto' ? ' (da foto)' : ''} · <a href="${mapaUrl(it.gps)}" target="_blank" rel="noopener">Abrir no mapa</a>` : '📍 Sem localização'].join('<br>');
+    it.gps ? `${ico('pin')} ${fmtGps(it.gps)}${it.gps.fonte === 'foto' ? ' (da foto)' : ''} · <a href="${mapaUrl(it.gps)}" target="_blank" rel="noopener">Abrir no mapa</a>` : `${ico('pin')} Sem localização`].join('<br>');
   $('lbStrip').querySelectorAll('img').forEach((im, k) => im.classList.toggle('sel', k === i));
   const sel = $('lbStrip').children[i]; if (sel) sel.scrollIntoView({ block: 'nearest', inline: 'center' });
   $('lbImg').removeAttribute('src');
@@ -1886,7 +1914,7 @@ function renderDetalhe() {
     `<span><b>${esc(d.Title)}</b>${d.Revisao ? ` · revisão ${d.Revisao}` : ''}</span>`,
     `<span class="note" style="margin:0">Recebido em ${fmtDataHora(d.RecebidoEm)}</span>`,
     d.ValidadoPor ? `<span>${decisao} por <b>${esc(d.ValidadoPor)}</b> em ${fmtDataHora(d.ValidadoEm)}</span>` : '',
-    d.EditadoPor ? `<span>✎ Editado por <b>${esc(d.EditadoPor)}</b> em ${fmtDataHora(d.EditadoEm)}</span>` : '',
+    d.EditadoPor ? `<span>${ico('pencil')} Editado por <b>${esc(d.EditadoPor)}</b> em ${fmtDataHora(d.EditadoEm)}</span>` : '',
     d.ObsValidacao ? `<span>${liberouRev || d.Status === 'Cancelado' ? 'Motivo' : 'Obs.'}: ${esc(d.ObsValidacao)}</span>` : '',
     d.RevisaoDe ? `<span>Substitui o <a href="#" data-code="${esc(d.RevisaoDe)}">${esc(d.RevisaoDe)}</a></span>` : '',
     d.SubstituidoPor ? `<span>Substituído pelo <a href="#" data-code="${esc(d.SubstituidoPor)}">${esc(d.SubstituidoPor)}</a></span>` : ''
@@ -1912,7 +1940,7 @@ function renderDetalhe() {
       <p>${fmtHora(a.InicioAtividade)} → ${fmtHora(a.FimAtividade)} · <b>${fmtDur(a.DuracaoMin)}</b></p>
       <p><b>Efetivo: ${a.EfetivoTotal}</b> — ${FUNCOES.filter(([, , c]) => a[c] > 0).map(([, rot, c]) => `${rot} ${a[c]}`).join(' · ')}</p>
       ${a.Observacao ? `<p style="color:var(--muted)">${esc(a.Observacao)}</p>` : ''}
-      ${gpsDet(a) ? `<p>📍 ${fmtGps(gpsDet(a))} · <a href="${mapaUrl(gpsDet(a))}" target="_blank" rel="noopener">Mapa</a></p>` : ''}
+      ${gpsDet(a) ? `<p>${ico('pin')} ${fmtGps(gpsDet(a))} · <a href="${mapaUrl(gpsDet(a))}" target="_blank" rel="noopener">Mapa</a></p>` : ''}
       <div class="rv-thumbs">${a.fotos.map(f => `<img data-foto="${esc(f.Caminho)}" data-g="${galDet.findIndex(x => x.caminho === f.Caminho)}" alt="">`).join('')}</div>
     </div>`).join('') || '<div class="note">Sem atividades.</div>';
   $('dtImpacts').innerHTML = d.impactos.length ? d.impactos.map(x => `<div class="rv-block">
@@ -1928,7 +1956,7 @@ function renderDetalhe() {
   $('btnValidar').disabled = d.Status === 'Validado';
   $('btnLiberarRev').disabled = d.Status === 'Em revisão';
   $('btnCancelarRdc').disabled = d.Status === 'Cancelado';
-  $('btnValidar').textContent = d.Status === 'Cancelado' ? '✓ REATIVAR E VALIDAR' : '✓ VALIDAR (SEM REVISÃO)';
+  $('btnValidar').textContent = d.Status === 'Cancelado' ? 'Reativar e validar' : 'Validar sem revisão';
   $('apagarNota').textContent = d.RevisaoDe ? 'Remove o RDC, as versões anteriores dele e as fotos. Não pode ser desfeito.' : 'Remove o RDC e as fotos. Não pode ser desfeito.';
   desarmar($('btnApagarRdc'));
   $('btnRevisarRdc').classList.toggle('hidden', d.Status !== 'Em revisão');
@@ -1954,12 +1982,12 @@ async function validar(decisao) {
   finally { busy(null); }
 }
 
-const ROTULO_APAGAR = '🗑 Apagar definitivamente';
-function desarmar(btn) { clearTimeout(btn._t); btn.classList.remove('armed'); btn.textContent = ROTULO_APAGAR; }
+const ROTULO_APAGAR = ico('trash') + 'Apagar definitivamente';
+function desarmar(btn) { clearTimeout(btn._t); btn.classList.remove('armed'); btn.innerHTML = ROTULO_APAGAR; }
 // Exclusão definitiva: o banco apaga o RDC (e versões anteriores) e libera as fotos; o app apaga as fotos do Storage
 async function apagarRdc(btn) {
   if (!btn.classList.contains('armed')) {
-    btn.classList.add('armed'); btn.textContent = 'Toque de novo para APAGAR';
+    btn.classList.add('armed'); btn.textContent = 'Toque de novo para apagar de vez';
     btn._t = setTimeout(() => desarmar(btn), 4000); return;
   }
   desarmar(btn);
@@ -2018,7 +2046,7 @@ function abrirEdicaoDados() {
   $('eBloq').value = sn(d.Bloqueio); $('eBloqAtivo').value = d.BloqueioAtivo || ''; $('eBloqHora').value = fmtHora(d.BloqueioHora);
   $('eMotivo').value = '';
   eVisibilidade();
-  $('dtEditar').classList.remove('hidden');
+  $('dtEditar').classList.remove('hidden'); $('dtAdmin').classList.add('hidden');
   $('dtEditar').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 // Só os campos que mudaram vão para o banco
@@ -2077,7 +2105,7 @@ async function salvarEdicaoDados() {
 async function iniciarRevisao(btn, adminEdit) {
   const rotulo = btn.dataset.rotulo || (btn.dataset.rotulo = btn.textContent);
   if (await Store.get('draft') && !btn.classList.contains('armed')) {
-    btn.classList.add('armed'); btn.textContent = 'DESCARTAR RASCUNHO ATUAL E CONTINUAR';
+    btn.classList.add('armed'); btn.textContent = 'Descartar rascunho atual e continuar';
     setTimeout(() => { btn.classList.remove('armed'); btn.textContent = rotulo; }, 3000); return;
   }
   btn.classList.remove('armed'); btn.textContent = rotulo;
@@ -2181,7 +2209,7 @@ async function syncAdmin(acao) {
       info.textContent = msg; return;
     }
     info.innerHTML = [
-      r.configurado ? '' : '<b style="color:var(--danger)">⚠ Chamada da função não configurada no Vault (rdc_sync_url / rdc_sync_segredo).</b>',
+      r.configurado ? '' : '<b style="color:var(--danger)">' + ico('alert') + ' Chamada da função não configurada no Vault (rdc_sync_url / rdc_sync_segredo).</b>',
       `No SharePoint: <b>${r.no_sharepoint}</b> RDC · Na fila: <b>${r.pendentes}</b> · Com erro: <b>${r.com_erro}</b>${r.desistidos ? ` (${r.desistidos} parados após 10 tentativas)` : ''}`,
       `Última cópia: ${r.ultima_sync ? fmtDataHora(r.ultima_sync) : '—'}`,
       r.ultimo_erro ? `Último erro: ${esc(r.ultimo_erro)}` : ''
@@ -2200,7 +2228,7 @@ function cfgLog(line, reset) {
 function openConfig() {
   $('cMode').value = CFG.mode; $('cSbUrl').value = CFG.supabaseUrl; $('cSbKey').value = CFG.supabaseKey; $('cSite').value = CFG.siteUrl; $('cClient').value = CFG.clientId; $('cTenant').value = CFG.tenantId; $('cFlow').value = CFG.flowUrl;
   $('cfgAdmin').classList.toggle('hidden', !admin);
-  $('cfgOrigem').textContent = cfgDevice ? '⚠ Este aparelho usa uma configuração própria (só dele).'
+  $('cfgOrigem').textContent = cfgDevice ? 'Atenção: este aparelho usa uma configuração própria (só dele).'
     : cfgGlobal.mode ? `Em uso: definida pelo administrador para todos${cfgGlobal.alteradoPor ? ` (${cfgGlobal.alteradoPor}, ${fmtDataHora(cfgGlobal.alteradoEm)})` : ''}.`
     : 'Em uso: padrão do arquivo index.html.';
   const podeGlobal = !!admin && adminDisponivel();
@@ -2294,6 +2322,7 @@ async function boot() {
   try { await initAuth(); } catch (e) { console.warn(e); toast(e.message, true); }
   bindForm();
 
+  document.querySelectorAll('[data-ic]').forEach(el => el.insertAdjacentHTML('afterbegin', ico(el.dataset.ic)));
   $('btnBack').onclick = () => {
     if (current === 'scrRDC' && (draft.passo || 1) > 1) return irPasso(draft.passo - 1); // no formulário, volta uma etapa
     const de = current, to = BACK[current]; go(to);
@@ -2327,6 +2356,8 @@ async function boot() {
   const abrirRdc = e => { const it = e.target.closest('[data-code]'); if (it) { e.preventDefault(); openDetalhe(it.dataset.code); } };
   $('qList').addEventListener('click', abrirRdc);
   $('histList').addEventListener('click', abrirRdc);
+  const abrirTecla = e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-code][role=button]')) abrirRdc(e); };
+  $('qList').addEventListener('keydown', abrirTecla); $('histList').addEventListener('keydown', abrirTecla);
   $('dtStatus').addEventListener('click', abrirRdc);
   $('dtActivities').addEventListener('click', e => { const im = e.target.closest('img[data-g]'); if (im) abrirGaleria(galDet, Number(im.dataset.g)); });
   $('rvActivities').addEventListener('click', e => { const im = e.target.closest('img[data-g]'); if (im) abrirGaleria(galRev, Number(im.dataset.g)); });
@@ -2338,7 +2369,7 @@ async function boot() {
   $('btnRevisarRdc').onclick = e => iniciarRevisao(e.currentTarget);
   $('btnEditarTudo').onclick = e => iniciarRevisao(e.currentTarget, true);
   $('btnEditarDados').onclick = abrirEdicaoDados;
-  $('btnFecharEdicao').onclick = () => $('dtEditar').classList.add('hidden');
+  $('btnFecharEdicao').onclick = () => { $('dtEditar').classList.add('hidden'); $('dtAdmin').classList.remove('hidden'); };
   $('btnSalvarEdicao').onclick = salvarEdicaoDados;
   $('ePts').onchange = $('eBloq').onchange = eVisibilidade;
   $('eArea').onchange = () => eAtivos($('eArea').value, '');
