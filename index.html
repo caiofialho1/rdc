@@ -136,12 +136,12 @@ select.control{appearance:none;background-image:linear-gradient(45deg,transparen
 .status-card{display:flex;flex-direction:column;gap:6px;font-size:14px}
 .status-card .pill{align-self:flex-start;font-size:13px}
 .btn.danger{background:var(--danger);color:#fff}
-.avatar{width:52px;height:52px;border-radius:50%;object-fit:cover;flex:none;background:#EAECF0;color:var(--navy);display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
-.avatar.lg{width:76px;height:76px;font-size:22px}
+.avatar{width:60px;height:60px;border-radius:50%;object-fit:cover;flex:none;background:#EAECF0;color:var(--navy);display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+.avatar.lg{width:88px;height:88px;font-size:24px}
 .hist-item .who{display:flex;gap:12px;align-items:center;min-width:0}
-.lider-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
+.lider-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
 .lider-opt{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px;border:1.5px solid var(--line);border-radius:12px;background:#fff;cursor:pointer;text-align:center;font:inherit;color:inherit}
-.lider-opt .avatar{width:68px;height:68px}
+.lider-opt .avatar{width:80px;height:80px}
 .lider-opt b{font-size:13px;color:var(--navy);line-height:1.2}
 .lider-opt small{font-size:11px;color:var(--muted);line-height:1.2}
 .lider-opt.sel{border-color:var(--navy);background:#EEF4FF;box-shadow:0 0 0 2px var(--navy) inset}
@@ -174,7 +174,7 @@ input.control::-webkit-calendar-picker-indicator{margin-left:2px}
 .grp>summary small{font-weight:600;color:rgba(255,255,255,.85);white-space:nowrap}
 .grp[open]>summary{margin-bottom:4px}
 .grp>summary .who{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
-.grp>summary .who .avatar{width:48px;height:48px;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
+.grp>summary .who .avatar{width:56px;height:56px;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
 .grp>summary .who span{display:block;font-weight:500;font-size:12px;color:rgba(255,255,255,.75)}
 .grp>summary .who b{color:#fff}
 .farois{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px;padding-left:18px}
@@ -246,6 +246,16 @@ button:focus-visible,summary:focus-visible,a:focus-visible,[role=button]:focus-v
 .btn .ic,.dashed .ic{margin-right:6px}
 .add-photo .ic{width:26px;height:26px;margin-bottom:2px}
 .success .big .ic{width:44px;height:44px}
+/* textos corridos justificados */
+.note,.hero p,.success .note,.rv-block p,.lb-cap{text-align:justify;hyphens:auto;-webkit-hyphens:auto}
+.success .note{text-align:center}
+/* botões em par lado a lado: economiza altura de tela */
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.btn-row:first-child{margin-top:0}
+.btn-row .btn{margin-top:0;min-width:0;padding:8px 10px;line-height:1.2}
+.btn-row .btn + .btn{margin-top:0}
+.btn-row.wide{grid-template-columns:1fr 2fr}
+.btn-row>.hidden+.btn,.btn-row>.btn:only-child,.btn-row>.btn:has(+ .btn.hidden){grid-column:1/-1}
 </style>
 </head>
 <body>
@@ -403,8 +413,10 @@ button:focus-visible,summary:focus-visible,a:focus-visible,[role=button]:focus-v
     <div class="card">
       <label class="check"><input type="checkbox" id="chkConfirm"> Confirmo que as informações estão corretas.</label>
     </div>
-    <button class="btn primary" id="btnEnviar" disabled>Confirmar e enviar</button>
-    <button class="btn ghost" id="btnVoltarEditar">Voltar e editar</button>
+    <div class="btn-row wide">
+      <button class="btn ghost" id="btnVoltarEditar">← Editar</button>
+      <button class="btn primary" id="btnEnviar" disabled>Confirmar e enviar</button>
+    </div>
   </section>
 
   <!-- ===================== SUCESSO ===================== -->
@@ -415,8 +427,10 @@ button:focus-visible,summary:focus-visible,a:focus-visible,[role=button]:focus-v
       <p class="note" id="sucMsg"></p>
       <p><code id="sucCode"></code></p>
       <div class="pills" id="sucPills"></div>
-      <button class="btn primary" id="btnNovo2">+ Novo RDC</button>
-      <button class="btn ghost" id="btnHome">Voltar ao início</button>
+      <div class="btn-row">
+        <button class="btn ghost" id="btnHome">Voltar ao início</button>
+        <button class="btn primary" id="btnNovo2">+ Novo RDC</button>
+      </div>
     </div>
   </section>
 
@@ -453,12 +467,16 @@ button:focus-visible,summary:focus-visible,a:focus-visible,[role=button]:focus-v
       <div class="badge" style="margin-bottom:10px">Validação do administrador</div>
       <div class="field"><label class="lbl" for="vObs">Observação / motivo</label><textarea class="control" id="vObs" placeholder="Obrigatório para liberar revisão ou cancelar: diga o motivo"></textarea></div>
       <button class="btn primary" id="btnValidar">Validar sem revisão</button>
-      <button class="btn ghost warn" id="btnLiberarRev" data-ic="undo">Liberar para revisão</button>
-      <button class="btn ghost warn" id="btnCancelarRdc" data-ic="x">Cancelar RDC</button>
+      <div class="btn-row">
+        <button class="btn ghost warn" id="btnLiberarRev" data-ic="undo">Liberar revisão</button>
+        <button class="btn ghost warn" id="btnCancelarRdc" data-ic="x">Cancelar RDC</button>
+      </div>
       <div class="badge" style="margin:18px 0 6px">Edição do administrador</div>
-      <button class="btn ghost" id="btnEditarDados" data-ic="pencil">Editar dados (contrato, data, OM, PTS…)</button>
-      <button class="btn ghost" id="btnEditarTudo" data-ic="pencil">Editar tudo (atividades, fotos, impactos)</button>
-      <p class="note">“Editar dados” altera este RDC no lugar. “Editar tudo” grava uma nova versão no lugar desta, mantendo a situação (validado continua validado).</p>
+      <div class="btn-row">
+        <button class="btn ghost" id="btnEditarDados" data-ic="pencil">Editar dados</button>
+        <button class="btn ghost" id="btnEditarTudo" data-ic="pencil">Editar tudo</button>
+      </div>
+      <p class="note">“Editar dados” (contrato, data, OM, PTS, bloqueio) altera este RDC no lugar. “Editar tudo” (atividades, fotos, impactos) grava uma nova versão no lugar desta, mantendo a situação (validado continua validado).</p>
       <div style="border-top:1px solid #EAECF0;margin-top:16px;padding-top:12px;text-align:center">
         <button class="link-danger" id="btnApagarRdc"></button>
         <p class="note" id="apagarNota">Remove o RDC, as versões anteriores e as fotos. Não pode ser desfeito.</p>
@@ -487,8 +505,10 @@ button:focus-visible,summary:focus-visible,a:focus-visible,[role=button]:focus-v
         <div class="field"><label class="lbl" for="eBloqHora">Horário do bloqueio</label><input class="control" type="time" id="eBloqHora"></div>
       </div>
       <div class="field"><label class="lbl" for="eMotivo">Motivo da edição <span class="opt-lbl">(opcional)</span></label><textarea class="control" id="eMotivo" placeholder="Ex.: contrato não informado no envio"></textarea></div>
-      <button class="btn primary" id="btnSalvarEdicao">Salvar alterações</button>
-      <button class="btn ghost" id="btnFecharEdicao">Descartar edição</button>
+      <div class="btn-row wide">
+        <button class="btn ghost" id="btnFecharEdicao">Descartar</button>
+        <button class="btn primary" id="btnSalvarEdicao">Salvar alterações</button>
+      </div>
     </div>
     <button class="btn accent hidden" id="btnRevisarRdc">Revisar este RDC</button>
     <button class="btn ghost hidden" id="btnAdminEntrar">Entrar como administrador para validar</button>
@@ -537,8 +557,10 @@ button:focus-visible,summary:focus-visible,a:focus-visible,[role=button]:focus-v
       </div>
       <div id="cfgFlow" class="field"><label class="lbl" for="cFlow">URL do gatilho HTTP (Power Automate)</label><textarea class="control" id="cFlow" rows="3"></textarea></div>
       <button class="btn primary" id="btnSaveGlobal">Salvar para todos os aparelhos</button>
-      <button class="btn ghost" id="btnSaveCfg">Salvar só neste aparelho (teste)</button>
-      <button class="btn ghost" id="btnResetCfg">Tirar a configuração própria deste aparelho</button>
+      <div class="btn-row">
+        <button class="btn ghost" id="btnSaveCfg">Salvar só neste aparelho</button>
+        <button class="btn ghost" id="btnResetCfg">Tirar config. deste aparelho</button>
+      </div>
       <div style="text-align:center;margin-top:8px"><button class="link-danger" id="btnResetGlobal">Remover configuração de todos (voltar ao arquivo)</button></div>
     </div>
     <div class="card" id="cfgTools">
@@ -554,8 +576,10 @@ button:focus-visible,summary:focus-visible,a:focus-visible,[role=button]:focus-v
       <div class="badge" style="margin-bottom:10px">Sincronização SharePoint</div>
       <p class="note" style="margin:0 0 12px">Os RDC ficam no Supabase e são copiados automaticamente para as listas e a biblioteca do SharePoint (validação, revisão, cancelamento e exclusão também).</p>
       <div class="note" id="syncInfo" style="margin:0 0 12px"></div>
-      <button class="btn ghost" id="btnSyncAtualizar">Atualizar situação</button>
-      <button class="btn ghost" id="btnSyncReprocessar">Tentar de novo os pendentes</button>
+      <div class="btn-row">
+        <button class="btn ghost" id="btnSyncAtualizar">Atualizar situação</button>
+        <button class="btn ghost" id="btnSyncReprocessar">Reenviar pendentes</button>
+      </div>
       <button class="btn ghost" id="btnSyncTodos">Copiar todos os RDC (carga inicial)</button>
     </div>
   </section>
