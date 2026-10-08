@@ -106,6 +106,33 @@ Alternativas: GitHub Pages e Cloudflare Pages, ambos gratuitos.
 
 ---
 
+## Atualização v8: PTS, bloqueio, GPS e painel de controle
+
+1. Rode `supabase/migracao_v8_pts_gps_painel.sql` no SQL Editor **antes** de publicar o `index.html` novo.
+2. Se a cópia para o SharePoint estiver ligada, publique de novo a Edge Function `sync-sharepoint` (conteúdo atualizado). Ela cria sozinha as colunas novas (`Contrato`, `ContratoNome`, `Pts`, `PtsSolicitacao`, `PtsAbertura`, `Bloqueio`, `BloqueioAtivo`, `BloqueioHora`, `Latitude`, `Longitude`, `PrecisaoM`, `GpsFonte`). Se a permissão do aplicativo não deixar criar colunas, a cópia continua sem esses campos.
+3. Se usar o Power BI com `powerbi_leitura`: `grant select on public.vw_rdc_fotos, public.vw_rdc_metricas to powerbi_leitura;`
+
+O que muda no app:
+- **Contrato** obrigatório na Identificação: TELHADO (5900111362), ROTINA (5900108690) ou GALPÃO (5900111078). O aparelho lembra o último usado. A lista pode ser agrupada por contrato e o painel filtra por ele. Para mudar os contratos, edite `CONTRATOS` no `index.html` e no `painel.html`. RDC antigos ficam "sem contrato".
+- A tela inicial mostra os **RDC emitidos** (busca, situação e **agrupar por** data, responsável, área, ativo, OM ou situação).
+- O preenchimento é feito em **4 etapas** (Identificação → PTS e bloqueio → Atividades → Impactos). Cada etapa é conferida antes de avançar.
+- **PTS** (sim/não, horário de solicitação e de abertura, com a espera calculada) e **bloqueio** (sim/não, ativo e horário) são obrigatórios.
+- Cada foto grava a **localização GPS**: a do próprio arquivo (EXIF) ou a do aparelho, só quando a foto acabou de ser tirada. As coordenadas também são carimbadas na foto. O app pede a permissão de localização ao abrir o formulário.
+- As fotos abrem num **carrossel** (setas, deslizar o dedo, miniaturas e link para o mapa).
+- A tela **Responsáveis · HH e impacto** mostra quem emitiu ou não RDC no período, o HH trabalhado e o HH de impacto.
+
+**HH de impacto** = duração do impacto × maior efetivo entre as atividades do RDC (a equipe que ficou parada).
+
+## Painel de controle (administradores)
+
+`painel.html`, publicado junto com o app (ex.: `https://<seu-site>/painel.html`). Use o mesmo nome e senha de administrador do app; sem eles, nenhum dado é carregado. O painel tem:
+- filtros de período, área, responsável, disciplina, situação e busca;
+- indicadores (HH trabalhado, RDC, HH e horas de impacto, espera média da PTS, bloqueios);
+- gráficos: HH por dia ou mês, por disciplina e impacto por responsável;
+- emissão por responsável × dia, resumo por responsável e lista de impactos;
+- tabela de RDC com detalhe, fotos, localização e validação (validar, liberar revisão, cancelar);
+- **Exportar Excel** com 4 abas (RDC, Atividades, Impactos, Fotos com link do mapa). Se a biblioteca do Excel não carregar, baixa CSV.
+
 ## Consultar os dados
 
 - **Painel do Supabase:**

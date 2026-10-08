@@ -146,6 +146,87 @@ select.control{appearance:none;background-image:linear-gradient(45deg,transparen
 .resp-head b{display:block;color:var(--navy);font-size:16px}
 .resp-head span{color:var(--muted);font-size:14px}
 .btn.ghost.warn{color:var(--danger);border-color:#FDA29B}
+/* data e hora: os campos nativos têm largura mínima própria e invadiam a coluna vizinha */
+.row>*,.periodo>*,.toolbar>*{min-width:0}
+input.control[type=date],input.control[type=time]{-webkit-appearance:none;appearance:none;min-width:0;width:100%;max-width:100%;display:block;line-height:26px;padding-left:10px;padding-right:8px}
+input.control::-webkit-date-and-time-value{text-align:left;margin:0}
+input.control::-webkit-calendar-picker-indicator{margin-left:2px}
+@media (max-width:360px){.row,.periodo,.toolbar{grid-template-columns:1fr;gap:0}}
+/* PTS e bloqueio */
+.chips.yn{grid-template-columns:repeat(2,1fr)}
+.sub-block{border-top:1px dashed var(--line);margin-top:4px;padding-top:12px}
+/* GPS */
+.gps{display:flex;align-items:center;gap:8px;min-height:44px;border:1px solid var(--line);border-radius:10px;background:#F9FAFB;padding:8px 12px;font-size:14px;color:var(--muted)}
+.gps.ok{color:var(--text)}
+.gps a{color:var(--navy-2);font-weight:700}
+/* galeria de RDC emitidos */
+.toolbar{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grp{border-bottom:1px solid #EAECF0}
+.grp:last-child{border-bottom:0}
+.grp>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;cursor:pointer;font-weight:800;color:var(--navy)}
+.grp>summary::-webkit-details-marker{display:none}
+.grp>summary::before{content:'▸';color:var(--muted);margin-right:6px;transition:transform .15s}
+.grp[open]>summary::before{transform:rotate(90deg)}
+.grp>summary .g-nome{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grp>summary small{font-weight:600;color:var(--muted);white-space:nowrap}
+.grp .hist-item:first-of-type{border-top:1px solid #EAECF0}
+.grp>summary .who{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.grp>summary .who .avatar{width:40px;height:40px}
+.grp>summary .who span{display:block;font-weight:500;font-size:12px;color:var(--muted)}
+.hist-item.sem-foto{padding-left:22px}
+/* formulário em etapas */
+.passos{position:sticky;top:calc(62px + env(safe-area-inset-top));z-index:5;background:var(--bg);margin:-16px -16px 6px;padding:10px 16px 8px}
+.passos ol{list-style:none;margin:8px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.passos button{width:100%;border:0;background:transparent;padding:2px 0;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;line-height:1.15;text-align:center}
+.passos i{font-style:normal;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px}
+.passos li.feito i{background:var(--ok);border-color:var(--ok);color:#fff}
+.passos li.atual button{color:var(--navy)}
+.passos li.atual i{background:var(--navy);border-color:var(--navy);color:#fff}
+.passos-barra{height:4px;border-radius:99px;background:#EAECF0;overflow:hidden}
+.passos-barra span{display:block;height:100%;width:25%;background:var(--accent);transition:width .25s}
+.passo{display:none}
+.passo.ativo{display:block}
+.passo-nav{display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-top:22px}
+.passo-nav .btn + .btn{margin-top:0}
+.passo-nav.so-um{grid-template-columns:1fr}
+.meta{color:var(--muted);font-size:13px}
+.nav-row{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:14px}
+/* responsáveis */
+.periodo{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.atalhos{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.atalhos button{border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:6px 14px;font-weight:700;color:var(--navy);cursor:pointer}
+.atalhos button.sel{background:var(--navy);border-color:var(--navy);color:#fff}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.kpi span{display:block;font-size:12px;color:var(--muted);font-weight:700}
+.kpi b{font-size:22px;color:var(--navy);font-variant-numeric:tabular-nums}
+.resp-card{cursor:pointer}
+.resp-card .resp-head{border-bottom:0;padding-bottom:6px}
+.resp-card .resp-head>div{flex:1;min-width:0}
+.resp-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px;font-size:12px;color:var(--muted)}
+.resp-nums b{display:block;font-size:16px;color:var(--navy);font-variant-numeric:tabular-nums}
+.dias{display:flex;gap:3px;flex-wrap:wrap;margin-top:10px}
+.dia{width:22px;height:22px;border-radius:5px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;background:var(--danger-bg);color:var(--danger)}
+.dia.ok{background:var(--ok-bg);color:#067647}
+.dia.fds{background:#F2F4F7;color:#98A2B3}
+.legenda{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.legenda i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:4px}
+/* carrossel de fotos */
+.thumb img,.rv-thumbs img{cursor:zoom-in}
+.lb{position:fixed;inset:0;z-index:60;background:#0B0F17;color:#fff;display:flex;flex-direction:column;touch-action:pan-y}
+.lb-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(10px + env(safe-area-inset-top)) 12px 10px 16px;font-weight:700;font-size:14px}
+.lb-top button{width:44px;height:44px;border:0;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;font-size:26px;cursor:pointer;line-height:1}
+.lb-stage{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+.lb-stage img{max-width:100%;max-height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none}
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:64px;border:0;border-radius:12px;background:rgba(255,255,255,.14);color:#fff;font-size:34px;cursor:pointer;line-height:1}
+.lb-nav.prev{left:8px}.lb-nav.next{right:8px}
+.lb-nav:disabled{opacity:.2;cursor:default}
+.lb-cap{padding:10px 16px 6px;font-size:13px;line-height:1.5;color:#D0D5DD;min-height:44px}
+.lb-cap b{color:#fff}
+.lb-cap a{color:#FDBA74;font-weight:700}
+.lb-strip{display:flex;gap:6px;overflow-x:auto;padding:6px 12px calc(12px + env(safe-area-inset-bottom))}
+.lb-strip img{width:52px;height:52px;flex:none;object-fit:cover;border-radius:8px;opacity:.5;border:2px solid transparent;cursor:pointer;background:#1D2939}
+.lb-strip img.sel{opacity:1;border-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -172,7 +253,6 @@ select.control{appearance:none;background-image:linear-gradient(45deg,transparen
 
     <div class="status-line" id="connStatus"><span class="dot"></span><span>Verificando…</span></div>
     <button class="btn ghost hidden" id="btnLogin" style="margin-bottom:14px">Entrar com conta corporativa</button>
-    <button class="btn ghost" id="btnConsulta" style="margin-bottom:14px">📋 CONSULTAR RDC EMITIDOS</button>
 
     <div class="card hidden" id="pendingCard" style="background:var(--warn-bg);border-color:#F7B27A">
       <div class="card-head" style="margin-bottom:8px"><span class="badge" id="pendingTitle">RDC pendentes</span></div>
@@ -181,40 +261,122 @@ select.control{appearance:none;background-image:linear-gradient(45deg,transparen
       <div class="note" id="pendingErr"></div>
     </div>
 
-    <div class="section-title">Enviados neste aparelho</div>
-    <div class="card" id="histList"><div class="note">Nenhum RDC enviado ainda.</div></div>
+    <div id="wrapEmitidos">
+      <div class="nav-row"><button class="btn ghost" id="btnResp">👥 RESPONSÁVEIS · HH E IMPACTO</button></div>
+      <div class="section-title">RDC emitidos</div>
+      <div class="card">
+        <div class="field"><label class="lbl" for="qBusca">Buscar</label><input class="control" id="qBusca" type="search" placeholder="OM, ativo, responsável ou código"></div>
+        <div class="toolbar">
+          <div class="field"><label class="lbl" for="qStatus">Situação</label>
+            <select class="control" id="qStatus">
+              <option value="">Todas</option>
+              <option value="Enviado">Aguardando validação</option>
+              <option value="Validado">Validado</option>
+              <option value="Em revisão">Revisão liberada</option>
+              <option value="Cancelado">Cancelado</option>
+              <option value="Substituído">Substituído (versões antigas)</option>
+            </select>
+          </div>
+          <div class="field"><label class="lbl" for="qAgrupar">Agrupar por</label>
+            <select class="control" id="qAgrupar">
+              <option value="">Não agrupar</option>
+              <option value="data">Data</option>
+              <option value="contrato">Contrato</option>
+              <option value="responsavel">Responsável</option>
+              <option value="area">Área</option>
+              <option value="ativo">Ativo / TAG</option>
+              <option value="om">OM</option>
+              <option value="status">Situação</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="qList"><div class="note">Carregando…</div></div>
+      <button class="btn ghost hidden" id="btnQMais">Carregar mais</button>
+    </div>
+
+    <div id="wrapHist">
+      <div class="section-title">Enviados neste aparelho</div>
+      <div class="card" id="histList"><div class="note">Nenhum RDC enviado ainda.</div></div>
+    </div>
   </section>
 
   <!-- ===================== FORMULÁRIO ===================== -->
   <section class="screen" id="scrRDC">
     <div class="card rev-banner hidden" id="revBanner"></div>
+    <nav class="passos" id="passos" aria-label="Etapas do RDC">
+      <div class="passos-barra"><span id="passosBarra"></span></div>
+      <ol>
+        <li><button type="button" data-ir="1"><i>1</i>Identificação</button></li>
+        <li><button type="button" data-ir="2"><i>2</i>PTS e bloqueio</button></li>
+        <li><button type="button" data-ir="3"><i>3</i>Atividades</button></li>
+        <li><button type="button" data-ir="4"><i>4</i>Impactos</button></li>
+      </ol>
+    </nav>
+
+    <div class="passo" data-passo="1">
     <div class="section-title">1. Identificação</div>
     <div class="card" id="cardHeader">
       <div class="field"><label class="lbl" for="fResponsavel">Responsável *</label><select class="control hidden" id="fResponsavel" data-h="responsavel"></select><div class="lider-grid" id="fRespGrid"></div></div>
+      <div class="field"><label class="lbl">Contrato *</label><div class="chips three" id="fContrato"></div></div>
       <div class="field"><label class="lbl" for="fData">Data *</label><input class="control" type="date" id="fData" data-h="data"></div>
       <div class="field"><label class="lbl" for="fArea">Área *</label><select class="control" id="fArea"></select></div>
       <div class="field"><label class="lbl" for="fAtivo">Ativo / TAG *</label><select class="control" id="fAtivo" disabled></select></div>
       <div class="field hidden" id="wrapAtivoOutro"><label class="lbl" for="fAtivoOutro">Descreva o ativo *</label><input class="control" id="fAtivoOutro" placeholder="Ex.: TAG ou descrição do local" autocapitalize="characters"></div>
       <div class="field"><label class="lbl" for="fOM">OM *</label><input class="control" id="fOM" data-h="om" placeholder="Nº da OM" inputmode="numeric"></div>
     </div>
+    </div>
 
-    <div class="section-title">2. Atividades executadas</div>
+    <div class="passo" data-passo="2">
+    <div class="section-title">2. PTS e bloqueio</div>
+    <div class="card" id="cardPts">
+      <div class="field"><label class="lbl">Teve PTS? *</label>
+        <div class="chips yn" data-yn="pts"><button type="button" class="chip" data-val="S">SIM</button><button type="button" class="chip" data-val="N">NÃO</button></div>
+      </div>
+      <div class="sub-block hidden" id="wrapPts">
+        <div class="row">
+          <div class="field"><label class="lbl" for="fPtsSol">Solicitação *</label><input class="control" type="time" id="fPtsSol" data-h="ptsSolicitacao"></div>
+          <div class="field"><label class="lbl" for="fPtsAbe">Abertura *</label><input class="control" type="time" id="fPtsAbe" data-h="ptsAbertura"></div>
+        </div>
+        <div class="dur" id="ptsEspera"></div>
+      </div>
+      <div class="field" style="margin-top:6px"><label class="lbl">Teve bloqueio? *</label>
+        <div class="chips yn" data-yn="bloqueio"><button type="button" class="chip" data-val="S">SIM</button><button type="button" class="chip" data-val="N">NÃO</button></div>
+      </div>
+      <div class="sub-block hidden" id="wrapBloq">
+        <div class="field"><label class="lbl" for="fBloqAtivo">Ativo bloqueado *</label><input class="control" id="fBloqAtivo" data-h="bloqueioAtivo" list="dlBloqAtivo" placeholder="TAG ou descrição do ativo" autocapitalize="characters"><datalist id="dlBloqAtivo"></datalist></div>
+        <div class="field"><label class="lbl" for="fBloqHora">Horário do bloqueio *</label><input class="control" type="time" id="fBloqHora" data-h="bloqueioHora"></div>
+      </div>
+    </div>
+    </div>
+
+    <div class="passo" data-passo="3">
+    <div class="section-title">3. Atividades executadas</div>
     <div id="activities"></div>
     <button class="dashed" id="btnAddAtv">+ ADICIONAR ATIVIDADE</button>
+    </div>
 
-    <div class="section-title">3. Registro de impactos <span class="opt">(opcional)</span></div>
+    <div class="passo" data-passo="4">
+    <div class="section-title">4. Registro de impactos <span class="opt">(opcional)</span></div>
     <div id="impacts"></div>
     <button class="dashed" id="btnAddImp">+ REGISTRAR IMPACTO</button>
-    <p class="note">Registre interferências, paralisações, aguardo de liberação, bloqueios ou outras ocorrências que afetaram a execução.</p>
+    <p class="note">Registre interferências, paralisações, aguardo de liberação, bloqueios ou outras ocorrências que afetaram a execução. Sem impactos, é só avançar.</p>
+    </div>
 
     <div class="errbox hidden" id="formError"></div>
-    <div style="margin-top:22px"><button class="btn primary" id="btnRevisar">REVISAR E ENVIAR</button></div>
+    <div class="passo-nav">
+      <button class="btn ghost" id="btnPassoVoltar">← VOLTAR</button>
+      <button class="btn primary" id="btnPassoAvancar">AVANÇAR →</button>
+      <button class="btn primary hidden" id="btnRevisar">REVISAR E ENVIAR</button>
+    </div>
   </section>
 
   <!-- ===================== REVISÃO ===================== -->
   <section class="screen" id="scrRevisao">
     <div class="section-title">Identificação</div>
     <div class="card" id="rvHeader"></div>
+    <div class="section-title">PTS e bloqueio</div>
+    <div class="card" id="rvPts"></div>
     <div class="section-title">Atividades</div>
     <div class="card" id="rvActivities"></div>
     <div class="section-title">Registro de impactos</div>
@@ -239,23 +401,22 @@ select.control{appearance:none;background-image:linear-gradient(45deg,transparen
     </div>
   </section>
 
-  <!-- ===================== CONSULTA (somente leitura) ===================== -->
-  <section class="screen" id="scrConsulta">
+  <!-- ===================== RESPONSÁVEIS (emissão, HH e impacto) ===================== -->
+  <section class="screen" id="scrResp">
     <div class="card">
-      <div class="field"><label class="lbl" for="qBusca">Buscar</label><input class="control" id="qBusca" type="search" placeholder="OM, ativo, responsável ou código"></div>
-      <div class="field"><label class="lbl" for="qStatus">Situação</label>
-        <select class="control" id="qStatus">
-          <option value="">Todas</option>
-          <option value="Enviado">Aguardando validação</option>
-          <option value="Validado">Validado</option>
-          <option value="Em revisão">Revisão liberada</option>
-          <option value="Cancelado">Cancelado</option>
-          <option value="Substituído">Substituído (versões antigas)</option>
-        </select>
+      <div class="periodo">
+        <div class="field"><label class="lbl" for="rIni">De</label><input class="control" type="date" id="rIni"></div>
+        <div class="field"><label class="lbl" for="rFim">Até</label><input class="control" type="date" id="rFim"></div>
+      </div>
+      <div class="atalhos" id="rAtalhos">
+        <button type="button" data-p="hoje">Hoje</button><button type="button" data-p="ontem">Ontem</button>
+        <button type="button" data-p="7">7 dias</button><button type="button" data-p="mes">Este mês</button>
       </div>
     </div>
-    <div class="card" id="qList"><div class="note">Carregando…</div></div>
-    <button class="btn ghost hidden" id="btnQMais">Carregar mais</button>
+    <div class="kpis" id="rKpis"></div>
+    <div class="section-title">Por responsável</div>
+    <div id="rLista"><div class="card note">Carregando…</div></div>
+    <p class="note">HH trabalhado = efetivo × duração das atividades. HH de impacto = duração do impacto × maior efetivo do RDC (a equipe parada). RDC cancelados e versões substituídas não entram. Toque num responsável para ver os RDC dele.</p>
   </section>
 
   <!-- ===================== DETALHE DO RDC ===================== -->
@@ -263,6 +424,8 @@ select.control{appearance:none;background-image:linear-gradient(45deg,transparen
     <div class="card status-card" id="dtStatus"></div>
     <div class="section-title">Identificação</div>
     <div class="card" id="dtHeader"></div>
+    <div class="section-title">PTS e bloqueio</div>
+    <div class="card" id="dtPts"></div>
     <div class="section-title">Atividades</div>
     <div class="card" id="dtActivities"></div>
     <div class="section-title">Registro de impactos</div>
@@ -351,6 +514,16 @@ select.control{appearance:none;background-image:linear-gradient(45deg,transparen
   <footer class="footer">Desenvolvido por <b>Fialho Consultoria de Planejamento LTDA.</b></footer>
 </div>
 
+<div class="lb hidden" id="lb" role="dialog" aria-modal="true" aria-label="Fotos">
+  <div class="lb-top"><span id="lbCount"></span><button type="button" id="lbClose" aria-label="Fechar">×</button></div>
+  <div class="lb-stage" id="lbStage">
+    <button type="button" class="lb-nav prev" id="lbPrev" aria-label="Foto anterior">‹</button>
+    <img id="lbImg" alt="">
+    <button type="button" class="lb-nav next" id="lbNext" aria-label="Próxima foto">›</button>
+  </div>
+  <div class="lb-cap" id="lbCap"></div>
+  <div class="lb-strip" id="lbStrip"></div>
+</div>
 <div class="toast" id="toast"></div>
 <div class="overlay hidden" id="overlay"><div class="spinner"></div><div id="overlayMsg">Enviando…</div></div>
 
@@ -551,6 +724,14 @@ const LIDERES = [
   ['Dorivan Costa', 'Enc. Mecânica', '6977'],
   ['Eliton Araújo', 'Alpinista Industrial N2 Jr', '7206']
 ];
+// Contratos em vigor: [nome, número]. O número fica gravado no RDC (coluna contrato).
+const CONTRATOS = [
+  ['TELHADO', '5900111362'],
+  ['ROTINA', '5900108690'],
+  ['GALPÃO', '5900111078']
+];
+const nomeContrato = num => (CONTRATOS.find(c => c[1] === num) || [])[0] || '';
+const fmtContrato = (num, nome) => num ? `${nome || nomeContrato(num) || 'Contrato'} · ${num}` : '—';
 const funcaoLider = nome => (LIDERES.find(l => l[0] === nome) || [nome, ''])[1];
 // Fotos dos líderes por matrícula (128×128, embutidas para funcionar sem internet)
 const FOTOS_LIDERES = {
@@ -589,19 +770,23 @@ const num = n => ({ name: n, number: {} });
 const dt = n => ({ name: n, dateTime: { format: 'dateTime' } });
 const dOnly = n => ({ name: n, dateTime: { format: 'dateOnly' } });
 const choice = (n, c) => ({ name: n, choice: { choices: c, displayAs: 'dropDownMenu' } });
+const bool = n => ({ name: n, boolean: {} });
 const SCHEMA = () => ({
   [CFG.lists.cabecalho]: [txt('Responsavel'), dOnly('DataRDC'), txt('Ativo'), txt('OM'),
     choice('Status', ['Rascunho','Enviado','Validado','Em revisão','Substituído','Cancelado']), dt('DataHoraEnvio'), txt('EnviadoPor'),
     num('QtdAtividades'), num('QtdImpactos'), num('QtdFotos'), txt('Area'), txt('AtivoDescricao'), txt('ResponsavelFuncao'),
     // validação e revisão (mesmas colunas de rdc_cabecalho no Supabase)
-    num('Revisao'), txt('RevisaoDe'), txt('SubstituidoPor'), txt('ValidadoPor'), dt('ValidadoEm'), mtxt('ObsValidacao')],
+    num('Revisao'), txt('RevisaoDe'), txt('SubstituidoPor'), txt('ValidadoPor'), dt('ValidadoEm'), mtxt('ObsValidacao'),
+    bool('Pts'), dt('PtsSolicitacao'), dt('PtsAbertura'), bool('Bloqueio'), txt('BloqueioAtivo'), dt('BloqueioHora'),
+    txt('Contrato'), txt('ContratoNome')],
   [CFG.lists.atividades]: [txt('RDC_ID'), num('Ordem'), choice('Disciplina', Object.keys(DISCIPLINAS)), txt('Servico'),
     choice('TipoAndaime', TIPOS_ANDAIME), mtxt('DescricaoOutros'), mtxt('Observacao'),
     dt('InicioAtividade'), dt('FimAtividade'), num('DuracaoMin'), txt('Ativo'), txt('OM'), dOnly('DataRDC'),
-    ...FUNCOES.map(([, , campo]) => num(campo)), num('EfetivoTotal')],
+    ...FUNCOES.map(([, , campo]) => num(campo)), num('EfetivoTotal'), txt('Contrato')],
   [CFG.lists.impactos]: [txt('RDC_ID'), num('Ordem'), mtxt('TipoImpacto'), dt('InicioImpacto'), dt('FimImpacto'),
-    num('DuracaoMin'), txt('Ativo'), txt('OM'), dOnly('DataRDC')],
-  [CFG.lists.fotos]: [txt('RDC_ID'), txt('Atividade_ID'), txt('NomeArquivo'), mtxt('URLArquivo'), dt('DataHoraFoto')]
+    num('DuracaoMin'), txt('Ativo'), txt('OM'), dOnly('DataRDC'), txt('Contrato')],
+  [CFG.lists.fotos]: [txt('RDC_ID'), txt('Atividade_ID'), txt('NomeArquivo'), mtxt('URLArquivo'), dt('DataHoraFoto'),
+    num('Latitude'), num('Longitude'), num('PrecisaoM'), txt('GpsFonte')]
 });
 
 /* ===================== UTILITÁRIOS ===================== */
@@ -776,14 +961,15 @@ function buildRecord(d) {
   const now = new Date();
   const code = `RDC-${d.data.replace(/-/g, '')}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}-${uid().slice(0, 4).toUpperCase()}`;
   const dataRDC = `${d.data}T12:00:00Z`; // meio-dia UTC evita troca de dia por fuso
-  const base = { Ativo: d.ativo.trim(), OM: d.om.trim(), DataRDC: dataRDC };
+  const base = { Ativo: d.ativo.trim(), OM: d.om.trim(), DataRDC: dataRDC, Contrato: d.contrato };
   const fotos = [];
   const atividades = d.atividades.map((a, i) => {
     const key = `${code}-A${pad(i + 1)}`;
     const dur = duration(a.horaInicio, a.horaFim);
     a.fotos.forEach((f, j) => fotos.push({
       Title: `${key}-F${pad(j + 1)}`, RDC_ID: code, Atividade_ID: key,
-      NomeArquivo: `${key}-F${pad(j + 1)}.jpg`, DataHoraFoto: new Date(f.ts).toISOString(), dataUrl: f.dataUrl
+      NomeArquivo: `${key}-F${pad(j + 1)}.jpg`, DataHoraFoto: new Date(f.ts).toISOString(), dataUrl: f.dataUrl,
+      ...(f.gps ? { Latitude: f.gps.lat, Longitude: f.gps.lng, PrecisaoM: f.gps.acc, GpsFonte: f.gps.fonte } : {})
     }));
     return {
       Title: key, RDC_ID: code, Ordem: i + 1, Disciplina: a.disciplina, Servico: a.servico,
@@ -803,10 +989,15 @@ function buildRecord(d) {
   const header = {
     Title: code, Responsavel: d.responsavel.trim(), DataRDC: dataRDC, Ativo: base.Ativo, OM: base.OM,
     ResponsavelFuncao: funcaoLider(d.responsavel),
+    Contrato: d.contrato, ContratoNome: nomeContrato(d.contrato),
     Area: d.area ? `${d.area} - ${nomeArea(d.area)}` : '',
     AtivoDescricao: d.ativoOutro ? 'OUTRO (não listado)' : descTag(d.ativo),
     Status: 'Rascunho', EnviadoPor: (account && (account.username || account.name)) || d.responsavel.trim(),
     QtdAtividades: atividades.length, QtdImpactos: impactos.length, QtdFotos: fotos.length,
+    Pts: d.pts === 'S', Bloqueio: d.bloqueio === 'S',
+    ...(d.pts === 'S' ? { PtsSolicitacao: toISO(d.data, d.ptsSolicitacao),
+      PtsAbertura: toISO(d.data, d.ptsAbertura, toMin(d.ptsAbertura) < toMin(d.ptsSolicitacao)) } : {}),
+    ...(d.bloqueio === 'S' ? { BloqueioAtivo: d.bloqueioAtivo.trim(), BloqueioHora: toISO(d.data, d.bloqueioHora) } : {}),
     ...(d.revisaoDe ? { RevisaoDe: d.revisaoDe } : {}) // revisão liberada pelo administrador
   };
   return { code, createdAt: now.toISOString(), header, atividades, impactos, fotos, progress: {} };
@@ -927,13 +1118,17 @@ const newActivity = () => ({ id: uid(), disciplina: '', servico: '', tipoAndaime
 const newImpact = () => ({ id: uid(), descricao: '', horaInicio: '', horaFim: '' });
 function newDraft() {
   const last = localStorage.getItem('rdc-responsavel') || (account && account.name) || '';
-  return { responsavel: last, data: todayISO(), area: '', ativo: '', ativoOutro: false, om: '', atividades: [newActivity()], impactos: [] };
+  let contrato = ''; try { contrato = localStorage.getItem('rdc-contrato') || ''; } catch { }
+  if (!nomeContrato(contrato)) contrato = '';
+  return { responsavel: last, contrato, data: todayISO(), area: '', ativo: '', ativoOutro: false, om: '',
+    pts: '', ptsSolicitacao: '', ptsAbertura: '', bloqueio: '', bloqueioAtivo: '', bloqueioHora: '',
+    atividades: [newActivity()], impactos: [] };
 }
 let saveTimer;
 function saveDraft() { clearTimeout(saveTimer); saveTimer = setTimeout(() => Store.set('draft', draft), 400); }
 
 /* ===================== NAVEGAÇÃO ===================== */
-const BACK = { scrRDC: 'scrInicio', scrRevisao: 'scrRDC', scrConfig: 'scrInicio', scrConsulta: 'scrInicio', scrDetalhe: 'scrConsulta', scrAdmin: 'scrInicio' };
+const BACK = { scrRDC: 'scrInicio', scrRevisao: 'scrRDC', scrConfig: 'scrInicio', scrResp: 'scrInicio', scrDetalhe: 'scrInicio', scrAdmin: 'scrInicio' };
 let current = 'scrInicio';
 function go(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
@@ -989,6 +1184,10 @@ async function renderHome() {
   const le = queue.find(q => q.lastError);
   $('pendingErr').textContent = le ? 'Último erro: ' + le.lastError : '';
 
+  // modo Supabase: a lista de RDC emitidos (do banco) fica na tela inicial; nos outros modos, o histórico do aparelho
+  const consulta = CFG.mode === 'supabase';
+  $('wrapEmitidos').classList.toggle('hidden', !consulta);
+  $('wrapHist').classList.toggle('hidden', consulta);
   const hist = await Store.get('history') || [];
   const rows = [...queue.map(q => ({ code: q.code, data: q.header.DataRDC.slice(0, 10), ativo: q.header.Ativo, om: q.header.OM, status: 'Pendente' })), ...hist];
   const podeAbrir = h => h.status === 'Enviado' && CFG.mode === 'supabase';
@@ -1018,7 +1217,29 @@ function fillHeader() {
   fillRespGrid();
   $('fArea').innerHTML = '<option value="">Selecione a área…</option>' +
     AREAS.map(([c, n]) => `<option value="${c}" ${draft.area === c ? 'selected' : ''}>${c} - ${esc(n)}</option>`).join('');
-  fillAtivos();
+  fillAtivos(); renderPts(); renderContrato();
+}
+function renderContrato() {
+  $('fContrato').innerHTML = CONTRATOS.map(([n, num]) => `<button type="button" class="chip${draft.contrato === num ? ' sel' : ''}" data-contrato="${num}" aria-pressed="${draft.contrato === num}">${esc(n)}<small>${num}</small></button>`).join('');
+}
+// PTS e bloqueio: perguntas Sim/Não; os horários só aparecem com "Sim"
+function esperaPts(sol, abe) {
+  const a = toMin(sol), b = toMin(abe);
+  if (a == null || b == null) return null;
+  return b >= a ? b - a : b + 1440 - a; // abertura antes da solicitação => abriu no dia seguinte
+}
+function atualizarEsperaPts() {
+  const m = esperaPts(draft.ptsSolicitacao, draft.ptsAbertura);
+  $('ptsEspera').innerHTML = m != null ? `Espera pela PTS: <b>${fmtDur(m)}</b>${toMin(draft.ptsAbertura) < toMin(draft.ptsSolicitacao) ? ' (abriu no dia seguinte)' : ''}` : '';
+}
+function renderPts() {
+  document.querySelectorAll('[data-yn]').forEach(g => g.querySelectorAll('.chip').forEach(b => {
+    const on = draft[g.dataset.yn] === b.dataset.val;
+    b.classList.toggle('sel', on); b.setAttribute('aria-pressed', on);
+  }));
+  $('wrapPts').classList.toggle('hidden', draft.pts !== 'S');
+  $('wrapBloq').classList.toggle('hidden', draft.bloqueio !== 'S');
+  atualizarEsperaPts();
 }
 // Escolha do responsável por foto; o <select> escondido continua sendo o campo do formulário
 function fillRespGrid() {
@@ -1037,6 +1258,9 @@ function fillAtivos() {
   }
   $('wrapAtivoOutro').classList.toggle('hidden', !draft.ativoOutro);
   $('fAtivoOutro').value = draft.ativoOutro ? draft.ativo : '';
+  // sugestões do ativo bloqueado: TAGs da área escolhida (aceita texto livre)
+  $('dlBloqAtivo').innerHTML = TAGS.filter(([t]) => !draft.area || areaDaTag(t) === draft.area)
+    .map(([t, d]) => `<option value="${t}">${esc(d)}</option>`).join('');
 }
 function activityHTML(a, i) {
   const disc = DISCIPLINAS[a.disciplina];
@@ -1069,11 +1293,20 @@ function activityHTML(a, i) {
     <div class="field"><label class="lbl">Observações <span class="opt-lbl">(opcional — somente informações complementares)</span></label><textarea class="control" data-f="observacao" placeholder="Informações complementares, se houver">${esc(a.observacao)}</textarea></div>
     <div class="field"><label class="lbl">Evidências (fotos) *</label>
       <div class="photos">
-        ${a.fotos.map(f => `<div class="thumb"><img src="${f.dataUrl}" alt=""><button type="button" data-act="del-foto" data-val="${f.id}" aria-label="Remover foto">×</button></div>`).join('')}
+        ${a.fotos.map((f, j) => `<div class="thumb"><img src="${f.dataUrl}" alt="Foto ${j + 1}" data-ver="${j}"><button type="button" data-act="del-foto" data-val="${f.id}" aria-label="Remover foto">×</button></div>`).join('')}
         <label class="add-photo"><span>📷</span>Adicionar<input type="file" accept="image/*" multiple data-act="foto"></label>
       </div>
     </div>
+    <div class="field"><label class="lbl">Localização (GPS) <span class="opt-lbl">(preenchida ao tirar a foto)</span></label>${gpsHTML(gpsAtividade(a), a.fotos.length)}</div>
   </div>`;
+}
+// Localização da atividade = a da foto mais recente que tem GPS
+const gpsAtividade = a => [...a.fotos].reverse().map(f => f.gps).find(Boolean) || null;
+const fmtGps = g => `${g.lat.toFixed(6)}, ${g.lng.toFixed(6)}${g.acc ? ` (±${g.acc} m)` : ''}`;
+const mapaUrl = g => `https://www.google.com/maps?q=${g.lat},${g.lng}`;
+function gpsHTML(g, nFotos) {
+  if (g) return `<div class="gps ok">📍 <span style="flex:1">${fmtGps(g)}${g.fonte === 'foto' ? ' · da foto' : ''}</span><a href="${mapaUrl(g)}" target="_blank" rel="noopener">Mapa</a></div>`;
+  return `<div class="gps">📍 ${nFotos ? 'Fotos sem localização. Ligue o GPS e permita a localização para o app.' : 'Será preenchida ao tirar a primeira foto.'}</div>`;
 }
 function impactHTML(x, i) {
   const dur = duration(x.horaInicio, x.horaFim);
@@ -1096,9 +1329,63 @@ function renderRevBanner() {
   $('revBanner').classList.toggle('hidden', !draft.revisaoDe);
   $('revBanner').innerHTML = draft.revisaoDe ? `<b>Revisão do ${esc(draft.revisaoDe)}</b>${draft.revisaoMotivo ? `<br>Motivo: ${esc(draft.revisaoMotivo)}` : ''}<br>Ao enviar, esta versão substitui a anterior.` : '';
 }
-function openForm() { fillHeader(); renderRevBanner(); renderActivities(); renderImpacts(); $('formError').classList.add('hidden'); go('scrRDC'); }
+function openForm() {
+  fillHeader(); renderRevBanner(); renderActivities(); renderImpacts(); go('scrRDC');
+  irPasso(draft.passo || 1); // rascunho continua na etapa em que parou
+  gpsAparelho(); // pede a permissão de localização já ao abrir o formulário
+}
 
-function stampPhoto(file) {
+/* ----- GPS: localização da foto ----- */
+// Prioridade: GPS gravado na própria foto (EXIF) > GPS do aparelho, só para foto recém-tirada
+// (foto antiga da galeria sem EXIF fica sem localização, para não registrar o lugar errado).
+let gpsUltimo = null, gpsPend = null, gpsAvisado = false;
+function gpsAparelho() {
+  if (!navigator.geolocation) return Promise.resolve(null);
+  if (gpsUltimo && Date.now() - gpsUltimo.ts < 60000) return Promise.resolve(gpsUltimo);
+  if (!gpsPend) gpsPend = new Promise(res => navigator.geolocation.getCurrentPosition(
+    p => { gpsUltimo = { lat: p.coords.latitude, lng: p.coords.longitude, acc: Math.round(p.coords.accuracy), fonte: 'aparelho', ts: Date.now() }; res(gpsUltimo); },
+    () => res(null),
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+  )).finally(() => { gpsPend = null; });
+  return gpsPend;
+}
+// Lê latitude/longitude do EXIF de um JPEG (sem bibliotecas)
+async function gpsExif(file) {
+  try {
+    const v = new DataView(await file.slice(0, 256 * 1024).arrayBuffer());
+    if (v.getUint16(0) !== 0xFFD8) return null;
+    for (let o = 2; o + 4 < v.byteLength;) {
+      const m = v.getUint16(o), len = v.getUint16(o + 2);
+      if (m === 0xFFE1 && v.getUint32(o + 4) === 0x45786966) { // APP1 "Exif"
+        const t = o + 10, le = v.getUint16(t) === 0x4949;
+        const u16 = p => v.getUint16(t + p, le), u32 = p => v.getUint32(t + p, le);
+        const tags = p => { const r = {}; for (let i = 0, n = u16(p); i < n; i++) r[u16(p + 2 + i * 12)] = p + 2 + i * 12; return r; };
+        const ifd0 = tags(u32(4));
+        if (!ifd0[0x8825]) return null;
+        const gps = tags(u32(ifd0[0x8825] + 8));
+        if (!gps[2] || !gps[4]) return null;
+        const graus = e => { const p = u32(e + 8), r = k => u32(p + k * 8) / u32(p + k * 8 + 4); return r(0) + r(1) / 60 + r(2) / 3600; };
+        const ref = e => e ? String.fromCharCode(v.getUint8(t + e + 8)) : '';
+        const lat = graus(gps[2]) * (ref(gps[1]) === 'S' ? -1 : 1), lng = graus(gps[4]) * (ref(gps[3]) === 'W' ? -1 : 1);
+        if (!isFinite(lat) || !isFinite(lng) || (lat === 0 && lng === 0) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+        return { lat, lng, acc: null, fonte: 'foto' };
+      }
+      if ((m & 0xFF00) !== 0xFF00 || m === 0xFFDA) break;
+      o += 2 + len;
+    }
+  } catch { }
+  return null;
+}
+async function gpsDaFoto(file) {
+  const exif = await gpsExif(file);
+  if (exif) return exif;
+  const recente = !file.lastModified || Date.now() - file.lastModified < 10 * 60000;
+  if (!recente) return null;
+  const g = await Promise.race([gpsAparelho(), sleep(12000).then(() => null)]);
+  return g && { lat: g.lat, lng: g.lng, acc: g.acc, fonte: 'aparelho' };
+}
+
+function stampPhoto(file, gps) {
   return new Promise((res, rej) => {
     const url = URL.createObjectURL(file), img = new Image();
     img.onload = () => {
@@ -1106,13 +1393,15 @@ function stampPhoto(file) {
       const w = Math.round(img.width * s), h = Math.round(img.height * s);
       const c = document.createElement('canvas'); c.width = w; c.height = h;
       const g = c.getContext('2d'); g.drawImage(img, 0, 0, w, h);
-      // carimbo de data/hora + ativo/OM
+      // carimbo: data/hora + ativo/OM e, abaixo, as coordenadas
       const d = new Date(), fs = Math.max(14, Math.round(w / 45));
-      const label = `${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}  ${draft.ativo || ''} ${draft.om ? '· OM ' + draft.om : ''}`.trim();
+      const linhas = [`${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}  ${draft.ativo || ''} ${draft.om ? '· OM ' + draft.om : ''}`.trim()];
+      if (gps) linhas.push(`GPS ${gps.lat.toFixed(6)}, ${gps.lng.toFixed(6)}${gps.acc ? ` ±${gps.acc} m` : ''}`);
       g.font = `bold ${fs}px system-ui,sans-serif`;
-      const tw = g.measureText(label).width;
-      g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, h - fs * 1.8, tw + fs * 1.2, fs * 1.8);
-      g.fillStyle = '#fff'; g.fillText(label, fs * 0.6, h - fs * 0.55);
+      const tw = Math.max(...linhas.map(l => g.measureText(l).width)), lh = fs * 1.35, alt = fs * 0.6 + lh * linhas.length;
+      g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, h - alt, Math.min(w, tw + fs * 1.2), alt);
+      g.fillStyle = '#fff';
+      linhas.forEach((l, i) => g.fillText(l, fs * 0.6, h - alt + lh * (i + 1)));
       URL.revokeObjectURL(url);
       res(c.toDataURL('image/jpeg', CFG.foto.qualidade));
     };
@@ -1125,8 +1414,18 @@ function bindForm() {
   document.querySelectorAll('[data-h]').forEach(el => el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', () => {
     draft[el.dataset.h] = el.value;
     if (el.dataset.h === 'responsavel') localStorage.setItem('rdc-responsavel', el.value);
+    if (el.dataset.h === 'ptsSolicitacao' || el.dataset.h === 'ptsAbertura') atualizarEsperaPts();
     saveDraft();
   }));
+  $('fBloqAtivo').addEventListener('change', e => { draft.bloqueioAtivo = e.target.value = e.target.value.toUpperCase(); saveDraft(); });
+  $('cardPts').addEventListener('click', e => {
+    const b = e.target.closest('[data-yn] .chip'); if (!b) return;
+    const k = b.closest('[data-yn]').dataset.yn;
+    draft[k] = b.dataset.val;
+    if (k === 'bloqueio' && b.dataset.val === 'S' && !draft.bloqueioAtivo && draft.ativo) $('fBloqAtivo').value = draft.bloqueioAtivo = draft.ativo;
+    renderPts(); saveDraft();
+    if (b.dataset.val === 'S') $(k === 'pts' ? 'fPtsSol' : 'fBloqHora').focus();
+  });
   $('fRespGrid').addEventListener('click', e => {
     const b = e.target.closest('[data-lider]');
     if (!b) return;
@@ -1134,6 +1433,12 @@ function bindForm() {
     sel.value = b.dataset.lider;
     sel.dispatchEvent(new Event('change'));
     fillRespGrid();
+  });
+  $('fContrato').addEventListener('click', e => {
+    const b = e.target.closest('[data-contrato]'); if (!b) return;
+    draft.contrato = b.dataset.contrato;
+    try { localStorage.setItem('rdc-contrato', draft.contrato); } catch { }
+    renderContrato(); saveDraft();
   });
   $('fArea').addEventListener('change', e => {
     draft.area = e.target.value; draft.ativo = ''; draft.ativoOutro = false;
@@ -1179,13 +1484,28 @@ function bindForm() {
     if (e.target.dataset.act !== 'foto') return;
     const a = draft.atividades.find(x => x.id === e.target.closest('[data-atv]').dataset.atv);
     const files = [...e.target.files]; if (!files.length) return;
-    busy('Processando fotos…');
-    try { for (const f of files) a.fotos.push({ id: uid(), dataUrl: await stampPhoto(f), ts: Date.now() }); }
+    busy('Obtendo localização e processando fotos…');
+    let semGps = 0;
+    try {
+      for (const f of files) {
+        const gps = await gpsDaFoto(f);
+        if (!gps) semGps++;
+        a.fotos.push({ id: uid(), dataUrl: await stampPhoto(f, gps), ts: Date.now(), ...(gps ? { gps } : {}) });
+      }
+    }
     catch (err) { toast(err.message, true); }
-    finally { busy(null); }
+    finally { busy(null); e.target.value = ''; }
     renderActivities(); saveDraft();
+    if (semGps && !gpsAvisado) { gpsAvisado = true; toast('Foto sem localização: ligue o GPS e permita a localização para o app.', true); }
   });
+  // começa a buscar o GPS quando a pessoa toca em "Adicionar" (a câmera leva alguns segundos)
+  $('activities').addEventListener('pointerdown', e => { if (e.target.closest('.add-photo')) gpsAparelho(); });
   $('activities').addEventListener('click', e => {
+    const img = e.target.closest('img[data-ver]');
+    if (img) {
+      const a = draft.atividades.find(x => x.id === img.closest('[data-atv]').dataset.atv);
+      return abrirGaleria(a.fotos.map((f, j) => ({ src: f.dataUrl, titulo: `Atividade ${pad(draft.atividades.indexOf(a) + 1)} · foto ${j + 1}`, data: f.ts, gps: f.gps })), Number(img.dataset.ver));
+    }
     const btn = e.target.closest('[data-act]'); if (!btn) return;
     const a = draft.atividades.find(x => x.id === btn.closest('[data-atv]').dataset.atv);
     const act = btn.dataset.act;
@@ -1214,46 +1534,112 @@ function bindForm() {
   $('btnAddAtv').onclick = () => { draft.atividades.push(newActivity()); renderActivities(); saveDraft(); $('activities').lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   $('btnAddImp').onclick = () => { draft.impactos.push(newImpact()); renderImpacts(); saveDraft(); $('impacts').lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   $('btnRevisar').onclick = review;
+  $('btnPassoAvancar').onclick = avancarPasso;
+  $('btnPassoVoltar').onclick = () => irPasso((draft.passo || 1) - 1);
+  // tocar numa etapa: volta livremente; para frente, só passando pelas anteriores sem erro
+  $('passos').addEventListener('click', e => {
+    const b = e.target.closest('[data-ir]'); if (!b) return;
+    const alvo = Number(b.dataset.ir);
+    for (let k = 1; k < alvo; k++) { const err = validate(k); if (err) { irPasso(k); return mostrarErro(err); } }
+    irPasso(alvo);
+  });
 }
 
 /* ===================== VALIDAÇÃO ===================== */
-function validate() {
-  const d = draft;
-  if (!d.responsavel.trim() || !d.data || !d.area || !d.ativo.trim() || !d.om.trim()) return { msg: 'Preencha Responsável, Data, Área, Ativo e OM.', el: $('cardHeader') };
-  if (!d.atividades.length) return { msg: 'Adicione pelo menos uma atividade.', el: $('btnAddAtv') };
-  for (const [i, a] of d.atividades.entries()) {
-    const el = document.querySelector(`[data-atv="${a.id}"]`), n = `Atividade ${pad(i + 1)}`;
-    if (!a.disciplina || !a.servico) return { msg: `Selecione disciplina e serviço da ${n}.`, el };
-    if (a.disciplina === 'ANDAIME' && SERVICOS_COM_TIPO.includes(a.servico) && !a.tipoAndaime) return { msg: `Selecione o tipo de andaime da ${n}.`, el };
-    if (a.servico === 'OUTROS' && !a.outros.trim()) return { msg: `Descreva o serviço “OUTROS” da ${n}.`, el };
-    if (!a.horaInicio || !a.horaFim) return { msg: `Informe horário de início e fim da ${n}.`, el };
-    if (a.horaInicio === a.horaFim) return { msg: `Início e fim iguais na ${n}.`, el };
-    if (efetivoTotal(a) < 1) return { msg: `Informe o efetivo (quantidade por função) da ${n}.`, el };
-    if (a.fotos.length < CFG.foto.minPorAtividade) return { msg: `Adicione pelo menos ${CFG.foto.minPorAtividade} foto na ${n}.`, el };
+// Cada erro diz em que etapa está; validate(n) confere só a etapa n (sem n, todas)
+function validate(so) {
+  const d = draft, e = (passo, msg, el) => ({ passo, msg, el });
+  if (!so || so === 1) {
+    if (!d.responsavel.trim() || !d.data || !d.area || !d.ativo.trim() || !d.om.trim()) return e(1, 'Preencha Responsável, Data, Área, Ativo e OM.', $('cardHeader'));
+    if (!nomeContrato(d.contrato)) return e(1, 'Escolha o contrato.', $('cardHeader'));
   }
-  for (const [i, x] of d.impactos.entries()) {
-    const el = document.querySelector(`[data-imp="${x.id}"]`);
-    if (!x.descricao.trim() || !x.horaInicio || !x.horaFim) return { msg: `Complete descrição, início e fim do Impacto ${pad(i + 1)}.`, el };
+  if (!so || so === 2) {
+    if (!d.pts) return e(2, 'Informe se teve PTS (sim ou não).', $('cardPts'));
+    if (d.pts === 'S' && (!d.ptsSolicitacao || !d.ptsAbertura)) return e(2, 'Informe o horário de solicitação e de abertura da PTS.', $('cardPts'));
+    if (!d.bloqueio) return e(2, 'Informe se teve bloqueio (sim ou não).', $('cardPts'));
+    if (d.bloqueio === 'S' && (!(d.bloqueioAtivo || '').trim() || !d.bloqueioHora)) return e(2, 'Informe o ativo bloqueado e o horário do bloqueio.', $('cardPts'));
+  }
+  if (!so || so === 3) {
+    if (!d.atividades.length) return e(3, 'Adicione pelo menos uma atividade.', $('btnAddAtv'));
+    for (const [i, a] of d.atividades.entries()) {
+      const el = document.querySelector(`[data-atv="${a.id}"]`), n = `Atividade ${pad(i + 1)}`;
+      if (!a.disciplina || !a.servico) return e(3, `Selecione disciplina e serviço da ${n}.`, el);
+      if (a.disciplina === 'ANDAIME' && SERVICOS_COM_TIPO.includes(a.servico) && !a.tipoAndaime) return e(3, `Selecione o tipo de andaime da ${n}.`, el);
+      if (a.servico === 'OUTROS' && !a.outros.trim()) return e(3, `Descreva o serviço “OUTROS” da ${n}.`, el);
+      if (!a.horaInicio || !a.horaFim) return e(3, `Informe horário de início e fim da ${n}.`, el);
+      if (a.horaInicio === a.horaFim) return e(3, `Início e fim iguais na ${n}.`, el);
+      if (efetivoTotal(a) < 1) return e(3, `Informe o efetivo (quantidade por função) da ${n}.`, el);
+      if (a.fotos.length < CFG.foto.minPorAtividade) return e(3, `Adicione pelo menos ${CFG.foto.minPorAtividade} foto na ${n}.`, el);
+    }
+  }
+  if (!so || so === 4) {
+    for (const [i, x] of d.impactos.entries()) {
+      const el = document.querySelector(`[data-imp="${x.id}"]`);
+      if (!x.descricao.trim() || !x.horaInicio || !x.horaFim) return e(4, `Complete descrição, início e fim do Impacto ${pad(i + 1)}.`, el);
+    }
   }
   return null;
 }
+function mostrarErro(err) {
+  document.querySelectorAll('.card.err').forEach(c => c.classList.remove('err'));
+  $('formError').textContent = err.msg; $('formError').classList.remove('hidden');
+  if (err.el) { err.el.classList.add('err'); setTimeout(() => err.el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50); }
+  toast(err.msg, true);
+}
+
+/* ----- formulário em etapas ----- */
+const N_PASSOS = 4;
+function irPasso(n, rolar = true) {
+  draft.passo = n = Math.max(1, Math.min(N_PASSOS, n)); saveDraft();
+  document.querySelectorAll('#scrRDC .passo').forEach(p => p.classList.toggle('ativo', Number(p.dataset.passo) === n));
+  // etapa "feita" = sem erro nela (mostra o progresso real do preenchimento)
+  document.querySelectorAll('#passos li').forEach((li, i) => {
+    li.classList.toggle('atual', i + 1 === n);
+    li.classList.toggle('feito', i + 1 !== n && !validate(i + 1) && (i + 1 < n || draft.passoMax > i + 1));
+  });
+  draft.passoMax = Math.max(draft.passoMax || 1, n);
+  $('passosBarra').style.width = `${n / N_PASSOS * 100}%`;
+  $('btnPassoVoltar').classList.toggle('hidden', n === 1);
+  $('btnPassoAvancar').classList.toggle('hidden', n === N_PASSOS);
+  $('btnRevisar').classList.toggle('hidden', n !== N_PASSOS);
+  document.querySelector('.passo-nav').classList.toggle('so-um', n === 1);
+  $('formError').classList.add('hidden');
+  document.querySelectorAll('.card.err').forEach(c => c.classList.remove('err'));
+  if (rolar) window.scrollTo(0, 0);
+}
+function avancarPasso() {
+  const n = draft.passo || 1, err = validate(n);
+  if (err) return mostrarErro(err);
+  irPasso(n + 1);
+}
 
 /* ===================== REVISÃO ===================== */
+let galRev = [];
+// Linhas de PTS e bloqueio (revisão e detalhe); horários em "HH:MM"
+function ptsRows(p) {
+  const rows = [['PTS', p.pts == null ? '—' : p.pts ? 'Sim' : 'Não']];
+  if (p.pts) rows.push(['Solicitação da PTS', p.sol || '—'], ['Abertura da PTS', p.abe || '—'], ['Espera pela PTS', p.espera != null ? fmtDur(p.espera) : '—']);
+  rows.push(['Bloqueio', p.bloqueio == null ? '—' : p.bloqueio ? 'Sim' : 'Não']);
+  if (p.bloqueio) rows.push(['Ativo bloqueado', p.ativo || '—'], ['Horário do bloqueio', p.hora || '—']);
+  return rows.map(([k, v]) => `<div class="rv-row"><span>${k}</span><strong>${esc(v)}</strong></div>`).join('');
+}
 function review() {
-  document.querySelectorAll('.card.err').forEach(c => c.classList.remove('err'));
   const err = validate();
-  if (err) {
-    $('formError').textContent = err.msg; $('formError').classList.remove('hidden');
-    if (err.el) { err.el.classList.add('err'); err.el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-    toast(err.msg, true); return;
-  }
+  if (err) { irPasso(err.passo, false); return mostrarErro(err); }
   $('formError').classList.add('hidden');
   const d = draft;
   $('rvHeader').innerHTML = `<div class="resp-head">${avatarLider(d.responsavel, 'lg')}<div><b>${esc(d.responsavel)}</b><span>${esc(funcaoLider(d.responsavel))}</span></div></div>` +
-    [...(d.revisaoDe ? [['Revisão de', d.revisaoDe]] : []), ['Data', fmtDate(d.data)],
+    [...(d.revisaoDe ? [['Revisão de', d.revisaoDe]] : []), ['Contrato', fmtContrato(d.contrato)], ['Data', fmtDate(d.data)],
     ['Área', `${d.area} - ${nomeArea(d.area)}`],
     ['Ativo', d.ativoOutro ? `${d.ativo} (não listado)` : `${d.ativo} · ${descTag(d.ativo)}`], ['OM', d.om]]
     .map(([k, v]) => `<div class="rv-row"><span>${k}</span><strong>${esc(v)}</strong></div>`).join('');
+  // todas as fotos do RDC num só carrossel
+  galRev = d.atividades.flatMap((a, i) => a.fotos.map((f, j) => ({ src: f.dataUrl, titulo: `Atividade ${pad(i + 1)} · foto ${j + 1}`, data: f.ts, gps: f.gps })));
+  const espera = esperaPts(d.ptsSolicitacao, d.ptsAbertura);
+  $('rvPts').innerHTML = ptsRows({
+    pts: d.pts === 'S', sol: d.ptsSolicitacao, abe: d.ptsAbertura, espera,
+    bloqueio: d.bloqueio === 'S', ativo: d.bloqueioAtivo, hora: d.bloqueioHora
+  });
   $('rvActivities').innerHTML = d.atividades.map((a, i) => `<div class="rv-block">
       <h4>ATIVIDADE ${pad(i + 1)} · ${esc(a.disciplina)}</h4>
       <p><b>${esc(a.servico)}</b>${a.tipoAndaime ? ' · ' + esc(a.tipoAndaime) : ''}</p>
@@ -1261,7 +1647,8 @@ function review() {
       <p>${esc(a.horaInicio)} → ${esc(a.horaFim)} · <b>${fmtDur(duration(a.horaInicio, a.horaFim))}</b></p>
       <p><b>Efetivo: ${efetivoTotal(a)}</b> — ${FUNCOES.filter(([k]) => Number((a.efetivo || {})[k]) > 0).map(([k, rot]) => `${rot} ${a.efetivo[k]}`).join(' · ')}</p>
       ${a.observacao ? `<p style="color:var(--muted)">${esc(a.observacao)}</p>` : ''}
-      <div class="rv-thumbs">${a.fotos.map(f => `<img src="${f.dataUrl}" alt="">`).join('')}</div>
+      ${gpsAtividade(a) ? `<p>📍 ${fmtGps(gpsAtividade(a))}</p>` : ''}
+      <div class="rv-thumbs">${a.fotos.map(f => `<img src="${f.dataUrl}" alt="" data-g="${galRev.findIndex(x => x.src === f.dataUrl)}">`).join('')}</div>
     </div>`).join('');
   $('rvImpacts').innerHTML = d.impactos.length ? d.impactos.map((x, i) => `<div class="rv-block">
       <h4>IMPACTO ${pad(i + 1)}</h4><p>${esc(x.descricao)}</p>
@@ -1303,25 +1690,55 @@ const rvRow = ([k, v]) => `<div class="rv-row"><span>${k}</span><strong>${esc(v)
 const semConsultaV5 = e => e.status === 404 ? 'Banco sem a exclusão de RDC — rode supabase/migracao_v5_cancelar_apagar.sql.' : null;
 const semConsultaV4 = e => e.status === 404 ? 'Banco sem a consulta de RDC — rode supabase/migracao_v4_admin_validacao.sql.' : null;
 
-const Q_LIMITE = 30;
-let qOffset = 0, qTimer = null, qSeq = 0;
-function openConsulta() { go('scrConsulta'); carregarConsulta(true); }
+// Galeria de RDC emitidos (tela inicial), com agrupamento opcional
+const Q_LIMITE = 30, Q_LIMITE_GRUPO = 100;
+let qOffset = 0, qTimer = null, qSeq = 0, qRows = [];
+const fmtH = h => h == null ? '' : `${String(Math.round(h * 10) / 10).replace('.', ',')} h`;
+const AGRUPAR = {
+  data: r => [r.data_rdc, fmtDate(r.data_rdc)],
+  contrato: r => [r.contrato || '—', r.contrato ? fmtContrato(r.contrato, r.contrato_nome) : 'Sem contrato'],
+  responsavel: r => [r.responsavel, r.responsavel],
+  area: r => [r.area || '—', r.area || 'Sem área'],
+  ativo: r => [r.ativo, r.ativo_descricao ? `${r.ativo} · ${r.ativo_descricao}` : r.ativo],
+  om: r => [r.om, `OM ${r.om}`],
+  status: r => [r.status, (STATUS_INFO[r.status] || [r.status])[0]]
+};
+// semFoto: dentro do grupo do responsável (foto e nome já estão no título do grupo), a data vem primeiro
+const itemRdc = (r, semFoto) => `<div class="hist-item click${semFoto ? ' sem-foto' : ''}" data-code="${esc(r.codigo)}"><div class="who">${semFoto ? '' : avatarLider(r.responsavel)}<div>${semFoto
+  ? `<b>${fmtDate(r.data_rdc)} · ${esc(r.ativo)}</b>OM ${esc(r.om)}`
+  : `<b>${esc(r.ativo)} · OM ${esc(r.om)}</b>${fmtDate(r.data_rdc)} · ${esc(r.responsavel)}`}<br><span class="meta">${r.contrato ? esc(r.contrato_nome || nomeContrato(r.contrato) || r.contrato) + ' · ' : ''}${esc(r.codigo)}${r.revisao ? ` · rev. ${r.revisao}` : ''}${r.hh != null ? ` · ${fmtH(r.hh)} HH` : ''}${Number(r.horas_impacto) > 0 ? ` · impacto ${fmtH(r.horas_impacto)}` : ''}</span></div></div><div>${statusPill(r.status)}</div></div>`;
+function renderConsulta() {
+  const list = $('qList'), por = $('qAgrupar').value;
+  if (!qRows.length) { list.innerHTML = '<div class="note">Nenhum RDC encontrado.</div>'; return; }
+  if (!AGRUPAR[por]) { list.innerHTML = qRows.map(r => itemRdc(r)).join(''); return; }
+  const grupos = new Map();
+  for (const r of qRows) {
+    const [k, nome] = AGRUPAR[por](r);
+    if (!grupos.has(k)) grupos.set(k, { nome, rows: [] });
+    grupos.get(k).rows.push(r);
+  }
+  const chaves = [...grupos.keys()].sort((a, b) => por === 'data' ? b.localeCompare(a) : a.localeCompare(b, 'pt-BR'));
+  const abertos = chaves.length <= 3;
+  list.innerHTML = chaves.map(k => {
+    const g = grupos.get(k), hh = g.rows.reduce((s, r) => s + (Number(r.hh) || 0), 0), resp = por === 'responsavel';
+    const titulo = resp ? `<span class="who">${avatarLider(k)}<span class="g-nome"><b style="font-weight:800">${esc(g.nome)}</b><span>${esc(funcaoLider(k) || '')}</span></span></span>` : `<span class="g-nome">${esc(g.nome)}</span>`;
+    const rows = resp ? [...g.rows].sort((a, b) => b.data_rdc.localeCompare(a.data_rdc) || b.recebido_em.localeCompare(a.recebido_em)) : g.rows;
+    return `<details class="grp"${abertos ? ' open' : ''}><summary>${titulo}<small>${g.rows.length} RDC${hh ? ` · ${fmtH(hh)} HH` : ''}</small></summary>${rows.map(r => itemRdc(r, resp)).join('')}</details>`;
+  }).join('');
+}
 async function carregarConsulta(reset) {
   const list = $('qList');
-  if (CFG.mode !== 'supabase') {
-    list.innerHTML = '<div class="note">A consulta de RDC emitidos funciona apenas no modo Supabase.</div>';
-    return $('btnQMais').classList.add('hidden');
-  }
-  if (reset) { qOffset = 0; list.innerHTML = '<div class="note">Carregando…</div>'; }
+  if (CFG.mode !== 'supabase') return;
+  const limite = $('qAgrupar').value ? Q_LIMITE_GRUPO : Q_LIMITE;
+  if (reset) { qOffset = 0; qRows = []; list.innerHTML = '<div class="note">Carregando…</div>'; }
   const seq = ++qSeq;
   try {
-    const rows = await sbRpc('rdc_listar', { p_busca: $('qBusca').value.trim() || null, p_status: $('qStatus').value || null, p_limite: Q_LIMITE, p_offset: qOffset });
+    const rows = await sbRpc('rdc_listar', { p_busca: $('qBusca').value.trim() || null, p_status: $('qStatus').value || null, p_limite: limite, p_offset: qOffset });
     if (seq !== qSeq) return; // resposta de uma busca já substituída
-    const html = rows.map(r => `<div class="hist-item click" data-code="${esc(r.codigo)}"><div class="who">${avatarLider(r.responsavel)}<div><b>${esc(r.ativo)} · OM ${esc(r.om)}</b>${fmtDate(r.data_rdc)} · ${esc(r.responsavel)}<br><span style="color:var(--muted)">${esc(r.codigo)}${r.revisao ? ` · rev. ${r.revisao}` : ''}</span></div></div><div>${statusPill(r.status)}</div></div>`).join('');
-    if (reset) list.innerHTML = html || '<div class="note">Nenhum RDC encontrado.</div>';
-    else list.insertAdjacentHTML('beforeend', html);
+    qRows = qRows.concat(rows);
+    renderConsulta();
     qOffset += rows.length;
-    $('btnQMais').classList.toggle('hidden', rows.length < Q_LIMITE);
+    $('btnQMais').classList.toggle('hidden', rows.length < limite);
   } catch (e) {
     if (seq !== qSeq) return;
     list.innerHTML = `<div class="note">${esc(!navigator.onLine ? 'Sem conexão — a consulta precisa de internet.' : semConsultaV4(e) || 'Não foi possível consultar: ' + e.message)}</div>`;
@@ -1345,6 +1762,56 @@ async function fotoUrl(caminho) {
   return fotoUrls.get(caminho);
 }
 const blobToDataUrl = b => new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = () => rej(fr.error); fr.readAsDataURL(b); });
+
+/* ===================== CARROSSEL DE FOTOS ===================== */
+// itens: { src } (foto no aparelho) ou { caminho } (foto no banco), com titulo, data e gps opcionais
+let gal = [], galIdx = 0, galDet = [];
+async function srcGaleria(it) { return it.src || (it.src = await fotoUrl(it.caminho)); }
+function abrirGaleria(itens, idx = 0) {
+  if (!itens.length) return;
+  gal = itens; galIdx = Math.max(0, Math.min(idx, itens.length - 1));
+  $('lbStrip').innerHTML = itens.map((_, i) => `<img data-i="${i}" alt="Foto ${i + 1}">`).join('');
+  $('lbStrip').querySelectorAll('img').forEach(async (img, i) => { try { img.src = await srcGaleria(itens[i]); } catch { img.alt = '✗'; } });
+  $('lb').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+  try { history.pushState({ rdcGaleria: 1 }, ''); } catch { } // o "voltar" do celular fecha as fotos
+  mostrarFoto();
+}
+async function mostrarFoto() {
+  const it = gal[galIdx], i = galIdx;
+  $('lbCount').textContent = `${galIdx + 1} de ${gal.length}`;
+  $('lbPrev').disabled = galIdx === 0; $('lbNext').disabled = galIdx === gal.length - 1;
+  const quando = it.data ? fmtDataHora(typeof it.data === 'number' ? new Date(it.data).toISOString() : it.data) : '';
+  $('lbCap').innerHTML = [`<b>${esc(it.titulo || '')}</b>${quando ? ' · ' + quando : ''}`,
+    it.gps ? `📍 ${fmtGps(it.gps)}${it.gps.fonte === 'foto' ? ' (da foto)' : ''} · <a href="${mapaUrl(it.gps)}" target="_blank" rel="noopener">Abrir no mapa</a>` : '📍 Sem localização'].join('<br>');
+  $('lbStrip').querySelectorAll('img').forEach((im, k) => im.classList.toggle('sel', k === i));
+  const sel = $('lbStrip').children[i]; if (sel) sel.scrollIntoView({ block: 'nearest', inline: 'center' });
+  $('lbImg').removeAttribute('src');
+  try { const s = await srcGaleria(it); if (galIdx === i) $('lbImg').src = s; } catch { $('lbCap').insertAdjacentHTML('afterbegin', 'Foto indisponível<br>'); }
+}
+function passarFoto(d) { const n = galIdx + d; if (n >= 0 && n < gal.length) { galIdx = n; mostrarFoto(); } }
+function fecharGaleria() {
+  if (history.state && history.state.rdcGaleria) return history.back(); // popstate fecha
+  $('lb').classList.add('hidden'); document.body.style.overflow = ''; gal = [];
+}
+function bindGaleria() {
+  window.addEventListener('popstate', () => { if (!$('lb').classList.contains('hidden')) { $('lb').classList.add('hidden'); document.body.style.overflow = ''; gal = []; } });
+  $('lbClose').onclick = fecharGaleria;
+  $('lbPrev').onclick = () => passarFoto(-1);
+  $('lbNext').onclick = () => passarFoto(1);
+  $('lbStrip').addEventListener('click', e => { const im = e.target.closest('[data-i]'); if (im) { galIdx = Number(im.dataset.i); mostrarFoto(); } });
+  document.addEventListener('keydown', e => {
+    if ($('lb').classList.contains('hidden')) return;
+    if (e.key === 'ArrowLeft') passarFoto(-1); else if (e.key === 'ArrowRight') passarFoto(1); else if (e.key === 'Escape') fecharGaleria();
+  });
+  // deslizar o dedo para os lados troca a foto
+  let x0 = null, y0 = 0;
+  $('lbStage').addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  $('lbStage').addEventListener('touchend', e => {
+    if (x0 == null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) passarFoto(dx < 0 ? 1 : -1);
+  });
+}
 
 let detalhe = null;
 async function openDetalhe(code) {
@@ -1370,8 +1837,19 @@ function renderDetalhe() {
     d.SubstituidoPor ? `<span>Substituído pelo <a href="#" data-code="${esc(d.SubstituidoPor)}">${esc(d.SubstituidoPor)}</a></span>` : ''
   ].join('');
   $('dtHeader').innerHTML = `<div class="resp-head">${avatarLider(d.Responsavel, 'lg')}<div><b>${esc(d.Responsavel)}</b><span>${esc(d.ResponsavelFuncao || funcaoLider(d.Responsavel))}</span></div></div>` +
-    [['Data', fmtDate(d.DataRDC)], ['Área', d.Area || '—'],
+    [['Contrato', fmtContrato(d.Contrato, d.ContratoNome)], ['Data', fmtDate(d.DataRDC)], ['Área', d.Area || '—'],
     ['Ativo', d.AtivoDescricao ? `${d.Ativo} · ${d.AtivoDescricao}` : d.Ativo], ['OM', d.OM]].map(rvRow).join('');
+  const minutos = (a, b) => a && b ? Math.round((Date.parse(b) - Date.parse(a)) / 60000) : null;
+  $('dtPts').innerHTML = ptsRows({
+    pts: d.Pts, sol: fmtHora(d.PtsSolicitacao), abe: fmtHora(d.PtsAbertura), espera: minutos(d.PtsSolicitacao, d.PtsAbertura),
+    bloqueio: d.Bloqueio, ativo: d.BloqueioAtivo, hora: fmtHora(d.BloqueioHora)
+  });
+  // carrossel com todas as fotos do RDC, na ordem das atividades
+  galDet = d.atividades.flatMap(a => a.fotos.map((f, j) => ({
+    caminho: f.Caminho, titulo: `Atividade ${pad(a.Ordem)} · foto ${j + 1}`, data: f.DataHoraFoto,
+    gps: f.Latitude != null ? { lat: f.Latitude, lng: f.Longitude, acc: f.PrecisaoM, fonte: f.GpsFonte } : null
+  })));
+  const gpsDet = a => { const f = [...a.fotos].reverse().find(x => x.Latitude != null); return f ? { lat: f.Latitude, lng: f.Longitude, acc: f.PrecisaoM } : null; };
   $('dtActivities').innerHTML = d.atividades.map(a => `<div class="rv-block">
       <h4>ATIVIDADE ${pad(a.Ordem)} · ${esc(a.Disciplina)}</h4>
       <p><b>${esc(a.Servico)}</b>${a.TipoAndaime ? ' · ' + esc(a.TipoAndaime) : ''}</p>
@@ -1379,7 +1857,8 @@ function renderDetalhe() {
       <p>${fmtHora(a.InicioAtividade)} → ${fmtHora(a.FimAtividade)} · <b>${fmtDur(a.DuracaoMin)}</b></p>
       <p><b>Efetivo: ${a.EfetivoTotal}</b> — ${FUNCOES.filter(([, , c]) => a[c] > 0).map(([, rot, c]) => `${rot} ${a[c]}`).join(' · ')}</p>
       ${a.Observacao ? `<p style="color:var(--muted)">${esc(a.Observacao)}</p>` : ''}
-      <div class="rv-thumbs">${a.fotos.map(f => `<img data-foto="${esc(f.Caminho)}" alt="">`).join('')}</div>
+      ${gpsDet(a) ? `<p>📍 ${fmtGps(gpsDet(a))} · <a href="${mapaUrl(gpsDet(a))}" target="_blank" rel="noopener">Mapa</a></p>` : ''}
+      <div class="rv-thumbs">${a.fotos.map(f => `<img data-foto="${esc(f.Caminho)}" data-g="${galDet.findIndex(x => x.caminho === f.Caminho)}" alt="">`).join('')}</div>
     </div>`).join('') || '<div class="note">Sem atividades.</div>';
   $('dtImpacts').innerHTML = d.impactos.length ? d.impactos.map(x => `<div class="rv-block">
       <h4>IMPACTO ${pad(x.Ordem)}</h4><p>${esc(x.TipoImpacto)}</p>
@@ -1445,9 +1924,9 @@ async function apagarRdc(btn) {
     await Store.set('history', hist);
     toast(fotosOk ? 'RDC apagado.' : 'RDC apagado. Algumas fotos ficaram no armazenamento e serão removidas na próxima exclusão.', !fotosOk);
     detalhe = null;
-    const to = BACK.scrDetalhe || 'scrConsulta';
+    const to = BACK.scrDetalhe || 'scrInicio';
     go(to);
-    if (to === 'scrConsulta') carregarConsulta(true); else renderHome();
+    if (to === 'scrInicio') { renderHome(); carregarConsulta(true); } else if (to === 'scrResp') carregarResp();
   } catch (e) { toast(semConsultaV5(e) || 'Não foi possível apagar: ' + e.message, true); }
   finally { busy(null); }
 }
@@ -1468,11 +1947,17 @@ async function iniciarRevisao(btn) {
       id: uid(), disciplina: a.Disciplina, servico: a.Servico, tipoAndaime: a.TipoAndaime || '', outros: a.DescricaoOutros || '',
       observacao: a.Observacao || '', horaInicio: fmtHora(a.InicioAtividade), horaFim: fmtHora(a.FimAtividade),
       efetivo: Object.fromEntries(FUNCOES.map(([k, , c]) => [k, Number(a[c]) || 0])),
-      fotos: await Promise.all(a.fotos.map(async f => ({ id: uid(), dataUrl: await blobToDataUrl(await fotoBlob(f.Caminho)), ts: Date.parse(f.DataHoraFoto) || Date.now() })))
+      fotos: await Promise.all(a.fotos.map(async f => ({
+        id: uid(), dataUrl: await blobToDataUrl(await fotoBlob(f.Caminho)), ts: Date.parse(f.DataHoraFoto) || Date.now(),
+        ...(f.Latitude != null ? { gps: { lat: f.Latitude, lng: f.Longitude, acc: f.PrecisaoM, fonte: f.GpsFonte } } : {})
+      })))
     });
+    const sn = v => v == null ? '' : v ? 'S' : 'N'; // RDC antigo (sem PTS/bloqueio) pede a resposta de novo
     draft = {
-      responsavel: d.Responsavel, data: d.DataRDC, area: (d.Area || '').split(' - ')[0], ativo: d.Ativo,
+      responsavel: d.Responsavel, contrato: d.Contrato || '', data: d.DataRDC, area: (d.Area || '').split(' - ')[0], ativo: d.Ativo,
       ativoOutro: d.AtivoDescricao === 'OUTRO (não listado)', om: d.OM, atividades,
+      pts: sn(d.Pts), ptsSolicitacao: fmtHora(d.PtsSolicitacao), ptsAbertura: fmtHora(d.PtsAbertura),
+      bloqueio: sn(d.Bloqueio), bloqueioAtivo: d.BloqueioAtivo || '', bloqueioHora: fmtHora(d.BloqueioHora),
       impactos: d.impactos.map(x => ({ id: uid(), descricao: x.TipoImpacto, horaInicio: fmtHora(x.InicioImpacto), horaFim: fmtHora(x.FimImpacto) })),
       revisaoDe: d.Title, revisaoMotivo: d.ObsValidacao || ''
     };
@@ -1480,6 +1965,66 @@ async function iniciarRevisao(btn) {
     openForm();
   } catch (e) { toast('Não foi possível carregar o RDC: ' + e.message, true); }
   finally { busy(null); }
+}
+
+/* ===================== RESPONSÁVEIS: EMISSÃO, HH E IMPACTO ===================== */
+const isoDia = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const semV8 = e => e.status === 404 ? 'Banco sem o painel dos responsáveis — rode supabase/migracao_v8_pts_gps_painel.sql.' : null;
+function periodoAtalho(p) {
+  const hoje = new Date(); let ini = new Date(hoje), fim = new Date(hoje);
+  if (p === 'ontem') { ini.setDate(hoje.getDate() - 1); fim = new Date(ini); }
+  else if (p === '7') ini.setDate(hoje.getDate() - 6);
+  else if (p === 'mes') ini = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  $('rIni').value = isoDia(ini); $('rFim').value = isoDia(fim);
+  carregarResp(p);
+}
+function openResp() { go('scrResp'); if (!$('rIni').value) periodoAtalho('hoje'); else carregarResp(); }
+let rSeq = 0;
+async function carregarResp(atalho) {
+  $('rAtalhos').querySelectorAll('button').forEach(b => b.classList.toggle('sel', b.dataset.p === atalho));
+  const ini = $('rIni').value, fim = $('rFim').value, lista = $('rLista');
+  const dias = [];
+  for (let d = new Date(ini + 'T12:00:00'); ini && fim && isoDia(d) <= fim && dias.length <= 366; d.setDate(d.getDate() + 1)) dias.push({ iso: isoDia(d), dom: d.getDay() === 0, n: d.getDate() });
+  if (!ini || !fim || !dias.length || dias.length > 366) { $('rKpis').innerHTML = ''; lista.innerHTML = '<div class="card note">Escolha um período de até 1 ano.</div>'; return; }
+  lista.innerHTML = '<div class="card note">Carregando…</div>';
+  const seq = ++rSeq;
+  let rows;
+  try { rows = await sbRpc('rdc_painel_responsaveis', { p_ini: ini, p_fim: fim }); }
+  catch (e) {
+    if (seq !== rSeq) return;
+    $('rKpis').innerHTML = '';
+    lista.innerHTML = `<div class="card note">${esc(!navigator.onLine ? 'Sem conexão — o painel precisa de internet.' : semV8(e) || 'Não foi possível consultar: ' + e.message)}</div>`;
+    return;
+  }
+  if (seq !== rSeq) return;
+
+  // por responsável: líderes cadastrados + quem mais aparecer nos RDC
+  const por = new Map(LIDERES.map(([n]) => [n, { nome: n, qtd: 0, hh: 0, himp: 0, hhimp: 0, dias: new Set() }]));
+  for (const r of rows) {
+    if (!por.has(r.responsavel)) por.set(r.responsavel, { nome: r.responsavel, qtd: 0, hh: 0, himp: 0, hhimp: 0, dias: new Set() });
+    const p = por.get(r.responsavel);
+    p.qtd += r.qtd_rdc; p.hh += Number(r.hh) || 0; p.himp += Number(r.horas_impacto) || 0; p.hhimp += Number(r.hh_impacto) || 0; p.dias.add(r.data_rdc);
+  }
+  // domingo só conta como falta se não for o único dia escolhido
+  const umDia = dias.length === 1, diasUteis = dias.filter(d => umDia || !d.dom);
+  const pessoas = [...por.values()].map(p => ({ ...p, faltas: diasUteis.filter(d => !p.dias.has(d.iso)).length }))
+    .sort((a, b) => b.faltas - a.faltas || a.nome.localeCompare(b.nome, 'pt-BR'));
+  const soma = k => pessoas.reduce((s, p) => s + p[k], 0);
+  const emitiram = pessoas.filter(p => p.qtd > 0).length;
+  $('rKpis').innerHTML = [
+    [umDia ? 'Emitiram RDC' : 'Com RDC no período', `${emitiram} de ${pessoas.length}`], ['RDC emitidos', soma('qtd')],
+    ['HH trabalhado', fmtH(soma('hh'))], ['HH de impacto', fmtH(soma('hhimp'))]
+  ].map(([k, v]) => `<div class="kpi"><span>${k}</span><b>${esc(v)}</b></div>`).join('');
+
+  lista.innerHTML = pessoas.map(p => {
+    const pill = umDia ? (p.qtd ? '<span class="pill ok">Emitiu</span>' : '<span class="pill rev">Não emitiu</span>')
+      : `<span class="pill ${!p.faltas ? 'ok' : p.qtd ? 'wait' : 'rev'}">${diasUteis.length - p.faltas} de ${diasUteis.length} dias</span>`;
+    const strip = !umDia && dias.length <= 31 ? `<div class="dias">${dias.map(d => `<span class="dia ${p.dias.has(d.iso) ? 'ok' : d.dom ? 'fds' : ''}" title="${fmtDate(d.iso)}">${d.n}</span>`).join('')}</div>` : '';
+    return `<div class="card resp-card" data-resp="${esc(p.nome)}" role="button" tabindex="0">
+      <div class="resp-head">${avatarLider(p.nome)}<div><b>${esc(p.nome)}</b><span>${esc(funcaoLider(p.nome) || '—')}</span></div>${pill}</div>
+      <div class="resp-nums"><div><b>${p.qtd}</b>RDC</div><div><b>${fmtH(p.hh) || '0 h'}</b>HH trabalhado</div><div><b>${fmtH(p.hhimp) || '0 h'}</b>HH impacto${p.himp ? ` (${fmtH(p.himp)} parado)` : ''}</div></div>
+      ${strip}</div>`;
+  }).join('') + (!umDia && dias.length <= 31 ? '<div class="legenda"><span><i style="background:var(--ok-bg)"></i>com RDC</span><span><i style="background:var(--danger-bg)"></i>sem RDC</span><span><i style="background:#F2F4F7"></i>domingo</span></div>' : '');
 }
 
 /* ===================== SINCRONIZAÇÃO SHAREPOINT (administrador) ===================== */
@@ -1607,20 +2152,43 @@ async function boot() {
   try { await initAuth(); } catch (e) { console.warn(e); toast(e.message, true); }
   bindForm();
 
-  $('btnBack').onclick = () => { const to = BACK[current]; go(to); if (to === 'scrConsulta') carregarConsulta(true); };
+  $('btnBack').onclick = () => {
+    if (current === 'scrRDC' && (draft.passo || 1) > 1) return irPasso(draft.passo - 1); // no formulário, volta uma etapa
+    const de = current, to = BACK[current]; go(to);
+    if (to === 'scrInicio' && de === 'scrDetalhe') carregarConsulta(true); // a situação pode ter mudado (validação)
+    if (to === 'scrResp') carregarResp();
+  };
   $('btnConfig').onclick = () => requireAdmin(openConfig);
   $('btnAdminLogin').onclick = adminLogin;
   $('aSenha').addEventListener('keydown', e => { if (e.key === 'Enter') adminLogin(); });
   $('btnAdminSair').onclick = () => { setAdmin(null); go('scrInicio'); toast('Saiu do modo administrador.'); };
-  $('btnConsulta').onclick = openConsulta;
+  $('btnResp').onclick = openResp;
+  $('rAtalhos').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (b) periodoAtalho(b.dataset.p); });
+  $('rIni').onchange = $('rFim').onchange = () => carregarResp();
+  // tocar num responsável abre a lista de RDC dele, agrupada por data
+  const verResp = e => {
+    const c = e.target.closest('[data-resp]'); if (!c || (e.type === 'keydown' && e.key !== 'Enter')) return;
+    $('qBusca').value = c.dataset.resp; $('qStatus').value = ''; $('qAgrupar').value = 'data';
+    go('scrInicio'); carregarConsulta(true);
+  };
+  $('rLista').addEventListener('click', verResp);
+  $('rLista').addEventListener('keydown', verResp);
   $('qBusca').addEventListener('input', () => { clearTimeout(qTimer); qTimer = setTimeout(() => carregarConsulta(true), 400); });
   $('qStatus').onchange = () => carregarConsulta(true);
+  try { $('qAgrupar').value = localStorage.getItem('rdc-agrupar') || ''; } catch { }
+  $('qAgrupar').onchange = () => {
+    try { localStorage.setItem('rdc-agrupar', $('qAgrupar').value); } catch { }
+    // agrupar busca mais RDC de uma vez (grupos mais completos)
+    if ($('qAgrupar').value && qRows.length < Q_LIMITE_GRUPO && !$('btnQMais').classList.contains('hidden')) carregarConsulta(true); else renderConsulta();
+  };
   $('btnQMais').onclick = () => carregarConsulta(false);
   const abrirRdc = e => { const it = e.target.closest('[data-code]'); if (it) { e.preventDefault(); openDetalhe(it.dataset.code); } };
   $('qList').addEventListener('click', abrirRdc);
   $('histList').addEventListener('click', abrirRdc);
   $('dtStatus').addEventListener('click', abrirRdc);
-  $('dtActivities').addEventListener('click', e => { if (e.target.matches('img[src]')) window.open(e.target.src, '_blank'); });
+  $('dtActivities').addEventListener('click', e => { const im = e.target.closest('img[data-g]'); if (im) abrirGaleria(galDet, Number(im.dataset.g)); });
+  $('rvActivities').addEventListener('click', e => { const im = e.target.closest('img[data-g]'); if (im) abrirGaleria(galRev, Number(im.dataset.g)); });
+  bindGaleria();
   $('btnValidar').onclick = () => validar('Validado');
   $('btnLiberarRev').onclick = () => validar('Em revisão');
   $('btnCancelarRdc').onclick = () => validar('Cancelado');
@@ -1630,8 +2198,8 @@ async function boot() {
   $('btnLogin').onclick = () => login();
   $('btnNovo').onclick = $('btnNovo2').onclick = async () => { draft = newDraft(); await Store.set('draft', draft); openForm(); };
   $('btnContinuar').onclick = async () => { draft = await Store.get('draft'); openForm(); };
-  $('btnHome').onclick = () => { go('scrInicio'); renderHome(); };
-  $('btnVoltarEditar').onclick = () => go('scrRDC');
+  $('btnHome').onclick = () => { go('scrInicio'); renderHome(); carregarConsulta(true); };
+  $('btnVoltarEditar').onclick = () => { go('scrRDC'); irPasso(draft.passo || N_PASSOS); };
   $('chkConfirm').onchange = e => $('btnEnviar').disabled = !e.target.checked;
   $('btnEnviar').onclick = submit;
   $('btnSync').onclick = async () => {
@@ -1655,10 +2223,11 @@ async function boot() {
   };
   $('btnTest').onclick = testConnection;
   $('btnProvision').onclick = provision;
-  window.addEventListener('online', () => { renderHome(); processQueue(false); });
+  window.addEventListener('online', () => { renderHome(); processQueue(false).then(r => { if (r.sent && current === 'scrInicio') carregarConsulta(true); }); });
   window.addEventListener('offline', renderHome);
 
   await renderHome();
+  carregarConsulta(true);
   atualizarCfgGlobal();
   if (navigator.onLine && (CFG.mode !== 'graph' || account)) processQueue(false);
 }

@@ -97,8 +97,39 @@ async function guardar(x: ItemSP) {
   if (error) throw error;
 }
 
+/* ---------- colunas: cria as das versões novas do app; campo sem coluna não trava a cópia ---------- */
+const col = (name: string, tipo: Record<string, unknown>) => ({ name, ...tipo });
+const COLUNAS_NOVAS: Record<string, Record<string, unknown>[]> = {
+  [LISTAS.cabecalho]: [col('Pts', { boolean: {} }), col('PtsSolicitacao', { dateTime: { format: 'dateTime' } }),
+    col('PtsAbertura', { dateTime: { format: 'dateTime' } }), col('Bloqueio', { boolean: {} }), col('BloqueioAtivo', { text: {} }),
+    col('BloqueioHora', { dateTime: { format: 'dateTime' } }), col('Contrato', { text: {} }), col('ContratoNome', { text: {} })],
+  [LISTAS.atividades]: [col('Contrato', { text: {} })],
+  [LISTAS.impactos]: [col('Contrato', { text: {} })],
+  [LISTAS.fotos]: [col('Latitude', { number: {} }), col('Longitude', { number: {} }), col('PrecisaoM', { number: {} }), col('GpsFonte', { text: {} })],
+};
+const colunasCache = new Map<string, Set<string>>();
+async function colunas(lista: string) {
+  let tem = colunasCache.get(lista);
+  if (!tem) {
+    const base = `/sites/${await siteId()}/lists/${encodeURIComponent(lista)}/columns`;
+    const r = await graph(`${base}?$select=name&$top=500`);
+    tem = new Set<string>((r.value || []).map((c: { name: string }) => c.name));
+    for (const c of COLUNAS_NOVAS[lista] || []) {
+      if (tem.has(c.name as string)) continue;
+      try { await graph(base, { method: 'POST', body: c }); tem.add(c.name as string); }
+      catch (e) { console.warn(`coluna ${lista}.${c.name} não criada: ${(e as Error).message}`); }
+    }
+    colunasCache.set(lista, tem);
+  }
+  return tem;
+}
+async function soColunas(lista: string, fields: Record<string, unknown>) {
+  const tem = await colunas(lista);
+  return Object.fromEntries(Object.entries(fields).filter(([k]) => k === 'Title' || tem.has(k)));
+}
+
 async function criarItem(rdc: string, lista: string, fields: Record<string, unknown>, extra: Partial<ItemSP> = {}) {
-  const it = await graph(await itens(lista), { method: 'POST', body: { fields: semVazios(fields) } });
+  const it = await graph(await itens(lista), { method: 'POST', body: { fields: semVazios(await soColunas(lista, fields)) } });
   await guardar({ titulo: String(fields.Title), rdc_codigo: rdc, lista, item_id: it.id, ...extra });
 }
 
@@ -114,7 +145,7 @@ async function sincronizar(codigo: string) {
   let atualizado = false;
   if (h) {
     try {
-      await graph(`${await itens(LISTAS.cabecalho)}/${h.item_id}/fields`, { method: 'PATCH', body: semNulos(d.cabecalho) });
+      await graph(`${await itens(LISTAS.cabecalho)}/${h.item_id}/fields`, { method: 'PATCH', body: semNulos(await soColunas(LISTAS.cabecalho, d.cabecalho)) });
       atualizado = true;
     } catch (e) { ignora404(e); } // apagado à mão no SharePoint: cria de novo
   }

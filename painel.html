@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Painel RDC</title>
+<style>
+:root{
+  color-scheme:light;
+  --navy:#0B2545; --navy-2:#13315C; --accent:#F2994A;
+  --page:#F2F4F7; --surface:#fcfcfb; --card:#FFFFFF; --line:#E1E0D9; --line-2:#D0D5DD;
+  --ink:#101828; --ink-2:#52514e; --muted:#667085; --axis:#c3c2b7;
+  --s1:#2a78d6; --s2:#eb6834;
+  --good:#0ca30c; --good-bg:#ECFDF3; --good-ink:#067647;
+  --crit:#d03b3b; --crit-bg:#FEF3F2; --warn-bg:#FFF4EA; --warn-ink:#9C4A00;
+  --rest:#EAECF0; --hover:rgba(19,49,92,.06); --overlay:rgba(11,37,69,.55);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --page:#0d0d0d; --surface:#1a1a19; --card:#1a1a19; --line:#2c2c2a; --line-2:#383835;
+    --ink:#ffffff; --ink-2:#c3c2b7; --muted:#9a9890; --axis:#383835;
+    --s1:#3987e5; --s2:#d95926;
+    --good-bg:#0f2a14; --good-ink:#5fd35f; --crit-bg:#331414; --warn-bg:#2e2010; --warn-ink:#fdba74;
+    --rest:#262624; --hover:rgba(255,255,255,.06); --overlay:rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#0d0d0d; --surface:#1a1a19; --card:#1a1a19; --line:#2c2c2a; --line-2:#383835;
+  --ink:#ffffff; --ink-2:#c3c2b7; --muted:#9a9890; --axis:#383835;
+  --s1:#3987e5; --s2:#d95926;
+  --good-bg:#0f2a14; --good-ink:#5fd35f; --crit-bg:#331414; --warn-bg:#2e2010; --warn-ink:#fdba74;
+  --rest:#262624; --hover:rgba(255,255,255,.06); --overlay:rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--page);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+button,input,select{font:inherit;color:inherit}
+.hidden{display:none!important}
+header{background:var(--navy);color:#fff;padding:12px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20}
+header h1{margin:0;font-size:18px;letter-spacing:.04em}
+header h1 small{display:block;font-size:12px;font-weight:500;letter-spacing:0;color:rgba(255,255,255,.75)}
+header .sp{flex:1}
+header .who{font-size:13px;color:rgba(255,255,255,.85)}
+header button{background:rgba(255,255,255,.12);border:0;color:#fff;border-radius:8px;padding:8px 12px;cursor:pointer;font-weight:600}
+main{max-width:1320px;margin:0 auto;padding:20px 24px 48px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+h2{font-size:15px;margin:0 0 4px;color:var(--ink)}
+.sub{color:var(--muted);font-size:12px;margin:0 0 12px}
+.lbl{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:4px}
+.ctl{height:38px;border:1px solid var(--line-2);border-radius:8px;background:var(--card);padding:0 10px;min-width:0;width:100%}
+.btn{height:38px;border:0;border-radius:8px;padding:0 14px;font-weight:700;cursor:pointer;white-space:nowrap}
+.btn.pri{background:var(--navy);color:#fff}
+:root[data-theme="dark"] .btn.pri{background:#3987e5}
+.btn.gh{background:transparent;border:1px solid var(--line-2);color:var(--ink)}
+.btn.dan{background:var(--crit);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+/* login */
+.login{max-width:380px;margin:12vh auto 0}
+.login .f{margin-bottom:12px}
+.err{background:var(--crit-bg);color:var(--crit);border-radius:8px;padding:10px 12px;font-weight:600;margin:8px 0}
+/* filtros */
+.filtros{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:16px}
+.filtros .f{flex:1 1 150px;min-width:140px}
+.filtros .f.data{flex:0 1 160px}
+.presets{display:flex;gap:6px;flex-wrap:wrap}
+.presets button{height:38px;border:1px solid var(--line-2);background:var(--card);border-radius:8px;padding:0 10px;cursor:pointer;font-weight:600}
+.presets button.sel{background:var(--navy);border-color:var(--navy);color:#fff}
+.carregando{opacity:.45;transition:opacity .15s}
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.kpi span{display:block;font-size:12px;color:var(--muted);font-weight:600}
+.kpi b{display:block;font-size:26px;font-weight:650;margin-top:2px}
+.kpi small{color:var(--muted);font-size:12px}
+.kpi.hero b{font-size:34px}
+/* grade */
+.grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
+@media (max-width:980px){.grid{grid-template-columns:1fr}}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--ink-2);margin:0 0 6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+svg text{fill:var(--muted);font-size:11px}
+.chart{position:relative}
+.chart svg{display:block;width:100%;overflow:visible}
+.chart .hit{fill:transparent;cursor:pointer}
+.chart .hit:hover+.bar,.chart g.col:hover .bar{filter:brightness(1.12)}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--surface);border-radius:8px;padding:8px 10px;font-size:12px;z-index:50;box-shadow:0 4px 16px rgba(0,0,0,.2);max-width:260px}
+.tip b{font-size:14px}
+.tip .k{display:inline-block;width:10px;height:2px;margin-right:6px;vertical-align:middle}
+.empty{color:var(--muted);padding:24px 0;text-align:center}
+/* tabelas */
+.tbl-wrap{overflow:auto;max-height:560px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{position:sticky;top:0;background:var(--surface);font-size:12px;color:var(--ink-2);cursor:pointer;user-select:none;z-index:1}
+th.num,td.num{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--hover)}
+.pill{display:inline-block;font-size:12px;font-weight:700;border-radius:99px;padding:2px 9px;background:var(--rest);color:var(--ink-2)}
+.pill.ok{background:var(--good-bg);color:var(--good-ink)}
+.pill.wait{background:var(--warn-bg);color:var(--warn-ink)}
+.pill.rev{background:var(--crit-bg);color:var(--crit)}
+/* emissão por dia */
+table.mat{width:auto}
+.mat td,.mat th{padding:0;border:0;text-align:center}
+.mat th{position:static;background:none;font-weight:600;color:var(--muted);font-size:11px;padding:2px 0;cursor:default}
+.mat th.nome,.mat td.nome{text-align:left;padding-right:12px;font-weight:600;color:var(--ink);font-size:13px;white-space:nowrap}
+.mat td.nome small{display:block;font-weight:400;color:var(--muted);font-size:11px}
+.mat .c{width:22px;height:22px;margin:1px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.mat .c.ok{background:var(--good-bg);color:var(--good-ink)}
+.mat .c.no{background:var(--crit-bg);color:var(--crit)}
+.mat .c.dom{background:var(--rest);color:var(--muted)}
+.mat tbody tr{cursor:default}
+.mat-leg{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:8px}
+.secao{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:24px 0 10px}
+.secao h2{font-size:16px}
+/* detalhe */
+.modal{position:fixed;inset:0;background:var(--overlay);z-index:40;display:flex;justify-content:flex-end}
+.painel-det{width:min(640px,100%);height:100%;overflow:auto;background:var(--page);padding:0 0 32px}
+.det-top{position:sticky;top:0;background:var(--navy);color:#fff;padding:14px 18px;display:flex;align-items:center;gap:12px;z-index:2}
+.det-top b{flex:1}
+.det-top button{background:rgba(255,255,255,.14);border:0;color:#fff;border-radius:8px;width:36px;height:36px;font-size:20px;cursor:pointer}
+.det-body{padding:16px 18px}
+.det-body .card{margin-bottom:12px}
+.rv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line)}
+.rv:last-child{border-bottom:0}
+.rv span{color:var(--muted)}
+.rv strong{text-align:right}
+.blk{padding:10px 0;border-bottom:1px solid var(--line)}
+.blk:last-child{border-bottom:0}
+.blk h4{margin:0 0 4px;font-size:13px}
+.blk p{margin:2px 0}
+.thumbs{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.thumbs img{width:64px;height:64px;object-fit:cover;border-radius:8px;background:var(--rest);cursor:zoom-in}
+textarea.ctl{height:auto;min-height:70px;padding:8px 10px}
+.acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+a{color:var(--s1)}
+/* carrossel */
+.lb{position:fixed;inset:0;background:#0B0F17;color:#fff;z-index:60;display:flex;flex-direction:column}
+.lb-top{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-weight:700}
+.lb-top button{width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:24px;cursor:pointer}
+.lb-st{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center}
+.lb-st img{max-width:100%;max-height:100%;object-fit:contain}
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:52px;height:72px;border:0;border-radius:12px;background:rgba(255,255,255,.14);color:#fff;font-size:36px;cursor:pointer}
+.lb-nav.p{left:12px}.lb-nav.n{right:12px}
+.lb-nav:disabled{opacity:.2}
+.lb-cap{padding:10px 16px 16px;font-size:13px;color:#D0D5DD}
+.lb-cap a{color:#FDBA74}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:10px;font-weight:600;z-index:70}
+.toast.err{background:var(--crit);color:#fff}
+.nota{color:var(--muted);font-size:12px;margin-top:8px}
+@media (max-width:640px){main{padding:16px}header{padding:12px 16px}.filtros .f,.filtros .f.data{flex:1 1 100%}}
+</style>
+</head>
+<body>
+<header>
+  <h1>RDC · Painel de controle<small>Relatório Diário de Campo — administradores</small></h1>
+  <div class="sp"></div>
+  <span class="who hidden" id="who"></span>
+  <button id="btnTema" title="Alternar tema claro/escuro">◐</button>
+  <button class="hidden" id="btnSair">Sair</button>
+</header>
+
+<main>
+  <!-- LOGIN -->
+  <section class="login card" id="scrLogin">
+    <h2>Acesso do administrador</h2>
+    <p class="sub">Use o mesmo nome e senha de administrador do app RDC.</p>
+    <div class="f"><label class="lbl" for="lNome">Nome</label><input class="ctl" id="lNome" autocomplete="username"></div>
+    <div class="f"><label class="lbl" for="lSenha">Senha</label><input class="ctl" id="lSenha" type="password" autocomplete="current-password"></div>
+    <div class="err hidden" id="lErr"></div>
+    <button class="btn pri" id="btnEntrar" style="width:100%">Entrar</button>
+  </section>
+
+  <!-- PAINEL -->
+  <section class="hidden" id="scrPainel">
+    <div class="filtros">
+      <div class="f data"><label class="lbl" for="fIni">De</label><input class="ctl" type="date" id="fIni"></div>
+      <div class="f data"><label class="lbl" for="fFim">Até</label><input class="ctl" type="date" id="fFim"></div>
+      <div><span class="lbl">Período</span><div class="presets" id="presets">
+        <button data-p="hoje">Hoje</button><button data-p="7">7 dias</button><button data-p="30">30 dias</button><button data-p="mes">Este mês</button><button data-p="mesant">Mês anterior</button>
+      </div></div>
+      <div class="f"><label class="lbl" for="fContrato">Contrato</label><select class="ctl" id="fContrato"></select></div>
+      <div class="f"><label class="lbl" for="fArea">Área</label><select class="ctl" id="fArea"></select></div>
+      <div class="f"><label class="lbl" for="fResp">Responsável</label><select class="ctl" id="fResp"></select></div>
+      <div class="f"><label class="lbl" for="fDisc">Disciplina</label><select class="ctl" id="fDisc"></select></div>
+      <div class="f"><label class="lbl" for="fStatus">Situação</label>
+        <select class="ctl" id="fStatus">
+          <option value="validos">Válidos (sem cancelados e versões antigas)</option>
+          <option value="Enviado">Aguardando validação</option>
+          <option value="Validado">Validado</option>
+          <option value="Em revisão">Revisão liberada</option>
+          <option value="Cancelado">Cancelado</option>
+          <option value="Substituído">Substituído</option>
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <div class="f" style="flex:2 1 200px"><label class="lbl" for="fBusca">Buscar</label><input class="ctl" id="fBusca" type="search" placeholder="OM, ativo, código…"></div>
+      <button class="btn gh" id="btnAtualizar">Atualizar</button>
+      <button class="btn pri" id="btnExcel">Exportar Excel</button>
+    </div>
+
+    <div id="conteudo">
+      <div class="kpis" id="kpis"></div>
+
+      <div class="grid">
+        <div class="card">
+          <h2>HH trabalhado e HH de impacto por <span id="hhPor">dia</span></h2>
+          <p class="sub">Homem-hora = efetivo × duração. Impacto = duração do impacto × maior efetivo do RDC.</p>
+          <div class="legend"><span><i style="background:var(--s1)"></i>HH trabalhado</span><span><i style="background:var(--s2)"></i>HH de impacto</span></div>
+          <div class="chart" id="chDia"></div>
+        </div>
+        <div class="card">
+          <h2>HH trabalhado por disciplina</h2>
+          <p class="sub">Soma das atividades no filtro.</p>
+          <div class="chart" id="chDisc"></div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h2>HH trabalhado por contrato</h2>
+          <p class="sub">Soma dos RDC no filtro.</p>
+          <div class="chart" id="chContrato"></div>
+          <h2 style="margin-top:18px">Horas de impacto por responsável</h2>
+          <p class="sub">Tempo parado registrado nos RDC.</p>
+          <div class="chart" id="chImpResp"></div>
+        </div>
+        <div class="card">
+          <h2>PTS e bloqueio</h2>
+          <p class="sub">RDC que informaram PTS e bloqueio (versão nova do app).</p>
+          <div id="ptsResumo"></div>
+        </div>
+      </div>
+
+      <div class="secao"><div><h2>Emissão por responsável</h2><p class="sub" style="margin:0">Quem emitiu RDC em cada dia do período. Domingo sem RDC não conta como falta.</p></div></div>
+      <div class="card"><div class="tbl-wrap" style="max-height:none;border:0" id="matriz"></div></div>
+
+      <div class="secao"><div><h2>Resumo por responsável</h2></div></div>
+      <div class="tbl-wrap" id="tblResp"></div>
+
+      <div class="secao"><div><h2>Impactos</h2><p class="sub" style="margin:0">Maiores primeiro.</p></div></div>
+      <div class="tbl-wrap" id="tblImp" style="max-height:360px"></div>
+
+      <div class="secao"><div><h2>RDC</h2><p class="sub" style="margin:0" id="rdcCount"></p></div></div>
+      <div class="tbl-wrap" id="tblRdc"></div>
+    </div>
+  </section>
+</main>
+
+<div class="modal hidden" id="modal"><div class="painel-det" id="det"></div></div>
+<div class="lb hidden" id="lb">
+  <div class="lb-top"><span id="lbN"></span><button id="lbX" aria-label="Fechar">×</button></div>
+  <div class="lb-st"><button class="lb-nav p" id="lbP" aria-label="Anterior">‹</button><img id="lbImg" alt=""><button class="lb-nav n" id="lbNx" aria-label="Próxima">›</button></div>
+  <div class="lb-cap" id="lbCap"></div>
+</div>
+<div class="tip hidden" id="tip"></div>
+<div class="toast hidden" id="toast"></div>
+
+<script>
+/* Mesmo projeto Supabase do app (index.html → CONFIG). Os dados só saem com nome e senha de administrador. */
+const SB_URL = 'https://ltuzzgdapgfbtxaxigek.supabase.co';
+const SB_KEY = 'sb_publishable_seUPg9HXoSjV8bwEY619XA_Q1JeWamW';
+const BUCKET = 'rdc-evidencias';
+// Mesma lista de líderes do app (index.html → LIDERES): quem deve emitir RDC
+const LIDERES = [
+  ['Concivan Araújo', 'Supervisor Geral'], ['Leandro Costa', 'Supervisor Alpinista N3'], ['Carlos "Caixão"', 'Técnico Geral'],
+  ['Valdeci "Manga Rosa"', 'Enc. Andaime'], ['Jamilson Santos', 'Enc. Pintura'], ['Aldemir "Branco"', 'Enc. Mecânica'],
+  ['Dorivan Costa', 'Enc. Mecânica'], ['Eliton Araújo', 'Alpinista Industrial N2 Jr']
+];
+// Mesma lista do app (index.html → CONTRATOS): [nome, número]
+const CONTRATOS = [['TELHADO', '5900111362'], ['ROTINA', '5900108690'], ['GALPÃO', '5900111078']];
+const nomeContrato = (num, nome) => nome || (CONTRATOS.find(c => c[1] === num) || [])[0] || '';
+const fmtContrato = (num, nome) => num ? `${nomeContrato(num, nome) || 'Contrato'} · ${num}` : '—';
+const FUNCOES = [['qtd_ajudante', 'Ajudante'], ['qtd_pintor', 'Pintor'], ['qtd_jatista', 'Jatista'], ['qtd_mecanico', 'Mecânico'],
+  ['qtd_montador_andaime', 'Montador de Andaime'], ['qtd_alpinista_n1', 'Alpinista N1'], ['qtd_soldador', 'Soldador']];
+const STATUS = { 'Enviado': ['Aguardando validação', 'wait'], 'Validado': ['Validado', 'ok'], 'Em revisão': ['Revisão liberada', 'rev'], 'Substituído': ['Substituído', ''], 'Cancelado': ['Cancelado', ''] };
+
+/* ---------- utilitários ---------- */
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const isoDia = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const fmtData = iso => iso ? iso.slice(0, 10).split('-').reverse().join('/') : '';
+const fmtHora = iso => { if (!iso) return ''; const d = new Date(iso); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const fmtDH = iso => iso ? new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '';
+const nf1 = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
+const nf0 = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
+const h = min => nf1.format((min || 0) / 60);           // minutos → horas com 1 casa
+const dur = min => min == null ? '—' : `${Math.floor(min / 60)}h${pad(Math.round(min % 60))}`;
+const pill = s => { const [t, c] = STATUS[s] || [s, '']; return `<span class="pill ${c}">${esc(t)}</span>`; };
+let toastT;
+function toast(msg, err) { const t = $('toast'); t.textContent = msg; t.className = 'toast' + (err ? ' err' : ''); clearTimeout(toastT); toastT = setTimeout(() => t.classList.add('hidden'), 3500); }
+
+async function rpc(fn, args) {
+  const r = await fetch(`${SB_URL}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { apikey: SB_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}) });
+  const t = await r.text();
+  if (!r.ok) { let m = t; try { m = JSON.parse(t).message || t; } catch { } const e = new Error(m); e.status = r.status; throw e; }
+  return t ? JSON.parse(t) : null;
+}
+const fotoUrls = new Map();
+async function fotoUrl(caminho) {
+  if (!fotoUrls.has(caminho)) fotoUrls.set(caminho, fetch(`${SB_URL}/storage/v1/object/authenticated/${BUCKET}/${caminho.split('/').map(encodeURIComponent).join('/')}`, { headers: { apikey: SB_KEY } })
+    .then(r => { if (!r.ok) throw new Error('foto'); return r.blob(); }).then(b => URL.createObjectURL(b)));
+  return fotoUrls.get(caminho);
+}
+
+/* ---------- tema ---------- */
+function aplicarTema(t) { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; }
+try { aplicarTema(localStorage.getItem('rdc-painel-tema')); } catch { }
+$('btnTema').onclick = () => {
+  const escuro = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  const t = escuro ? 'light' : 'dark'; aplicarTema(t);
+  try { localStorage.setItem('rdc-painel-tema', t); } catch { }
+  if (dados) render();
+};
+
+/* ---------- sessão do administrador (só nesta aba) ---------- */
+let admin = null;
+try { admin = JSON.parse(sessionStorage.getItem('rdc-painel-admin') || 'null'); } catch { }
+function setAdmin(a) {
+  admin = a;
+  try { a ? sessionStorage.setItem('rdc-painel-admin', JSON.stringify(a)) : sessionStorage.removeItem('rdc-painel-admin'); } catch { }
+  $('scrLogin').classList.toggle('hidden', !!a); $('scrPainel').classList.toggle('hidden', !a);
+  $('who').classList.toggle('hidden', !a); $('btnSair').classList.toggle('hidden', !a);
+  $('who').textContent = a ? a.nome : '';
+}
+async function entrar() {
+  const nome = $('lNome').value.trim(), senha = $('lSenha').value, err = $('lErr');
+  const falha = m => { err.textContent = m; err.classList.remove('hidden'); };
+  if (!nome || !senha) return falha('Informe nome e senha.');
+  $('btnEntrar').disabled = true;
+  try {
+    const r = await rpc('rdc_admin_login', { p_nome: nome, p_senha: senha });
+    if (!r || !r.ok) return falha((r && r.erro) || 'Nome ou senha inválidos.');
+    err.classList.add('hidden'); setAdmin({ nome: r.nome, senha }); preset('mes');
+  } catch (e) { falha('Não foi possível verificar: ' + e.message); }
+  finally { $('btnEntrar').disabled = false; }
+}
+$('btnEntrar').onclick = entrar;
+$('lSenha').addEventListener('keydown', e => { if (e.key === 'Enter') entrar(); });
+$('btnSair').onclick = () => { setAdmin(null); dados = null; };
+
+/* ---------- carga ---------- */
+let dados = null, seq = 0;
+function preset(p) {
+  const hoje = new Date(); let ini = new Date(hoje), fim = new Date(hoje);
+  if (p === '7') ini.setDate(hoje.getDate() - 6);
+  else if (p === '30') ini.setDate(hoje.getDate() - 29);
+  else if (p === 'mes') ini = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  else if (p === 'mesant') { ini = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1); fim = new Date(hoje.getFullYear(), hoje.getMonth(), 0); }
+  $('fIni').value = isoDia(ini); $('fFim').value = isoDia(fim);
+  carregar(p);
+}
+async function carregar(p) {
+  $('presets').querySelectorAll('button').forEach(b => b.classList.toggle('sel', b.dataset.p === p));
+  const ini = $('fIni').value, fim = $('fFim').value;
+  if (!ini || !fim || fim < ini) return toast('Período inválido.', true);
+  const s = ++seq;
+  $('conteudo').classList.add('carregando');
+  try {
+    const r = await rpc('rdc_admin_exportar', { p_nome: admin.nome, p_senha: admin.senha, p_ini: ini, p_fim: fim });
+    if (s !== seq) return;
+    if (!r || !r.ok) { const m = (r && r.erro) || 'Falha ao carregar.'; if (/Sessão/.test(m)) setAdmin(null); return toast(m, true); }
+    dados = { ...r, ini, fim };
+    preencherFiltros(); render();
+  } catch (e) {
+    if (s === seq) toast(e.status === 404 ? 'Banco sem o painel — rode supabase/migracao_v8_pts_gps_painel.sql.' : 'Não foi possível carregar: ' + e.message, true);
+  } finally { if (s === seq) $('conteudo').classList.remove('carregando'); }
+}
+function opcoes(sel, valores, todos) {
+  const atual = sel.value;
+  sel.innerHTML = `<option value="">${todos}</option>` + valores.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  if (valores.includes(atual)) sel.value = atual;
+}
+function preencherFiltros() {
+  const uniq = a => [...new Set(a.filter(Boolean))].sort((x, y) => x.localeCompare(y, 'pt-BR'));
+  const sel = $('fContrato'), atual = sel.value;
+  const nums = uniq([...CONTRATOS.map(c => c[1]), ...dados.rdcs.map(r => r.contrato)]);
+  sel.innerHTML = '<option value="">Todos</option>' + nums.map(n => `<option value="${esc(n)}">${esc(fmtContrato(n, (dados.rdcs.find(r => r.contrato === n) || {}).contrato_nome))}</option>`).join('')
+    + (dados.rdcs.some(r => !r.contrato) ? '<option value="-">Sem contrato (RDC antigos)</option>' : '');
+  if ([...sel.options].some(o => o.value === atual)) sel.value = atual;
+  opcoes($('fArea'), uniq(dados.rdcs.map(r => r.area)), 'Todas');
+  opcoes($('fResp'), uniq([...LIDERES.map(l => l[0]), ...dados.rdcs.map(r => r.responsavel)]), 'Todos');
+  opcoes($('fDisc'), uniq(dados.atividades.map(a => a.disciplina)), 'Todas');
+}
+
+/* ---------- filtro e agregação ---------- */
+function filtrar() {
+  const contrato = $('fContrato').value, area = $('fArea').value, resp = $('fResp').value, disc = $('fDisc').value, st = $('fStatus').value, q = $('fBusca').value.trim().toLowerCase();
+  const atvPor = new Map();
+  for (const a of dados.atividades) { if (!atvPor.has(a.rdc)) atvPor.set(a.rdc, []); atvPor.get(a.rdc).push(a); }
+  const rdcs = dados.rdcs.filter(r =>
+    (st === 'validos' ? !['Substituído', 'Cancelado'].includes(r.status) : !st || r.status === st) &&
+    (!contrato || (contrato === '-' ? !r.contrato : r.contrato === contrato)) &&
+    (!area || r.area === area) && (!resp || r.responsavel === resp) &&
+    (!disc || (atvPor.get(r.codigo) || []).some(a => a.disciplina === disc)) &&
+    (!q || [r.codigo, r.om, r.ativo, r.ativo_descricao, r.responsavel, r.contrato, r.contrato_nome].some(v => String(v || '').toLowerCase().includes(q))));
+  const cods = new Set(rdcs.map(r => r.codigo));
+  // com disciplina escolhida, o HH conta só as atividades dela
+  const atividades = dados.atividades.filter(a => cods.has(a.rdc) && (!disc || a.disciplina === disc));
+  const hhAtv = new Map();
+  for (const a of atividades) hhAtv.set(a.rdc, (hhAtv.get(a.rdc) || 0) + a.efetivo_total * a.duracao_min);
+  for (const r of rdcs) r._hh = disc ? (hhAtv.get(r.codigo) || 0) : r.hh_min;
+  return { rdcs, atividades, impactos: dados.impactos.filter(i => cods.has(i.rdc)), fotos: dados.fotos.filter(f => cods.has(f.rdc)), atvPor };
+}
+function diasDoPeriodo() {
+  const out = [];
+  for (let d = new Date(dados.ini + 'T12:00:00'); isoDia(d) <= dados.fim; d.setDate(d.getDate() + 1)) out.push({ iso: isoDia(d), dom: d.getDay() === 0, n: d.getDate(), m: d.getMonth() + 1 });
+  return out;
+}
+
+let F = null;
+function render() {
+  F = filtrar();
+  const { rdcs, atividades, impactos } = F;
+  const soma = (a, k) => a.reduce((s, x) => s + (Number(x[k]) || 0), 0);
+  const hhMin = soma(rdcs, '_hh'), impMin = soma(rdcs, 'min_impacto'), hhImpMin = soma(rdcs, 'hh_impacto_min');
+  const comPts = rdcs.filter(r => r.pts === true), esperas = comPts.map(r => r.espera_pts_min).filter(v => v != null);
+  const aguard = rdcs.filter(r => r.status === 'Enviado').length;
+
+  $('kpis').innerHTML = [
+    ['HH trabalhado', h(hhMin), `${nf0.format(atividades.length)} atividades`, true],
+    ['RDC emitidos', nf0.format(rdcs.length), `${aguard} aguardando validação`],
+    ['HH de impacto', h(hhImpMin), hhMin ? `${nf1.format(hhImpMin / hhMin * 100)}% do HH trabalhado` : ''],
+    ['Horas de impacto', h(impMin), `${nf0.format(impactos.length)} impactos`],
+    ['Espera média pela PTS', esperas.length ? dur(esperas.reduce((a, b) => a + b, 0) / esperas.length) : '—', `${comPts.length} RDC com PTS`],
+    ['Bloqueios', nf0.format(rdcs.filter(r => r.bloqueio === true).length), 'RDC com bloqueio']
+  ].map(([k, v, s, hero]) => `<div class="kpi${hero ? ' hero' : ''}"><span>${k}</span><b>${esc(v)}</b><small>${esc(s)}</small></div>`).join('');
+
+  graficoDia(rdcs);
+  barrasH($('chDisc'), agrupar(atividades, a => a.disciplina, a => a.efetivo_total * a.duracao_min), 'var(--s1)', v => `${h(v)} HH`);
+  barrasH($('chContrato'), agrupar(rdcs, r => r.contrato ? nomeContrato(r.contrato, r.contrato_nome) : 'Sem contrato', r => r._hh), 'var(--s1)', v => `${h(v)} HH`);
+  barrasH($('chImpResp'), agrupar(rdcs, r => r.responsavel, r => r.min_impacto).filter(x => x.v > 0), 'var(--s2)', v => `${h(v)} h`);
+  resumoPts(rdcs, comPts, esperas);
+  matriz(rdcs);
+  tabelaResp(rdcs);
+  tabelaImp(impactos);
+  tabelaRdc(rdcs);
+}
+function agrupar(lista, chave, valor) {
+  const m = new Map();
+  for (const x of lista) { const k = chave(x) || '—'; m.set(k, (m.get(k) || 0) + (Number(valor(x)) || 0)); }
+  return [...m].map(([k, v]) => ({ k, v })).sort((a, b) => b.v - a.v);
+}
+
+/* ---------- gráficos (SVG) ---------- */
+const tip = $('tip');
+function mostrarTip(e, html) { tip.innerHTML = html; tip.classList.remove('hidden'); const r = tip.getBoundingClientRect(); let x = e.clientX + 14, y = e.clientY + 14; if (x + r.width > innerWidth - 8) x = e.clientX - r.width - 14; if (y + r.height > innerHeight - 8) y = e.clientY - r.height - 14; tip.style.left = x + 'px'; tip.style.top = y + 'px'; }
+function esconderTip() { tip.classList.add('hidden'); }
+const ticks = max => { if (max <= 0) return [0]; const p = Math.pow(10, Math.floor(Math.log10(max))), st = [1, 2, 2.5, 5, 10].map(m => m * p).find(s => max / s <= 5) || p * 10; const out = []; for (let v = 0; v <= max + st * 0.001; v += st) out.push(v); if (out[out.length - 1] < max) out.push(out[out.length - 1] + st); return out; };
+// barra com ponta arredondada (4px) e base reta
+const barV = (x, y, w, hgt) => { const r = Math.min(4, w / 2, hgt); return `M${x},${y + hgt}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + hgt}Z`; };
+const barH = (x, y, w, hgt) => { const r = Math.min(4, hgt / 2, w); return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + hgt - r}Q${x + w},${y + hgt} ${x + w - r},${y + hgt}H${x}Z`; };
+
+function graficoDia(rdcs) {
+  const el = $('chDia'), dias = diasDoPeriodo();
+  // até 62 dias: por dia; depois, por mês
+  const porMes = dias.length > 62;
+  $('hhPor').textContent = porMes ? 'mês' : 'dia';
+  const chave = iso => porMes ? iso.slice(0, 7) : iso;
+  const cats = [...new Set(dias.map(d => chave(d.iso)))];
+  const v = new Map(cats.map(c => [c, { hh: 0, imp: 0, n: 0 }]));
+  for (const r of rdcs) { const c = v.get(chave(r.data_rdc)); if (c) { c.hh += r._hh; c.imp += r.hh_impacto_min; c.n++; } }
+  if (!rdcs.length) { el.innerHTML = '<div class="empty">Nenhum RDC no filtro.</div>'; return; }
+  const W = Math.max(320, el.clientWidth || 640), H = 240, m = { l: 44, r: 8, t: 10, b: 28 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const max = Math.max(...[...v.values()].map(x => Math.max(x.hh, x.imp))) / 60;
+  const tk = ticks(max), top = tk[tk.length - 1] || 1, y = val => m.t + ih - val / top * ih;
+  const band = iw / cats.length, bw = Math.max(2, Math.min(24, (band - 6) / 2 - 1));
+  const lblCada = Math.ceil(cats.length / Math.floor(iw / 44));
+  let s = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="HH trabalhado e HH de impacto por ${porMes ? 'mês' : 'dia'}">`;
+  for (const t of tk) s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${m.l - 6}" y="${y(t) + 4}" text-anchor="end">${nf0.format(t)}</text>`;
+  cats.forEach((c, i) => {
+    const x0 = m.l + i * band + band / 2, d = v.get(c);
+    const hh = d.hh / 60, im = d.imp / 60;
+    s += `<g class="col" data-i="${i}"><rect class="hit" x="${m.l + i * band}" y="${m.t}" width="${band}" height="${ih}"/>`;
+    if (hh > 0) s += `<path class="bar" d="${barV(x0 - bw - 1, y(hh), bw, m.t + ih - y(hh))}" fill="var(--s1)"/>`;
+    if (im > 0) s += `<path class="bar" d="${barV(x0 + 1, y(im), bw, m.t + ih - y(im))}" fill="var(--s2)"/>`;
+    s += '</g>';
+    if (i % lblCada === 0) s += `<text x="${x0}" y="${H - 8}" text-anchor="middle">${porMes ? c.slice(5) + '/' + c.slice(2, 4) : c.slice(8) + '/' + c.slice(5, 7)}</text>`;
+  });
+  s += `<line x1="${m.l}" x2="${W - m.r}" y1="${m.t + ih}" y2="${m.t + ih}" stroke="var(--axis)"/></svg>`;
+  el.innerHTML = s;
+  el.querySelectorAll('g.col').forEach(g => {
+    const c = cats[g.dataset.i], d = v.get(c);
+    const nome = porMes ? `${c.slice(5)}/${c.slice(0, 4)}` : fmtData(c);
+    const html = () => `<div style="opacity:.8">${nome} · ${d.n} RDC</div><div><span class="k" style="background:var(--s1)"></span><b>${h(d.hh)}</b> HH trabalhado</div><div><span class="k" style="background:var(--s2)"></span><b>${h(d.imp)}</b> HH de impacto</div>`;
+    g.addEventListener('pointermove', e => mostrarTip(e, html()));
+    g.addEventListener('pointerleave', esconderTip);
+  });
+}
+function barrasH(el, itens, cor, fmt) {
+  if (!itens.length) { el.innerHTML = '<div class="empty">Sem dados no filtro.</div>'; return; }
+  itens = itens.slice(0, 12);
+  const W = Math.max(260, el.clientWidth || 360), lw = Math.min(150, W * 0.38), vw = 70, row = 30, H = itens.length * row + 4;
+  const max = Math.max(...itens.map(x => x.v)) || 1, iw = W - lw - vw;
+  let s = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img">`;
+  itens.forEach((x, i) => {
+    const yy = i * row + 4, w = Math.max(2, x.v / max * iw), nome = x.k.length > 22 ? x.k.slice(0, 21) + '…' : x.k;
+    s += `<g class="col" data-i="${i}"><rect class="hit" x="0" y="${yy - 2}" width="${W}" height="${row}"/>
+      <text x="${lw - 8}" y="${yy + 15}" text-anchor="end" style="fill:var(--ink-2)">${esc(nome)}</text>
+      <path class="bar" d="${barH(lw, yy + 3, w, 18)}" fill="${cor}"/>
+      <text x="${lw + w + 6}" y="${yy + 16}" style="fill:var(--ink)">${esc(fmt(x.v))}</text></g>`;
+  });
+  s += `<line x1="${lw}" x2="${lw}" y1="0" y2="${H}" stroke="var(--axis)"/></svg>`;
+  el.innerHTML = s;
+  el.querySelectorAll('g.col').forEach(g => {
+    const x = itens[g.dataset.i];
+    g.addEventListener('pointermove', e => mostrarTip(e, `<b>${esc(fmt(x.v))}</b><div style="opacity:.8">${esc(x.k)}</div>`));
+    g.addEventListener('pointerleave', esconderTip);
+  });
+}
+function resumoPts(rdcs, comPts, esperas) {
+  const inf = rdcs.filter(r => r.pts != null), bloq = rdcs.filter(r => r.bloqueio === true);
+  const maior = esperas.length ? Math.max(...esperas) : null;
+  const ativos = agrupar(bloq, r => r.bloqueio_ativo, () => 1).slice(0, 5);
+  $('ptsResumo').innerHTML = [
+    ['RDC que informaram', `${inf.length} de ${rdcs.length}`],
+    ['Com PTS', `${comPts.length}`], ['Espera média', esperas.length ? dur(esperas.reduce((a, b) => a + b, 0) / esperas.length) : '—'],
+    ['Maior espera', maior != null ? dur(maior) : '—'], ['Com bloqueio', `${bloq.length}`]
+  ].map(([k, v]) => `<div class="rv"><span>${k}</span><strong>${esc(v)}</strong></div>`).join('') +
+    (ativos.length ? `<p class="nota">Ativos mais bloqueados: ${ativos.map(a => `${esc(a.k)} (${a.v})`).join(' · ')}</p>` : '');
+}
+
+/* ---------- emissão por dia (responsável × dia) ---------- */
+function matriz(rdcs) {
+  const dias = diasDoPeriodo(), el = $('matriz');
+  if (dias.length > 62) { el.innerHTML = '<p class="sub" style="margin:0">Escolha um período de até 62 dias para ver a emissão dia a dia. O resumo abaixo vale para o período todo.</p>'; return; }
+  const resp = $('fResp').value;
+  const nomes = resp ? [resp] : [...new Set([...LIDERES.map(l => l[0]), ...rdcs.map(r => r.responsavel)])];
+  const cont = new Map();
+  for (const r of rdcs) { const k = r.responsavel + '|' + r.data_rdc; cont.set(k, (cont.get(k) || 0) + 1); }
+  el.innerHTML = `<table class="mat"><thead><tr><th class="nome"></th>${dias.map(d => `<th title="${fmtData(d.iso)}">${d.n}</th>`).join('')}</tr></thead><tbody>${nomes.map(n => {
+    const fn = (LIDERES.find(l => l[0] === n) || [])[1];
+    const faltas = dias.filter(d => !d.dom && !cont.get(n + '|' + d.iso)).length;
+    return `<tr><td class="nome">${esc(n)}<small>${esc(fn || '')}${faltas ? ` · ${faltas} dia(s) sem RDC` : ' · todos os dias'}</small></td>${dias.map(d => {
+      const c = cont.get(n + '|' + d.iso);
+      return `<td><div class="c ${c ? 'ok' : d.dom ? 'dom' : 'no'}" title="${esc(n)} · ${fmtData(d.iso)}: ${c ? c + ' RDC' : 'sem RDC'}">${c ? (c > 1 ? c : '✓') : d.dom ? '' : '✕'}</div></td>`;
+    }).join('')}</tr>`;
+  }).join('')}</tbody></table>
+  <div class="mat-leg"><span>✓ emitiu (número = mais de um RDC)</span><span>✕ sem RDC</span><span>cinza = domingo</span></div>`;
+}
+
+/* ---------- tabelas ordenáveis ---------- */
+const ordem = {};
+function tabela(el, id, cols, linhas, onClick) {
+  const o = ordem[id] || (ordem[id] = { c: null, d: 1 });
+  if (o.c != null) { const c = cols[o.c]; linhas = [...linhas].sort((a, b) => { const x = c.v(a), y = c.v(b); return (typeof x === 'number' ? x - y : String(x ?? '').localeCompare(String(y ?? ''), 'pt-BR')) * o.d; }); }
+  el.innerHTML = linhas.length ? `<table><thead><tr>${cols.map((c, i) => `<th class="${c.num ? 'num' : ''}" data-c="${i}">${c.t}${o.c === i ? (o.d > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('')}</tr></thead>
+    <tbody>${linhas.map((l, i) => `<tr data-r="${i}">${cols.map(c => `<td class="${c.num ? 'num' : ''}">${c.h ? c.h(l) : esc(c.v(l) ?? '')}</td>`).join('')}</tr>`).join('')}</tbody></table>` : '<div class="empty">Nada no filtro.</div>';
+  el.querySelectorAll('th').forEach(th => th.onclick = () => { const c = Number(th.dataset.c); o.d = o.c === c ? -o.d : (cols[c].num ? -1 : 1); o.c = c; tabela(el, id, cols, linhas, onClick); });
+  if (onClick) el.querySelectorAll('tbody tr').forEach(tr => tr.onclick = () => onClick(linhas[tr.dataset.r]));
+}
+function tabelaResp(rdcs) {
+  const dias = diasDoPeriodo(), uteis = dias.filter(d => !d.dom).length || dias.length;
+  const resp = $('fResp').value;
+  const nomes = resp ? [resp] : [...new Set([...LIDERES.map(l => l[0]), ...rdcs.map(r => r.responsavel)])];
+  const linhas = nomes.map(n => {
+    const rs = rdcs.filter(r => r.responsavel === n), esp = rs.map(r => r.espera_pts_min).filter(v => v != null);
+    return { nome: n, funcao: (LIDERES.find(l => l[0] === n) || [])[1] || rs[0]?.responsavel_funcao || '', rdc: rs.length,
+      dias: new Set(rs.map(r => r.data_rdc)).size, hh: rs.reduce((s, r) => s + r._hh, 0), imp: rs.reduce((s, r) => s + r.min_impacto, 0),
+      hhimp: rs.reduce((s, r) => s + r.hh_impacto_min, 0), aguard: rs.filter(r => r.status === 'Enviado').length,
+      espera: esp.length ? esp.reduce((a, b) => a + b, 0) / esp.length : null };
+  });
+  tabela($('tblResp'), 'resp', [
+    { t: 'Responsável', v: l => l.nome }, { t: 'Função', v: l => l.funcao },
+    { t: 'RDC', num: 1, v: l => l.rdc }, { t: `Dias com RDC (de ${uteis})`, num: 1, v: l => l.dias },
+    { t: 'HH trabalhado', num: 1, v: l => l.hh, h: l => h(l.hh) }, { t: 'Horas de impacto', num: 1, v: l => l.imp, h: l => h(l.imp) },
+    { t: 'HH de impacto', num: 1, v: l => l.hhimp, h: l => h(l.hhimp) }, { t: 'Espera média PTS', num: 1, v: l => l.espera ?? -1, h: l => l.espera == null ? '—' : dur(l.espera) },
+    { t: 'Aguardando validação', num: 1, v: l => l.aguard }
+  ], linhas, l => { $('fResp').value = l.nome; render(); scrollTo({ top: 0, behavior: 'smooth' }); });
+}
+function tabelaImp(impactos) {
+  const porRdc = new Map(dados.rdcs.map(r => [r.codigo, r]));
+  ordem.imp ||= { c: 5, d: -1 };
+  tabela($('tblImp'), 'imp', [
+    { t: 'Data', v: i => porRdc.get(i.rdc)?.data_rdc, h: i => fmtData(porRdc.get(i.rdc)?.data_rdc) },
+    { t: 'Responsável', v: i => porRdc.get(i.rdc)?.responsavel }, { t: 'Ativo', v: i => porRdc.get(i.rdc)?.ativo },
+    { t: 'Descrição', v: i => i.descricao, h: i => `<span title="${esc(i.descricao)}">${esc(i.descricao.length > 70 ? i.descricao.slice(0, 69) + '…' : i.descricao)}</span>` },
+    { t: 'Horário', v: i => i.inicio, h: i => `${fmtHora(i.inicio)} → ${fmtHora(i.fim)}` },
+    { t: 'Duração', num: 1, v: i => i.duracao_min, h: i => dur(i.duracao_min) },
+    { t: 'HH de impacto', num: 1, v: i => i.duracao_min * (porRdc.get(i.rdc)?.efetivo_max || 0), h: i => h(i.duracao_min * (porRdc.get(i.rdc)?.efetivo_max || 0)) }
+  ], impactos, i => abrirDetalhe(i.rdc));
+}
+function tabelaRdc(rdcs) {
+  $('rdcCount').textContent = `${rdcs.length} RDC no filtro · clique numa linha para ver o detalhe e as fotos`;
+  tabela($('tblRdc'), 'rdc', [
+    { t: 'Data', v: r => r.data_rdc, h: r => fmtData(r.data_rdc) }, { t: 'Código', v: r => r.codigo },
+    { t: 'Contrato', v: r => nomeContrato(r.contrato, r.contrato_nome) || '—' },
+    { t: 'Responsável', v: r => r.responsavel }, { t: 'Área', v: r => r.area }, { t: 'Ativo', v: r => r.ativo }, { t: 'OM', v: r => r.om },
+    { t: 'Situação', v: r => r.status, h: r => pill(r.status) },
+    { t: 'HH', num: 1, v: r => r._hh, h: r => h(r._hh) }, { t: 'Impacto (h)', num: 1, v: r => r.min_impacto, h: r => h(r.min_impacto) },
+    { t: 'PTS', v: r => r.pts == null ? '' : r.pts ? 'Sim' : 'Não', h: r => r.pts == null ? '—' : r.pts ? `Sim · ${dur(r.espera_pts_min)}` : 'Não' },
+    { t: 'Bloqueio', v: r => r.bloqueio == null ? '' : r.bloqueio ? 'Sim' : 'Não', h: r => r.bloqueio == null ? '—' : r.bloqueio ? `Sim · ${esc(r.bloqueio_ativo || '')}` : 'Não' },
+    { t: 'Fotos', num: 1, v: r => r.qtd_fotos }, { t: 'Recebido', v: r => r.recebido_em, h: r => fmtDH(r.recebido_em) }
+  ], rdcs, r => abrirDetalhe(r.codigo));
+}
+
+/* ---------- detalhe, validação e fotos ---------- */
+let detCod = null, gal = [], gi = 0;
+function abrirDetalhe(cod) {
+  const r = dados.rdcs.find(x => x.codigo === cod); if (!r) return;
+  detCod = cod;
+  const atv = (F.atvPor.get(cod) || []).sort((a, b) => a.ordem - b.ordem);
+  const fotos = dados.fotos.filter(f => f.rdc === cod), imps = dados.impactos.filter(i => i.rdc === cod);
+  gal = atv.flatMap(a => fotos.filter(f => f.atividade === a.codigo).map((f, j) => ({ ...f, titulo: `Atividade ${pad(a.ordem)} · foto ${j + 1}` })));
+  const rv = rows => rows.map(([k, v]) => `<div class="rv"><span>${k}</span><strong>${esc(v ?? '—')}</strong></div>`).join('');
+  const podeDecidir = ['Enviado', 'Validado', 'Em revisão', 'Cancelado'].includes(r.status);
+  $('det').innerHTML = `<div class="det-top"><b>${esc(r.codigo)}</b><button id="detX" aria-label="Fechar">×</button></div>
+  <div class="det-body">
+    <div class="card">${pill(r.status)}${r.revisao ? ` · revisão ${r.revisao}` : ''}
+      <p class="nota">Recebido em ${fmtDH(r.recebido_em)}${r.validado_por ? ` · decisão de ${esc(r.validado_por)} em ${fmtDH(r.validado_em)}` : ''}</p>
+      ${r.obs_validacao ? `<p>Obs./motivo: ${esc(r.obs_validacao)}</p>` : ''}${r.revisao_de ? `<p class="nota">Substitui ${esc(r.revisao_de)}</p>` : ''}${r.substituido_por ? `<p class="nota">Substituído por ${esc(r.substituido_por)}</p>` : ''}</div>
+    <div class="card">${rv([['Contrato', fmtContrato(r.contrato, r.contrato_nome)], ['Responsável', `${r.responsavel}${r.responsavel_funcao ? ' — ' + r.responsavel_funcao : ''}`], ['Data', fmtData(r.data_rdc)], ['Área', r.area], ['Ativo', r.ativo_descricao ? `${r.ativo} · ${r.ativo_descricao}` : r.ativo], ['OM', r.om],
+      ['HH trabalhado', h(r.hh_min)], ['HH de impacto', h(r.hh_impacto_min)]])}</div>
+    <div class="card">${rv([['PTS', r.pts == null ? '—' : r.pts ? 'Sim' : 'Não'], ...(r.pts ? [['Solicitação', fmtHora(r.pts_solicitacao)], ['Abertura', fmtHora(r.pts_abertura)], ['Espera', dur(r.espera_pts_min)]] : []),
+      ['Bloqueio', r.bloqueio == null ? '—' : r.bloqueio ? 'Sim' : 'Não'], ...(r.bloqueio ? [['Ativo bloqueado', r.bloqueio_ativo], ['Horário do bloqueio', fmtHora(r.bloqueio_hora)]] : [])])}</div>
+    <div class="card"><h2>Atividades</h2>${atv.map(a => {
+      const fs = gal.filter(f => f.atividade === a.codigo), g = [...fs].reverse().find(f => f.latitude != null);
+      return `<div class="blk"><h4>Atividade ${pad(a.ordem)} · ${esc(a.disciplina)}</h4><p><b>${esc(a.servico)}</b>${a.tipo_andaime ? ' · ' + esc(a.tipo_andaime) : ''}</p>
+        ${a.descricao_outros ? `<p>${esc(a.descricao_outros)}</p>` : ''}
+        <p>${fmtHora(a.inicio)} → ${fmtHora(a.fim)} · <b>${dur(a.duracao_min)}</b> · efetivo ${a.efetivo_total} (${FUNCOES.filter(([k]) => a[k] > 0).map(([k, t]) => `${t} ${a[k]}`).join(', ')}) · ${h(a.efetivo_total * a.duracao_min)} HH</p>
+        ${a.observacao ? `<p class="nota">${esc(a.observacao)}</p>` : ''}
+        ${g ? `<p>📍 ${g.latitude.toFixed(6)}, ${g.longitude.toFixed(6)} · <a href="https://www.google.com/maps?q=${g.latitude},${g.longitude}" target="_blank" rel="noopener">mapa</a></p>` : ''}
+        <div class="thumbs">${fs.map(f => `<img data-g="${gal.indexOf(f)}" alt="">`).join('')}</div></div>`;
+    }).join('') || '<p class="nota">Sem atividades.</p>'}</div>
+    <div class="card"><h2>Impactos</h2>${imps.map(i => `<div class="blk"><p>${esc(i.descricao)}</p><p class="nota">${fmtHora(i.inicio)} → ${fmtHora(i.fim)} · ${dur(i.duracao_min)}</p></div>`).join('') || '<p class="nota">Nenhum impacto.</p>'}</div>
+    ${podeDecidir ? `<div class="card"><h2>Validação</h2>
+      <label class="lbl" for="vObs">Observação / motivo (obrigatório para revisão ou cancelamento)</label><textarea class="ctl" id="vObs"></textarea>
+      <div class="acoes"><button class="btn pri" data-dec="Validado" ${r.status === 'Validado' ? 'disabled' : ''}>${r.status === 'Cancelado' ? 'Reativar e validar' : 'Validar'}</button>
+      <button class="btn dan" data-dec="Em revisão" ${r.status === 'Em revisão' ? 'disabled' : ''}>Liberar revisão</button>
+      <button class="btn gh" data-dec="Cancelado" ${r.status === 'Cancelado' ? 'disabled' : ''}>Cancelar RDC</button></div></div>` : ''}
+  </div>`;
+  $('modal').classList.remove('hidden');
+  $('det').scrollTop = 0;
+  $('detX').onclick = fecharDetalhe;
+  $('det').querySelectorAll('img[data-g]').forEach(async im => { try { im.src = await fotoUrl(gal[im.dataset.g].caminho); } catch { im.alt = '✕'; } });
+  $('det').querySelectorAll('img[data-g]').forEach(im => im.onclick = () => abrirFoto(Number(im.dataset.g)));
+  $('det').querySelectorAll('[data-dec]').forEach(b => b.onclick = () => decidir(b.dataset.dec));
+}
+function fecharDetalhe() { $('modal').classList.add('hidden'); detCod = null; }
+$('modal').addEventListener('click', e => { if (e.target === $('modal')) fecharDetalhe(); });
+async function decidir(dec) {
+  const obs = $('vObs').value.trim();
+  if (dec !== 'Validado' && !obs) { toast('Escreva o motivo.', true); return $('vObs').focus(); }
+  try {
+    const r = await rpc('rdc_validar', { p_nome: admin.nome, p_senha: admin.senha, p_codigo: detCod, p_decisao: dec, p_obs: obs || null });
+    if (!r || !r.ok) { const m = (r && r.erro) || 'Falha.'; if (/Sessão/.test(m)) setAdmin(null); return toast(m, true); }
+    toast({ 'Validado': 'RDC validado.', 'Em revisão': 'Revisão liberada.', 'Cancelado': 'RDC cancelado.' }[dec]);
+    const cod = detCod; await carregar(); abrirDetalhe(cod);
+  } catch (e) { toast('Não foi possível gravar: ' + e.message, true); }
+}
+async function abrirFoto(i) { gi = i; $('lb').classList.remove('hidden'); mostrarFoto(); }
+async function mostrarFoto() {
+  const f = gal[gi], k = gi;
+  $('lbN').textContent = `${gi + 1} de ${gal.length}`; $('lbP').disabled = gi === 0; $('lbNx').disabled = gi === gal.length - 1;
+  $('lbCap').innerHTML = `<b>${esc(f.titulo)}</b> · ${fmtDH(f.data_hora_foto)}<br>${f.latitude != null ? `📍 ${f.latitude.toFixed(6)}, ${f.longitude.toFixed(6)}${f.precisao_m ? ` (±${f.precisao_m} m)` : ''}${f.gps_fonte === 'foto' ? ' (da foto)' : ''} · <a href="https://www.google.com/maps?q=${f.latitude},${f.longitude}" target="_blank" rel="noopener">abrir no mapa</a>` : '📍 Sem localização'}`;
+  $('lbImg').removeAttribute('src');
+  try { const u = await fotoUrl(f.caminho); if (gi === k) $('lbImg').src = u; } catch { }
+}
+const passar = d => { const n = gi + d; if (n >= 0 && n < gal.length) { gi = n; mostrarFoto(); } };
+$('lbP').onclick = () => passar(-1); $('lbNx').onclick = () => passar(1); $('lbX').onclick = () => $('lb').classList.add('hidden');
+document.addEventListener('keydown', e => {
+  if (!$('lb').classList.contains('hidden')) { if (e.key === 'ArrowLeft') passar(-1); if (e.key === 'ArrowRight') passar(1); if (e.key === 'Escape') $('lb').classList.add('hidden'); }
+  else if (e.key === 'Escape' && !$('modal').classList.contains('hidden')) fecharDetalhe();
+});
+
+/* ---------- exportação ---------- */
+function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('sem acesso a ' + src)); document.head.appendChild(s); }); }
+function planilhas() {
+  const porRdc = new Map(dados.rdcs.map(r => [r.codigo, r]));
+  const hr = min => min == null ? null : Math.round(min / 60 * 100) / 100;
+  const dh = iso => iso ? fmtDH(iso) : '';
+  return {
+    RDC: F.rdcs.map(r => ({ Codigo: r.codigo, Contrato: r.contrato || '', ContratoNome: nomeContrato(r.contrato, r.contrato_nome), Data: fmtData(r.data_rdc), Responsavel: r.responsavel, Funcao: r.responsavel_funcao, Area: r.area, Ativo: r.ativo,
+      AtivoDescricao: r.ativo_descricao, OM: r.om, Situacao: r.status, Revisao: r.revisao, Atividades: r.qtd_atividades, Impactos: r.qtd_impactos, Fotos: r.qtd_fotos,
+      HorasAtividades: hr(r.min_atividades), HH: hr(r._hh), EfetivoMax: r.efetivo_max, HorasImpacto: hr(r.min_impacto), HHImpacto: hr(r.hh_impacto_min),
+      PTS: r.pts == null ? '' : r.pts ? 'Sim' : 'Não', PTSSolicitacao: fmtHora(r.pts_solicitacao), PTSAbertura: fmtHora(r.pts_abertura), EsperaPTSMin: r.espera_pts_min,
+      Bloqueio: r.bloqueio == null ? '' : r.bloqueio ? 'Sim' : 'Não', BloqueioAtivo: r.bloqueio_ativo || '', BloqueioHora: fmtHora(r.bloqueio_hora),
+      RecebidoEm: dh(r.recebido_em), ValidadoPor: r.validado_por || '', ValidadoEm: dh(r.validado_em), ObsValidacao: r.obs_validacao || '' })),
+    Atividades: F.atividades.map(a => ({ RDC: a.rdc, Contrato: porRdc.get(a.rdc)?.contrato || '', Data: fmtData(porRdc.get(a.rdc)?.data_rdc), Responsavel: porRdc.get(a.rdc)?.responsavel, Ativo: porRdc.get(a.rdc)?.ativo,
+      OM: porRdc.get(a.rdc)?.om, Ordem: a.ordem, Disciplina: a.disciplina, Servico: a.servico, TipoAndaime: a.tipo_andaime || '', DescricaoOutros: a.descricao_outros || '',
+      Inicio: fmtHora(a.inicio), Fim: fmtHora(a.fim), DuracaoMin: a.duracao_min, ...Object.fromEntries(FUNCOES.map(([k, t]) => [t, a[k]])), Efetivo: a.efetivo_total,
+      HH: hr(a.efetivo_total * a.duracao_min), Observacao: a.observacao || '' })),
+    Impactos: F.impactos.map(i => ({ RDC: i.rdc, Contrato: porRdc.get(i.rdc)?.contrato || '', Data: fmtData(porRdc.get(i.rdc)?.data_rdc), Responsavel: porRdc.get(i.rdc)?.responsavel, Ativo: porRdc.get(i.rdc)?.ativo,
+      OM: porRdc.get(i.rdc)?.om, Ordem: i.ordem, Descricao: i.descricao, Inicio: fmtHora(i.inicio), Fim: fmtHora(i.fim), DuracaoMin: i.duracao_min,
+      EfetivoRDC: porRdc.get(i.rdc)?.efetivo_max, HHImpacto: hr(i.duracao_min * (porRdc.get(i.rdc)?.efetivo_max || 0)) })),
+    Fotos: F.fotos.map(f => ({ RDC: f.rdc, Atividade: f.atividade, Foto: f.codigo, DataHora: dh(f.data_hora_foto), Latitude: f.latitude, Longitude: f.longitude,
+      PrecisaoM: f.precisao_m, OrigemGPS: f.gps_fonte || '', Mapa: f.latitude != null ? `https://www.google.com/maps?q=${f.latitude},${f.longitude}` : '', Caminho: f.caminho }))
+  };
+}
+$('btnExcel').onclick = async () => {
+  if (!dados) return;
+  const abas = planilhas(), nome = `RDC_${dados.ini}_a_${dados.fim}`;
+  try {
+    if (!window.XLSX) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+    const wb = XLSX.utils.book_new();
+    for (const [n, linhas] of Object.entries(abas)) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(linhas.length ? linhas : [{}]), n);
+    XLSX.writeFile(wb, nome + '.xlsx');
+  } catch (e) {
+    // sem a biblioteca: CSV (abre no Excel), um arquivo por aba
+    for (const [n, linhas] of Object.entries(abas)) {
+      if (!linhas.length) continue;
+      const cols = Object.keys(linhas[0]), q = v => { const s = String(v ?? ''); return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+      const csv = '﻿' + [cols.join(';'), ...linhas.map(l => cols.map(c => q(typeof l[c] === 'number' ? String(l[c]).replace('.', ',') : l[c])).join(';'))].join('\r\n');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `${nome}_${n}.csv`; a.click();
+    }
+    toast('Excel indisponível; baixados arquivos CSV.');
+  }
+};
+
+/* ---------- eventos ---------- */
+$('presets').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (b) preset(b.dataset.p); });
+$('fIni').onchange = $('fFim').onchange = () => carregar();
+$('btnAtualizar').onclick = () => carregar();
+['fContrato', 'fArea', 'fResp', 'fDisc', 'fStatus'].forEach(id => $(id).onchange = () => dados && render());
+let bt; $('fBusca').oninput = () => { clearTimeout(bt); bt = setTimeout(() => dados && render(), 250); };
+let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => dados && render(), 200); });
+
+setAdmin(admin);
+if (admin) preset('mes');
+</script>
+</body>
+</html>
