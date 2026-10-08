@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+</head>
+<body>
+<title>Assinador PPL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Great+Vibes&family=Allura&family=Mr+Dafoe&display=swap" rel="stylesheet">
+<style>
+  /* Layout: two-column workbench — signer settings + stamp on the left, document queue and page preview on the right; stacks on phones. Single dark look by request. */
+  :root {
+    --bg: #0b0d10; --panel: #15181d; --raised: #1d2128; --fg: #e8eaee; --muted: #9098a5; --line: #2a2f38;
+    --accent: #7fb0ff; --accent-fg: #07101f; --paper: #ffffff; --ok: #5fd08f; --warn: #e8b85a; --err: #ff8a80;
+    --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", Consolas, monospace;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--fg); font: 14px/1.5 var(--sans); }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 24px 16px 48px; display: grid; gap: 20px; }
+  header h1 { font-size: 22px; font-weight: 600; margin: 0; text-wrap: balance; }
+  header p { margin: 4px 0 0; color: var(--muted); max-width: 72ch; }
+  .main { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 20px; align-items: start; }
+  @media (max-width: 880px) { .main { grid-template-columns: minmax(0, 1fr); } }
+  .side { display: grid; gap: 16px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+  @media (max-width: 880px) { .side { position: static; } }
+  .right { display: grid; gap: 16px; min-width: 0; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+  .panel h2 { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; font-weight: 600; }
+  .head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .fields .full { grid-column: 1 / -1; }
+  label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+  input[type=text], select { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--raised); color: var(--fg); font: inherit; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  input:focus-visible, select:focus-visible, button:focus-visible, .btn:focus-visible, .drop:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn { display: inline-block; border: 1px solid var(--line); background: var(--raised); color: var(--fg); padding: 8px 13px; border-radius: 6px; font: inherit; font-weight: 500; cursor: pointer; }
+  .btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+  .btn.small { padding: 5px 10px; font-size: 13px; }
+  .btn.ghost { background: transparent; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .logo-row { display: flex; gap: 12px; align-items: center; }
+  .logo-box { width: 88px; height: 56px; border: 1px dashed var(--line); border-radius: 6px; display: grid; place-items: center; background: var(--paper); overflow: hidden; flex: none; }
+  .logo-box img { max-width: 100%; max-height: 100%; }
+  .logo-box span { font-size: 11px; color: #6b7380; text-align: center; padding: 4px; }
+  .stamp-preview { background: var(--paper); border-radius: 6px; padding: 8px; }
+  .stamp-preview img { display: block; width: 100%; }
+  .msg { font-size: 13px; min-height: 1.5em; color: var(--muted); }
+  .msg.ok { color: var(--ok); } .msg.err { color: var(--err); }
+
+  .drop { position: relative; border: 2px dashed var(--line); border-radius: 10px; background: var(--panel); padding: 28px 20px; text-align: center; display: grid; gap: 6px; justify-items: center; cursor: pointer; }
+  .drop.compact { padding: 14px; }
+  .drop.over { border-color: var(--accent); background: var(--raised); }
+  .drop strong { font-size: 15px; }
+  .drop span { color: var(--muted); font-size: 13px; }
+  .drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+
+  .queue { display: grid; gap: 6px; }
+  .item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); cursor: pointer; }
+  .item.active { border-color: var(--accent); }
+  .item .name { font-weight: 500; overflow-wrap: anywhere; }
+  .item .sub { font-family: var(--mono); font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
+  .item .acts { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+  .pill { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+  .pill.pend { color: var(--muted); } .pill.ok { color: var(--ok); } .pill.warn { color: var(--warn); } .pill.err { color: var(--err); }
+  .empty { color: var(--muted); font-size: 13px; }
+
+  .doc { display: grid; gap: 22px; justify-items: center; padding-top: 6px; }
+  .page { position: relative; background: var(--paper); box-shadow: 0 2px 10px rgba(0,0,0,.6); max-width: 100%; }
+  .page canvas { display: block; width: 100%; height: auto; cursor: copy; }
+  .page .num { position: absolute; top: -19px; left: 0; font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .stamp { position: absolute; cursor: grab; outline: 1.5px dashed #2f6fd6; outline-offset: 2px; touch-action: none; user-select: none; }
+  .stamp.drag { cursor: grabbing; }
+  .stamp img { display: block; width: 100%; pointer-events: none; }
+  .stamp .grip { position: absolute; width: 16px; height: 16px; right: -9px; bottom: -9px; background: #2f6fd6; border: 2px solid #fff; border-radius: 3px; cursor: nwse-resize; touch-action: none; }
+  .stamp .grip.l { left: -9px; right: auto; cursor: nesw-resize; }
+  .hint { color: var(--muted); font-size: 13px; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: grid; place-items: center; padding: 16px; z-index: 10; }
+  .modal form { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; width: min(400px, 100%); display: grid; gap: 12px; }
+  .modal h3 { margin: 0; font-size: 17px; font-weight: 600; }
+  .modal p { margin: 0; color: var(--muted); font-size: 13px; }
+  .modal input[type=password] { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--raised); color: var(--fg); font: inherit; }
+  .modal .row { justify-content: flex-end; }
+  .lock { font-size: 12px; color: var(--muted); }
+  @media (prefers-reduced-motion: no-preference) { .btn, .item { transition: filter .15s, border-color .15s; } .btn:hover:not(:disabled) { filter: brightness(1.12); } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Assinador PPL</h1>
+    <p>Na primeira vez, envie a imagem da sua assinatura e o logo: eles ficam só neste navegador. Depois, envie um ou vários PDFs. Cada documento recebe a assinatura na última página, com data, hora, fuso, local e o código SHA-256 próprio. Ajuste a posição de cada um e exporte individualmente ou todos de uma vez.</p>
+  </header>
+
+  <div class="main">
+    <aside class="side">
+      <section class="panel">
+        <h2>Assinante</h2>
+        <div class="fields">
+          <label class="full">Nome<input type="text" id="f-name" value="Caio Fialho"></label>
+          <label class="full">Cargo<input type="text" id="f-role" value="Gerente de Planejamento"></label>
+          <label class="full">Empresa<input type="text" id="f-company" value="PPL Manutenção LTDA."></label>
+          <label class="full">Local
+            <span class="row" style="flex-wrap:nowrap"><input type="text" id="f-place" placeholder="Ex.: São Luís - MA"><button type="button" class="btn small" id="gps">GPS</button></span>
+            <span class="row" style="color:var(--muted)"><input type="checkbox" id="f-city"> Converter coordenadas em cidade (OpenStreetMap)</span>
+          </label>
+          <label>Estilo<select id="f-font">
+            <option value="__own__">Minha assinatura (manuscrita)</option>
+            <option value="Great Vibes">Caligrafia 1</option>
+            <option value="Allura">Caligrafia 2</option>
+            <option value="Mr Dafoe">Caligrafia 3</option>
+          </select></label>
+          <label>Tinta<select id="f-ink"><option value="#0d2b6b">Azul caneta</option><option value="#111111">Preto</option></select></label>
+          <label>Cor do logo<select id="f-logocolor"><option value="color">Colorido</option><option value="bw">Preto e branco</option></select></label>
+          <label>Posição do logo<select id="f-logopos"><option value="side">Ao lado dos textos</option><option value="wm">Marca d'água</option></select></label>
+          <label>Marca d'água<input type="range" id="f-wm" min="5" max="40" value="14"></label>
+          <label>Tamanho<input type="range" id="f-size2" min="10" max="90" value="30"></label>
+        </div>
+        <div class="logo-row">
+          <div class="logo-box" id="logo-box"><span>Sem logo</span></div>
+          <div class="row">
+            <label class="btn" for="f-logo">Enviar logo da PPL</label>
+            <label class="btn" for="f-sig">Enviar imagem da assinatura</label>
+            <input type="file" id="f-sig" accept="image/png,image/webp" hidden>
+            <input type="file" id="f-logo" accept="image/png,image/jpeg,image/svg+xml,image/webp" hidden>
+            <button class="btn ghost" id="logo-clear" hidden>Remover</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Carimbo de assinatura</h2>
+        <div class="stamp-preview"><img id="stamp-img" alt="Prévia da assinatura"></div>
+        <div class="row"><button class="btn" id="png">Baixar só a assinatura (PNG)</button></div>
+        <div class="lock" id="lock-state">Senha de assinatura: verificando…</div>
+      </section>
+    </aside>
+
+    <div class="right">
+      <section class="panel">
+        <div class="head">
+          <h2 id="q-title">Documentos</h2>
+          <div class="row">
+            <button class="btn ghost small" id="clear-all" hidden>Limpar lista</button>
+            <button class="btn" id="sign-all" disabled>Assinar todos (arquivos separados)</button>
+            <button class="btn primary" id="sign-zip" disabled>Assinar todos em ZIP</button>
+          </div>
+        </div>
+        <label class="drop" id="drop">
+          <input type="file" id="f-pdf" accept="application/pdf" multiple>
+          <strong>Solte os PDFs aqui ou clique para escolher</strong>
+          <span>Pode selecionar vários arquivos. Tudo é processado no seu navegador.</span>
+        </label>
+        <div class="queue" id="queue"></div>
+        <div class="msg" id="msg"></div>
+      </section>
+
+      <section class="panel" id="viewer" hidden>
+        <div class="head">
+          <h2 id="v-title">Prévia</h2>
+          <label class="row" style="color:var(--fg);font-size:13px"><input type="checkbox" id="f-same" checked> Mesma posição e tamanho em todos os documentos</label>
+          <span class="hint">Arraste a assinatura para mover e use os cantos azuis para redimensionar. Clicar numa página leva a assinatura até lá.</span>
+        </div>
+        <div class="doc" id="doc"></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="pw-modal" hidden>
+  <form id="pw-form" autocomplete="off">
+    <h3 id="pw-title">Senha de assinatura</h3>
+    <p id="pw-text"></p>
+    <label>Senha<input type="password" id="pw-1" autocomplete="off"></label>
+    <label id="pw-2-wrap">Confirme a senha<input type="password" id="pw-2" autocomplete="off"></label>
+    <div class="msg err" id="pw-msg"></div>
+    <div class="row"><button type="button" class="btn ghost" id="pw-cancel">Cancelar</button><button type="submit" class="btn primary" id="pw-ok">Confirmar</button></div>
+  </form>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const OWN_SIG = new Image();
+OWN_SIG.onload = () => refresh();
+try { const v = localStorage.getItem("ppl-sign:sig"); if (v) OWN_SIG.src = v; } catch {}
+const SW = 620, SH = 296, SS = 2;              // stamp canvas size (x2 for print quality)
+const store = {
+  get(k) { try { return localStorage.getItem("ppl-sign:" + k); } catch { return null; } },
+  set(k, v) { try { v == null ? localStorage.removeItem("ppl-sign:" + k) : localStorage.setItem("ppl-sign:" + k, v); } catch {} }
+};
+
+// ---------- state ----------
+let logoImg = null, logoBW = null, downloads = null;
+let docs = [];        // {id, name, bytes, hash, pdf, pageCount, sizes:[{w,h}], place:{page,x,y}, status, note}
+let active = -1;
+let pagesEls = [];    // rendered pages of the active doc
+let renderToken = 0, busy = false, seq = 0;
+
+// ---------- saved fields ----------
+["name", "role", "company", "place", "font", "ink", "logocolor", "logopos", "wm", "size2"].forEach(k => {
+  const v = store.get(k); if (v != null) $("f-" + k).value = v;
+  $("f-" + k).addEventListener("input", () => { store.set(k, $("f-" + k).value); if (k === "size2" && docs[active]) { docs[active].place.w = sizeFrac(); syncPlacement(docs[active]); } refresh(); });
+});
+if (store.get("logo")) setLogo(store.get("logo"));
+$("f-logo").onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { setLogo(r.result); store.set("logo", r.result); };
+  r.readAsDataURL(f);
+};
+$("f-sig").onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { OWN_SIG.src = r.result; try { localStorage.setItem("ppl-sign:sig", r.result); } catch { setMsg("Assinatura carregada, mas o navegador não deixou salvá-la para a próxima vez.", "err"); } };
+  r.readAsDataURL(f);
+};
+$("logo-clear").onclick = () => { logoImg = null; logoBW = null; store.set("logo", null); $("logo-box").innerHTML = "<span>Sem logo</span>"; $("logo-clear").hidden = true; refresh(); };
+// greyscale copy drawn by hand (canvas filter is missing in some browsers)
+function toGray(img) {
+  const c = document.createElement("canvas");
+  c.width = img.naturalWidth || img.width || 600; c.height = img.naturalHeight || img.height || 300;
+  const x = c.getContext("2d"); x.drawImage(img, 0, 0, c.width, c.height);
+  try {
+    const d = x.getImageData(0, 0, c.width, c.height), p = d.data;
+    for (let i = 0; i < p.length; i += 4) { const g = 0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2]; p[i] = p[i + 1] = p[i + 2] = g; }
+    x.putImageData(d, 0, 0);
+  } catch (e) { console.error(e); }
+  return c;
+}
+function setLogo(src) {
+  const img = new Image();
+  img.onload = () => { logoImg = img; logoBW = toGray(img); $("logo-box").innerHTML = ""; $("logo-box").appendChild(img.cloneNode()); $("logo-clear").hidden = false; refresh(); };
+  img.src = src;
+}
+
+// ---------- GPS ----------
+async function locate(silent) {
+  if (!navigator.geolocation) { if (!silent) setMsg("Este navegador não oferece GPS.", "err"); return; }
+  if (!silent) setMsg("Obtendo localização…");
+  navigator.geolocation.getCurrentPosition(async p => {
+    const lat = p.coords.latitude, lon = p.coords.longitude;
+    let label = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+    if ($("f-city").checked) {
+      try {
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&accept-language=pt-BR&lat=${lat}&lon=${lon}`);
+        const j = await r.json(), a = j.address || {};
+        const city = a.city || a.town || a.village || a.municipality || a.county;
+        const uf = (a["ISO3166-2-lvl4"] || "").split("-")[1] || a.state || "";
+        if (city) label = uf ? `${city} - ${uf}` : city;
+      } catch (e) { console.error(e); }
+    }
+    $("f-place").value = label; store.set("place", label); refresh();
+    if (!silent) setMsg(`Localização obtida (precisão de ${Math.round(p.coords.accuracy)} m).`, "ok");
+  }, err => { if (!silent) setMsg(err.code === 1 ? "Permissão de localização negada. Libere no cadeado da barra de endereço." : "Não foi possível obter a localização.", "err"); },
+  { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+}
+$("gps").onclick = () => locate(false);
+try { const v = localStorage.getItem("ppl-sign:city"); if (v != null) $("f-city").checked = v === "1"; } catch {}
+$("f-city").onchange = e => store.set("city", e.target.checked ? "1" : "0");
+// refresh location automatically when permission was already granted
+navigator.permissions?.query({ name: "geolocation" }).then(st => { if (st.state === "granted") locate(true); }).catch(() => {});
+
+// ---------- stamp ----------
+const stampCanvas = document.createElement("canvas");
+stampCanvas.width = SW * SS; stampCanvas.height = SH * SS;
+
+function signedAt(d = new Date()) {
+  const date = d.toLocaleDateString("pt-BR");
+  const time = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const off = -d.getTimezoneOffset(), sign = off >= 0 ? "+" : "-";
+  const utc = "UTC" + sign + String(Math.floor(Math.abs(off) / 60)).padStart(2, "0") + ":" + String(Math.abs(off) % 60).padStart(2, "0");
+  return { date, time, utc, tz: Intl.DateTimeFormat().resolvedOptions().timeZone, iso: d.toISOString() };
+}
+function fitText(ctx, text, maxW, size, family, weight = "") {
+  let s = size;
+  do { ctx.font = `${weight} ${s}px ${family}`; s -= 1; } while (ctx.measureText(text).width > maxW && s > 8);
+}
+
+function drawStamp(doc, when) {
+  const ctx = stampCanvas.getContext("2d");
+  ctx.setTransform(SS, 0, 0, SS, 0, 0);
+  ctx.clearRect(0, 0, SW, SH);
+  const ink = $("f-ink").value, name = $("f-name").value || " ";
+  let x0 = 20;
+
+  const logoSrc = logoImg ? ($("f-logocolor").value === "bw" && logoBW ? logoBW : logoImg) : null;
+  const logoSide = logoSrc && $("f-logopos").value === "side";
+  if (logoSrc && !logoSide) {
+    // watermark: logo centred behind the signature, faded
+    const r = Math.min((SW - 80) / logoImg.width, (SH - 30) / logoImg.height);
+    const w = logoImg.width * r, hh = logoImg.height * r;
+    ctx.save();
+    ctx.globalAlpha = Number($("f-wm").value) / 100;
+    ctx.drawImage(logoSrc, (SW - w) / 2, (SH - hh) / 2, w, hh);
+    ctx.restore();
+  }
+  // layout: signature on top over the line, auto-generated text below it, all left-aligned
+  const TX = 18, TW = SW - 36, LINE_Y = 136;
+  const BLUE = "#0047d6", BLUE2 = "#0a5cf0";
+
+  ctx.fillStyle = ink; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+  if ($("f-font").value === "__own__") {
+    if (OWN_SIG.complete && OWN_SIG.naturalWidth) {
+      // scanned signature: fit above the line, letting the tail cross it like a real pen stroke
+      const r = Math.min((TW * 0.75) / OWN_SIG.naturalWidth, 124 / OWN_SIG.naturalHeight);
+      const w = OWN_SIG.naturalWidth * r, h = OWN_SIG.naturalHeight * r;
+      ctx.save();
+      if (ink === "#111111") ctx.filter = "grayscale(1) brightness(0.45)";
+      ctx.drawImage(OWN_SIG, TX, LINE_Y + 12 - h, w, h);
+      ctx.restore();
+    }
+  } else {
+    fitText(ctx, name, TW * 0.8, 84, `'${$("f-font").value}', cursive`);
+    ctx.fillText(name, TX + 6, LINE_Y - 16);
+  }
+  ctx.strokeStyle = "#2a2f38"; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(TX, LINE_Y); ctx.lineTo(TX + 340, LINE_Y); ctx.stroke();
+
+  const t = when || signedAt();
+  const place = $("f-place").value.trim();
+  const sans = "'IBM Plex Sans', sans-serif";
+  const lines = [
+    [name, 22, sans, "600", "#111111", 164],
+    [$("f-role").value, 17, sans, "", "#111111", 188],
+    [$("f-company").value, 17, sans, "", "#111111", 210],
+    [`Assinado em ${t.date} às ${t.time} (${t.utc})`, 14, sans, "", BLUE2, 238],
+    [place ? `${place} · ${t.tz}` : t.tz, 14, sans, "", BLUE2, 258],
+    [doc ? `SHA-256: ${doc.hash.slice(0, 32)}… · ${doc.pageCount} pág.` : "SHA-256: gerado ao carregar o PDF", 12, "'IBM Plex Mono', monospace", "", BLUE2, 280],
+  ];
+  // logo beside the text block (below the line), text shifts right
+  let textX = TX, textW = TW;
+  if (logoSide) {
+    const boxW = 130, boxH = SH - LINE_Y - 22, r = Math.min(boxW / logoImg.width, boxH / logoImg.height);
+    const w = logoImg.width * r, h = logoImg.height * r;
+    ctx.drawImage(logoSrc, TX, LINE_Y + 12 + (boxH - h) / 2, w, h);
+    textX = TX + w + 18; textW = SW - 18 - textX;
+  }
+  ctx.textAlign = "left";
+  for (const [text, size, fam, weight, color, y] of lines) {
+    if (!text) continue;
+    ctx.fillStyle = color;
+    fitText(ctx, text, textW, size, fam, weight);
+    ctx.fillText(text, textX, y);
+  }
+  return stampCanvas.toDataURL("image/png");
+}
+
+function refresh() {
+  const url = drawStamp(docs[active]);
+  $("stamp-img").src = url;
+  placeStamp(url);
+}
+
+// ---------- adding documents ----------
+const drop = $("drop"), pdfInput = $("f-pdf");
+["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => addFiles(e.dataTransfer.files));
+pdfInput.onchange = e => { addFiles(e.target.files); pdfInput.value = ""; };
+
+async function addFiles(list) {
+  const files = [...list].filter(f => /\.pdf$/i.test(f.name) || f.type === "application/pdf");
+  if (!files.length) return setMsg("Nenhum PDF encontrado nos arquivos enviados.", "err");
+  let added = 0, failed = [];
+  for (const file of files) {
+    setMsg(`Lendo ${file.name}…`);
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const digest = await crypto.subtle.digest("SHA-256", bytes);
+      const hash = [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, "0")).join("");
+      const pdf = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
+      const sizes = [];
+      for (let i = 1; i <= pdf.numPages; i++) { const v = (await pdf.getPage(i)).getViewport({ scale: 1 }); sizes.push({ w: v.width, h: v.height }); }
+      const doc = { id: ++seq, name: file.name.replace(/\.pdf$/i, ""), bytes, hash, pdf, pageCount: pdf.numPages, sizes, status: "pend", note: "" };
+      const w = sizeFrac(), last = sizes[sizes.length - 1];
+      const hFrac = w * (last.w / last.h) * (SH / SW);
+      doc.place = { page: sizes.length - 1, x: 1 - w - 0.06, y: 1 - hFrac - 0.06, w };
+      if ($("f-same").checked && docs[active]) copyPlacement(docs[active], doc);
+      docs.push(doc); added++;
+    } catch (err) { console.error(err); failed.push(file.name); }
+  }
+  if (active < 0 && docs.length) active = 0;
+  renderQueue(); showActive();
+  setMsg(failed.length ? `Não abriu: ${failed.join(", ")}. Se tiver senha, remova a proteção e envie de novo.` : `${added} documento(s) adicionado(s).`, failed.length ? "err" : "ok");
+}
+
+// "same placement for all": the last page maps to each document's last page, other pages by number
+function copyPlacement(from, to) {
+  const onLast = from.place.page === from.pageCount - 1;
+  to.place = { page: onLast ? to.pageCount - 1 : Math.min(from.place.page, to.pageCount - 1), x: from.place.x, y: from.place.y, w: from.place.w };
+  clampPlace(to);
+}
+function syncPlacement(from) {
+  if (!from || !$("f-same").checked) return;
+  docs.forEach(d => { if (d !== from) copyPlacement(from, d); });
+  renderQueue();
+}
+try { const v = localStorage.getItem("ppl-sign:same"); if (v != null) document.getElementById("f-same").checked = v === "1"; } catch {}
+document.getElementById("f-same").addEventListener("change", e => {
+  store.set("same", e.target.checked ? "1" : "0");
+  if (e.target.checked) { syncPlacement(docs[active]); setMsg("Posição do documento em prévia aplicada a todos.", "ok"); }
+});
+
+// width of the stamp as a fraction of page width: per document, slider is the default for new ones
+function sizeFrac(doc) { return doc && doc.place && doc.place.w ? doc.place.w : Number($("f-size2").value) / 100; }
+function hFracOf(doc) { const s = doc.sizes[doc.place.page]; return sizeFrac(doc) * (s.w / s.h) * (SH / SW); }
+function clampPlace(doc) {
+  doc.place.w = Math.min(Math.max(sizeFrac(doc), 0.08), 0.95);
+  const w = doc.place.w;
+  doc.place.x = Math.min(Math.max(doc.place.x, 0), 1 - w);
+  doc.place.y = Math.min(Math.max(doc.place.y, 0), 1 - hFracOf(doc));
+}
+
+// ---------- queue ----------
+const STATUS = { pend: ["Pendente", "pend"], ok: ["Assinado", "ok"], skip: ["Cancelado", "warn"], err: ["Erro", "err"], work: ["Assinando…", "warn"] };
+function renderQueue() {
+  const q = $("queue"); q.innerHTML = "";
+  drop.classList.toggle("compact", docs.length > 0);
+  $("q-title").textContent = docs.length ? `Documentos (${docs.length})` : "Documentos";
+  $("sign-all").disabled = !docs.length || busy;
+  $("sign-all").textContent = docs.length > 1 ? `Assinar todos (${docs.length} arquivos separados)` : "Assinar todos (arquivos separados)";
+  $("sign-zip").disabled = !docs.length || busy;
+  $("sign-zip").textContent = docs.length > 1 ? `Assinar todos em ZIP (${docs.length})` : "Assinar todos em ZIP";
+  $("clear-all").hidden = !docs.length;
+  if (!docs.length) { q.innerHTML = '<div class="empty">Nenhum documento na lista ainda.</div>'; return; }
+  docs.forEach((d, i) => {
+    const [label, cls] = STATUS[d.status];
+    const el = document.createElement("div");
+    el.className = "item" + (i === active ? " active" : "");
+    el.innerHTML = `<div><div class="name"></div><div class="sub">${d.pageCount} pág. · assinatura na pág. ${d.place.page + 1} · SHA-256 ${d.hash.slice(0, 12)}…</div></div>
+      <div class="acts"><span class="pill ${cls}">${label}</span>
+      <button class="btn small" data-a="sign">Assinar e baixar</button>
+      <button class="btn small ghost" data-a="del" aria-label="Remover da lista">Remover</button></div>`;
+    el.querySelector(".name").textContent = d.name + ".pdf" + (d.note ? " — " + d.note : "");
+    el.querySelectorAll("button").forEach(b => b.disabled = busy);
+    el.onclick = e => {
+      const a = e.target.closest("button")?.dataset.a;
+      if (a === "sign") return signOne(d).then(renderQueue);
+      if (a === "del") { docs.splice(i, 1); if (active >= docs.length) active = docs.length - 1; if (i === active || active < 0) {} renderQueue(); showActive(); return; }
+      if (i !== active) { active = i; renderQueue(); showActive(); }
+    };
+    q.appendChild(el);
+  });
+}
+$("clear-all").onclick = () => { docs = []; active = -1; renderQueue(); showActive(); setMsg(""); };
+
+// ---------- preview of the active document ----------
+async function showActive() {
+  const token = ++renderToken, docEl = $("doc");
+  docEl.innerHTML = ""; pagesEls = []; stampEl = null;
+  const d = docs[active];
+  $("viewer").hidden = !d;
+  refresh();
+  if (!d) return;
+  $("f-size2").value = Math.round(d.place.w * 100);
+  $("v-title").textContent = "Prévia · " + d.name + ".pdf";
+  const maxW = Math.min(docEl.clientWidth || 800, 860);
+  for (let i = 1; i <= d.pageCount; i++) {
+    const page = await d.pdf.getPage(i);
+    if (token !== renderToken) return;
+    const base = page.getViewport({ scale: 1 });
+    const vp = page.getViewport({ scale: (maxW / base.width) * Math.min(devicePixelRatio || 1, 2) });
+    const el = document.createElement("div"); el.className = "page"; el.style.width = maxW + "px";
+    el.innerHTML = `<span class="num">pág. ${i}/${d.pageCount}</span>`;
+    const c = document.createElement("canvas"); c.width = vp.width; c.height = vp.height;
+    el.appendChild(c); docEl.appendChild(el);
+    const idx = i - 1;
+    c.addEventListener("click", e => moveTo(idx, e));
+    pagesEls[idx] = el;
+    if (idx === d.place.page) refresh();
+    await page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
+    if (token !== renderToken) return;
+  }
+}
+
+let stampEl = null;
+function placeStamp(url) {
+  const d = docs[active];
+  if (!d || !pagesEls[d.place.page]) return;
+  if (!stampEl) {
+    stampEl = document.createElement("div"); stampEl.className = "stamp";
+    stampEl.innerHTML = "<img alt=''><span class='grip l' title='Redimensionar'></span><span class='grip' title='Redimensionar'></span>";
+    enableDrag(stampEl);
+    stampEl.querySelectorAll(".grip").forEach(enableResize);
+  }
+  const host = pagesEls[d.place.page];
+  if (stampEl.parentNode !== host) host.appendChild(stampEl);
+  stampEl.firstChild.src = url;
+  clampPlace(d);
+  stampEl.style.left = d.place.x * 100 + "%";
+  stampEl.style.top = d.place.y * 100 + "%";
+  stampEl.style.width = d.place.w * 100 + "%";
+}
+function moveTo(idx, e) {
+  const d = docs[active], r = pagesEls[idx].getBoundingClientRect();
+  const w = sizeFrac(d), hPx = r.width * w * SH / SW;
+  d.place = { page: idx, x: (e.clientX - r.left) / r.width - w / 2, y: (e.clientY - r.top - hPx / 2) / r.height, w };
+  placeStamp(stampEl ? stampEl.firstChild.src : drawStamp(d));
+  renderQueue(); syncPlacement(d);
+}
+function enableDrag(el) {
+  let start = null;
+  el.addEventListener("pointerdown", e => {
+    if (e.target.classList.contains("grip")) return;
+    const d = docs[active];
+    el.setPointerCapture(e.pointerId); el.classList.add("drag");
+    start = { x: e.clientX, y: e.clientY, px: d.place.x, py: d.place.y };
+  });
+  el.addEventListener("pointermove", e => {
+    if (!start) return;
+    const d = docs[active], r = pagesEls[d.place.page].getBoundingClientRect();
+    d.place.x = start.px + (e.clientX - start.x) / r.width;
+    d.place.y = start.py + (e.clientY - start.y) / r.height;
+    placeStamp(el.firstChild.src);
+  });
+  const end = () => { if (start) syncPlacement(docs[active]); start = null; el.classList.remove("drag"); };
+  el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end);
+}
+
+function enableResize(grip) {
+  const left = grip.classList.contains("l");
+  let start = null;
+  grip.addEventListener("pointerdown", e => {
+    e.stopPropagation(); e.preventDefault();
+    const d = docs[active];
+    grip.setPointerCapture(e.pointerId);
+    start = { x: e.clientX, w: d.place.w, px: d.place.x };
+  });
+  grip.addEventListener("pointermove", e => {
+    if (!start) return;
+    const d = docs[active], r = pagesEls[d.place.page].getBoundingClientRect();
+    const dx = (e.clientX - start.x) / r.width;
+    // right grip keeps the left edge fixed; left grip keeps the right edge fixed
+    let w = Math.min(Math.max(start.w + (left ? -dx : dx), 0.08), 0.95);
+    if (left) { w = Math.min(w, start.px + start.w); d.place.x = start.px + start.w - w; }
+    else w = Math.min(w, 1 - start.px);
+    d.place.w = w;
+    $("f-size2").value = Math.round(w * 100);
+    placeStamp(stampEl.firstChild.src);
+  });
+  const end = () => { if (start) { store.set("size2", $("f-size2").value); syncPlacement(docs[active]); } start = null; };
+  grip.addEventListener("pointerup", end); grip.addEventListener("pointercancel", end);
+}
+
+// ---------- signing password ----------
+// Stored as a salted PBKDF2 hash in the viewer's private db path (falls back to this browser only).
+let pwStore = null;
+async function initPwStore() {
+  try {
+    const [db, user] = await Promise.all([window.claude?.use?.("db"), window.claude?.use?.("user")]);
+    const uid = user ? await user.id() : null;
+    if (db && uid) {
+      const ref = db.doc(`data/users/${uid}/settings/signing`);
+      pwStore = { kind: "conta", get: async () => { const s = await ref.get(); return s.exists ? s.data() : null; }, set: v => ref.set(v) };
+    }
+  } catch (e) { console.error(e); }
+  if (!pwStore) pwStore = { kind: "navegador", get: async () => { const v = store.get("pw"); return v ? JSON.parse(v) : null; }, set: async v => store.set("pw", JSON.stringify(v)) };
+  const rec = await pwStore.get().catch(() => null);
+  $("lock-state").textContent = rec ? `Senha de assinatura: ativa (salva na sua ${pwStore.kind}).` : "Senha de assinatura: será criada na primeira assinatura.";
+}
+const b64 = u8 => btoa(String.fromCharCode(...u8));
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function derive(pw, salt, iter) {
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveBits"]);
+  return new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: iter }, key, 256));
+}
+function askPassword(creating) {
+  return new Promise(resolve => {
+    $("pw-title").textContent = creating ? "Crie sua senha de assinatura" : "Confirme sua senha";
+    $("pw-text").textContent = creating ? "Ela será pedida sempre que você assinar. Use pelo menos 6 caracteres. Não há como recuperá-la depois." : "Digite a senha para validar a assinatura.";
+    $("pw-2-wrap").hidden = !creating;
+    $("pw-1").value = ""; $("pw-2").value = ""; $("pw-msg").textContent = "";
+    $("pw-modal").hidden = false; $("pw-1").focus();
+    const done = v => { $("pw-modal").hidden = true; $("pw-form").onsubmit = null; $("pw-cancel").onclick = null; resolve(v); };
+    $("pw-cancel").onclick = () => done(null);
+    $("pw-form").onsubmit = async e => {
+      e.preventDefault();
+      const p1 = $("pw-1").value;
+      if (creating) {
+        if (p1.length < 6) return ($("pw-msg").textContent = "A senha precisa ter pelo menos 6 caracteres.");
+        if (p1 !== $("pw-2").value) return ($("pw-msg").textContent = "As senhas não conferem.");
+        const salt = crypto.getRandomValues(new Uint8Array(16)), iter = 210000;
+        $("pw-ok").disabled = true;
+        try { await pwStore.set({ salt: b64(salt), hash: b64(await derive(p1, salt, iter)), iter, created: new Date().toISOString() }); }
+        catch (err) { console.error(err); $("pw-ok").disabled = false; return ($("pw-msg").textContent = "Não foi possível salvar a senha. Tente de novo."); }
+        $("pw-ok").disabled = false;
+        $("lock-state").textContent = `Senha de assinatura: ativa (salva na sua ${pwStore.kind}).`;
+        return done(true);
+      }
+      $("pw-ok").disabled = true;
+      const rec = await pwStore.get();
+      const h = await derive(p1, unb64(rec.salt), rec.iter);
+      $("pw-ok").disabled = false;
+      if (b64(h) !== rec.hash) { $("pw-1").value = ""; return ($("pw-msg").textContent = "Senha incorreta."); }
+      done(true);
+    };
+  });
+}
+async function requirePassword() {
+  if (!pwStore) await initPwStore();
+  const rec = await pwStore.get().catch(() => null);
+  const ok = await askPassword(!rec);
+  if (!ok) setMsg("Assinatura cancelada: senha não confirmada.");
+  return !!ok;
+}
+
+// ---------- signing ----------
+async function buildSigned(d) {
+  const now = new Date(), t = signedAt(now);
+  const png = drawStamp(d, t);
+  const pdf = await PDFLib.PDFDocument.load(d.bytes);
+  const img = await pdf.embedPng(png);
+  const page = pdf.getPage(d.place.page);
+  const { width: pw, height: ph } = page.getSize();
+  const sw = sizeFrac(d) * pw, sh = sw * SH / SW;
+  page.drawImage(img, { x: d.place.x * pw, y: ph - d.place.y * ph - sh, width: sw, height: sh });
+  pdf.setModificationDate(now);
+  pdf.setProducer("Assinador PPL");
+  pdf.setKeywords([`Assinado por ${$("f-name").value}`, "Senha do assinante validada", `Em ${t.iso}`, `Local ${$("f-place").value || "-"}`, `SHA-256 original ${d.hash}`]);
+  return { bytes: await pdf.save(), t };
+}
+
+// the viewer limits how many save prompts can open in a row: wait and try again instead of failing
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function saveWithRetry(filename, data) {
+  for (let attempt = 0; ; attempt++) {
+    try { return await downloads.save({ filename, data }); }
+    catch (err) {
+      if (!(err && err.code === "rate_limited") || attempt >= 20) throw err;
+      const wait = Math.min(2000 * (attempt + 1), 15000);
+      setMsg(`Aguardando liberação do download (${Math.round(wait / 1000)} s)…`);
+      await sleep(wait);
+    }
+  }
+}
+
+async function signOne(d, authed = false) {
+  if (!downloads) { setMsg("Download indisponível nesta visualização. Abra o artefato no claude.ai.", "err"); return "unavailable"; }
+  if (!authed && !(await requirePassword())) return "declined";
+  d.status = "work"; d.note = ""; renderQueue();
+  try {
+    const { bytes, t } = await buildSigned(d);
+    await saveWithRetry(`${d.name}_assinado.pdf`, new Blob([bytes], { type: "application/pdf" }));
+    d.status = "ok"; d.note = `${t.date} ${t.time}`;
+    setMsg(`${d.name}.pdf assinado e baixado.`, "ok");
+    return "ok";
+  } catch (err) {
+    if (err && err.code === "declined") { d.status = "skip"; setMsg(`Download de ${d.name}.pdf cancelado.`); return "declined"; }
+    console.error(err); d.status = "err"; d.note = err && err.message ? err.message : "";
+    setMsg(`Não foi possível assinar ${d.name}.pdf.`, "err");
+    return "error";
+  } finally { refresh(); }
+}
+
+$("sign-all").onclick = async () => {
+  if (!docs.length || busy) return;
+  if (!downloads) return setMsg("Download indisponível nesta visualização. Abra o artefato no claude.ai.", "err");
+  if (!(await requirePassword())) return;
+  busy = true; renderQueue();
+  let ok = 0, skip = 0, fail = 0;
+  for (const d of docs) {
+    if (d.status === "ok") { ok++; continue; }
+    let r = await signOne(d, true);
+    if (r === "unavailable") break;
+    ok += r === "ok"; skip += r === "declined"; fail += r === "error";
+    renderQueue();
+  }
+  busy = false; renderQueue();
+  setMsg(`Concluído: ${ok} assinado(s)` + (skip ? `, ${skip} cancelado(s)` : "") + (fail ? `, ${fail} com erro` : "") + ".", fail ? "err" : "ok");
+};
+
+$("sign-zip").onclick = async () => {
+  if (!docs.length || busy) return;
+  if (!downloads) return setMsg("Download indisponível nesta visualização. Abra o artefato no claude.ai.", "err");
+  if (!(await requirePassword())) return;
+  busy = true; renderQueue();
+  const zip = new JSZip(), used = new Set();
+  let ok = 0, fail = 0;
+  for (const d of docs) {
+    d.status = "work"; d.note = ""; renderQueue();
+    setMsg(`Assinando ${ok + fail + 1} de ${docs.length}: ${d.name}.pdf`);
+    try {
+      const { bytes, t } = await buildSigned(d);
+      let fn = `${d.name}_assinado.pdf`, n = 2;
+      while (used.has(fn)) fn = `${d.name}_assinado_${n++}.pdf`;
+      used.add(fn); zip.file(fn, bytes);
+      d.status = "ok"; d.note = `${t.date} ${t.time}`; ok++;
+    } catch (err) { console.error(err); d.status = "err"; d.note = err && err.message ? err.message : ""; fail++; }
+    renderQueue();
+  }
+  refresh();
+  try {
+    if (ok) {
+      setMsg("Compactando…");
+      const blob = await zip.generateAsync({ type: "blob" });
+      const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+      await saveWithRetry(`documentos_assinados_${stamp}.zip`, blob);
+      setMsg(`ZIP baixado com ${ok} documento(s) assinado(s)` + (fail ? `; ${fail} com erro.` : "."), fail ? "err" : "ok");
+    } else setMsg("Nenhum documento pôde ser assinado.", "err");
+  } catch (err) {
+    docs.forEach(d => { if (d.status === "ok") d.status = "skip"; });
+    setMsg(err && err.code === "declined" ? "Download do ZIP cancelado." : "Não foi possível salvar o ZIP.", err && err.code === "declined" ? "" : "err");
+  } finally { busy = false; renderQueue(); }
+};
+
+$("png").onclick = async () => {
+  if (!downloads) return setMsg("Download indisponível nesta visualização. Abra o artefato no claude.ai.", "err");
+  drawStamp(docs[active]);
+  stampCanvas.toBlob(async b => {
+    try { await downloads.save({ filename: "assinatura-" + ($("f-name").value || "ppl").replace(/\s+/g, "-").toLowerCase() + ".png", data: b }); setMsg("Assinatura salva.", "ok"); }
+    catch (err) { err && err.code === "declined" ? setMsg("Download cancelado.") : setMsg("Não foi possível salvar a imagem.", "err"); }
+  }, "image/png");
+};
+
+function setMsg(text, kind = "") { const m = $("msg"); m.textContent = text; m.className = "msg " + kind; }
+
+// ---------- boot ----------
+downloads = {
+  async save({ filename, data }) {
+    const url = URL.createObjectURL(data instanceof Blob ? data : new Blob([data]));
+    const a = document.createElement("a"); a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    await new Promise(r => setTimeout(r, 400));   // spacing so the browser accepts many downloads
+    return { status: "saved" };
+  }
+};
+setInterval(refresh, 20000);
+Promise.all(["Great Vibes", "Allura", "Mr Dafoe", "IBM Plex Sans", "IBM Plex Mono"].map(f => document.fonts.load(`40px '${f}'`).catch(() => {}))).then(refresh);
+renderQueue();
+refresh();
+initPwStore();
+</script>
+
+</body>
+</html>
