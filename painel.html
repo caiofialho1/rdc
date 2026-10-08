@@ -124,16 +124,29 @@ tr.g-row.fechado .seta{transform:rotate(-90deg)}
 .pill.wait{background:var(--warn-bg);color:var(--warn-ink)}
 .pill.rev{background:var(--crit-bg);color:var(--crit)}
 /* emissão por dia */
-table.mat{width:auto}
+/* emissão por responsável: grade estilo calendário */
+table.mat{width:auto;border-collapse:separate;border-spacing:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
 .mat td,.mat th{padding:0;border:0;text-align:center}
-.mat th{position:static;background:none;font-weight:600;color:var(--muted);font-size:11px;padding:2px 0;cursor:default}
-.mat th.nome,.mat td.nome{text-align:left;padding-right:12px;font-weight:600;color:var(--ink);font-size:13px;white-space:nowrap}
+.mat th{position:static;background:none;font-weight:600;color:var(--muted);font-size:11px;cursor:default}
+.mat thead tr.mes th{background:var(--navy);color:#fff;font-size:12px;font-weight:700;text-transform:capitalize;letter-spacing:.02em;padding:6px 8px;text-align:left;border-left:1px solid rgba(255,255,255,.18)}
+.mat thead tr.mes th.nome{border-left:0}
+.mat thead tr.dia th{background:var(--surface);padding:4px 0 5px;border-bottom:1px solid var(--line);line-height:1.15}
+.mat thead tr.dia th b{display:block;font-size:13px;color:var(--ink)}
+.mat thead tr.dia th.fds b{color:var(--crit)}
+.mat thead tr.dia th.hoje b{background:var(--s1);color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;margin:0 auto}
+.mat td.d{border-left:1px solid var(--line);border-bottom:1px solid var(--line);padding:2px}
+.mat tr:last-child td{border-bottom:0}
+.mat .seg{border-left:2px solid var(--line-2)!important}
+.mat .fds{background:var(--rest)}
+.mat td.hoje{background:color-mix(in srgb,var(--s1) 10%,transparent)}
+.mat th.nome,.mat td.nome{text-align:left;padding:6px 12px;font-weight:600;color:var(--ink);font-size:13px;white-space:nowrap;background:var(--surface);border-bottom:1px solid var(--line)}
 .mat td.nome small{display:block;font-weight:400;color:var(--muted);font-size:11px}
-.mat .c{width:22px;height:22px;margin:1px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.mat .c{width:24px;height:24px;margin:0 auto;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
 .mat .c.ok{background:var(--good-bg);color:var(--good-ink)}
 .mat .c.no{background:var(--crit-bg);color:var(--crit)}
-.mat .c.dom{background:var(--rest);color:var(--muted)}
+.mat .c.dom{background:transparent;color:var(--muted)}
 .mat tbody tr{cursor:default}
+.mat tbody tr:hover td.nome{background:var(--hover)}
 .mat-leg{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:8px}
 .secao{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:24px 0 10px}
 .secao h2{font-size:16px}
@@ -445,7 +458,7 @@ function filtrar() {
 }
 function diasDoPeriodo() {
   const out = [];
-  for (let d = new Date(dados.ini + 'T12:00:00'); isoDia(d) <= dados.fim; d.setDate(d.getDate() + 1)) out.push({ iso: isoDia(d), dom: d.getDay() === 0, n: d.getDate(), m: d.getMonth() + 1 });
+  for (let d = new Date(dados.ini + 'T12:00:00'); isoDia(d) <= dados.fim; d.setDate(d.getDate() + 1)) out.push({ iso: isoDia(d), dom: d.getDay() === 0, ds: d.getDay(), n: d.getDate(), m: d.getMonth() + 1 });
   return out;
 }
 
@@ -610,15 +623,21 @@ function matriz(rdcs) {
   const nomes = resp ? [resp] : [...new Set([...LIDERES.map(l => l[0]), ...rdcs.map(r => r.responsavel)])];
   const cont = new Map();
   for (const r of rdcs) { const k = r.responsavel + '|' + r.data_rdc; cont.set(k, (cont.get(k) || 0) + 1); }
-  el.innerHTML = `<table class="mat"><thead><tr><th class="nome"></th>${dias.map(d => `<th title="${fmtData(d.iso)}">${d.n}</th>`).join('')}</tr></thead><tbody>${nomes.map(n => {
+  // cabeçalho de calendário: faixa do mês + dia da semana e número; fim de semana sombreado, segunda abre a semana, hoje destacado
+  const hoje = isoDia(new Date()), SEM = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+  const cls = (d, i) => [d.ds === 0 || d.ds === 6 ? 'fds' : '', d.ds === 1 && i > 0 ? 'seg' : '', d.iso === hoje ? 'hoje' : ''].filter(Boolean).join(' ');
+  const meses = []; dias.forEach(d => { const k = d.iso.slice(0, 7); if (meses.at(-1)?.k === k) meses.at(-1).n++; else meses.push({ k, n: 1 }); });
+  const nomeMes = k => new Date(k + '-15T12:00:00').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  el.innerHTML = `<table class="mat"><thead><tr class="mes"><th class="nome">Responsável</th>${meses.map(m => `<th colspan="${m.n}">${m.n >= 4 ? nomeMes(m.k) : ''}</th>`).join('')}</tr>
+    <tr class="dia"><th class="nome"></th>${dias.map((d, i) => `<th class="${cls(d, i)}" title="${fmtData(d.iso)}">${SEM[d.ds]}<b>${d.n}</b></th>`).join('')}</tr></thead><tbody>${nomes.map(n => {
     const fn = (LIDERES.find(l => l[0] === n) || [])[1];
     const faltas = dias.filter(d => !d.dom && !cont.get(n + '|' + d.iso)).length;
-    return `<tr><td class="nome">${esc(n)}<small>${esc(fn || '')}${faltas ? ` · ${faltas} dia(s) sem RDC` : ' · todos os dias'}</small></td>${dias.map(d => {
+    return `<tr><td class="nome">${esc(n)}<small>${esc(fn || '')}${faltas ? ` · ${faltas} dia(s) sem RDC` : ' · todos os dias'}</small></td>${dias.map((d, i) => {
       const c = cont.get(n + '|' + d.iso);
-      return `<td><div class="c ${c ? 'ok' : d.dom ? 'dom' : 'no'}" title="${esc(n)} · ${fmtData(d.iso)}: ${c ? c + ' RDC' : 'sem RDC'}">${c ? (c > 1 ? c : '✓') : d.dom ? '' : '✕'}</div></td>`;
+      return `<td class="d ${cls(d, i)}"><div class="c ${c ? 'ok' : d.dom ? 'dom' : 'no'}" title="${esc(n)} · ${fmtData(d.iso)}: ${c ? c + ' RDC' : 'sem RDC'}">${c ? (c > 1 ? c : '✓') : d.dom ? '' : '✕'}</div></td>`;
     }).join('')}</tr>`;
   }).join('')}</tbody></table>
-  <div class="mat-leg"><span>✓ emitiu (número = mais de um RDC)</span><span>✕ sem RDC</span><span>cinza = domingo</span></div>`;
+  <div class="mat-leg"><span>✓ emitiu (número = mais de um RDC)</span><span>✕ sem RDC</span><span>sombreado = fim de semana (domingo sem RDC não conta)</span><span>azul = hoje</span></div>`;
 }
 
 /* ---------- tabelas ordenáveis ---------- */
