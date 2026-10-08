@@ -436,10 +436,40 @@ input.control::-webkit-calendar-picker-indicator{margin-left:2px}
       <button class="btn primary" id="btnValidar">✓ VALIDAR (SEM REVISÃO)</button>
       <button class="btn danger" id="btnLiberarRev">↺ LIBERAR PARA REVISÃO</button>
       <button class="btn ghost warn" id="btnCancelarRdc">✕ CANCELAR RDC</button>
+      <div class="badge" style="margin:18px 0 6px">Edição do administrador</div>
+      <button class="btn ghost" id="btnEditarDados">✎ EDITAR DADOS (contrato, data, OM, PTS…)</button>
+      <button class="btn ghost" id="btnEditarTudo">✎ EDITAR TUDO (atividades, fotos, impactos)</button>
+      <p class="note">“Editar dados” altera este RDC no lugar. “Editar tudo” grava uma nova versão no lugar desta, mantendo a situação (validado continua validado).</p>
       <div style="border-top:1px solid #EAECF0;margin-top:16px;padding-top:12px;text-align:center">
         <button class="link-danger" id="btnApagarRdc">🗑 Apagar definitivamente</button>
         <p class="note" id="apagarNota">Remove o RDC, as versões anteriores e as fotos. Não pode ser desfeito.</p>
       </div>
+    </div>
+    <div class="card hidden" id="dtEditar">
+      <div class="badge" style="margin-bottom:6px">Editar dados do RDC</div>
+      <p class="note" style="margin:0 0 14px">Altera este RDC no lugar (mesmo código e situação). Fica registrado quem alterou e o valor anterior. Mudar a data move junto os horários.</p>
+      <div class="field"><label class="lbl" for="eContrato">Contrato</label><select class="control" id="eContrato"></select></div>
+      <div class="field"><label class="lbl" for="eResp">Responsável</label><select class="control" id="eResp"></select></div>
+      <div class="row">
+        <div class="field"><label class="lbl" for="eData">Data</label><input class="control" type="date" id="eData"></div>
+        <div class="field"><label class="lbl" for="eOM">OM</label><input class="control" id="eOM" inputmode="numeric"></div>
+      </div>
+      <div class="field"><label class="lbl" for="eArea">Área</label><select class="control" id="eArea"></select></div>
+      <div class="field"><label class="lbl" for="eAtivo">Ativo / TAG</label><select class="control" id="eAtivo"></select></div>
+      <div class="field hidden" id="eWrapOutro"><label class="lbl" for="eAtivoOutro">Descreva o ativo</label><input class="control" id="eAtivoOutro" autocapitalize="characters"></div>
+      <div class="field"><label class="lbl" for="ePts">Teve PTS?</label><select class="control" id="ePts"><option value="">Não informado</option><option value="S">Sim</option><option value="N">Não</option></select></div>
+      <div class="row" id="eWrapPts">
+        <div class="field"><label class="lbl" for="ePtsSol">Solicitação</label><input class="control" type="time" id="ePtsSol"></div>
+        <div class="field"><label class="lbl" for="ePtsAbe">Abertura</label><input class="control" type="time" id="ePtsAbe"></div>
+      </div>
+      <div class="field"><label class="lbl" for="eBloq">Teve bloqueio?</label><select class="control" id="eBloq"><option value="">Não informado</option><option value="S">Sim</option><option value="N">Não</option></select></div>
+      <div id="eWrapBloq">
+        <div class="field"><label class="lbl" for="eBloqAtivo">Ativo bloqueado</label><input class="control" id="eBloqAtivo" list="dlBloqAtivo" autocapitalize="characters"></div>
+        <div class="field"><label class="lbl" for="eBloqHora">Horário do bloqueio</label><input class="control" type="time" id="eBloqHora"></div>
+      </div>
+      <div class="field"><label class="lbl" for="eMotivo">Motivo da edição <span class="opt-lbl">(opcional)</span></label><textarea class="control" id="eMotivo" placeholder="Ex.: contrato não informado no envio"></textarea></div>
+      <button class="btn primary" id="btnSalvarEdicao">SALVAR ALTERAÇÕES</button>
+      <button class="btn ghost" id="btnFecharEdicao">CANCELAR</button>
     </div>
     <button class="btn accent hidden" id="btnRevisarRdc">REVISAR ESTE RDC</button>
     <button class="btn ghost hidden" id="btnAdminEntrar">Entrar como administrador para validar</button>
@@ -1000,7 +1030,7 @@ function buildRecord(d) {
     ...(d.bloqueio === 'S' ? { BloqueioAtivo: d.bloqueioAtivo.trim(), BloqueioHora: toISO(d.data, d.bloqueioHora) } : {}),
     ...(d.revisaoDe ? { RevisaoDe: d.revisaoDe } : {}) // revisão liberada pelo administrador
   };
-  return { code, createdAt: now.toISOString(), header, atividades, impactos, fotos, progress: {} };
+  return { code, createdAt: now.toISOString(), header, atividades, impactos, fotos, progress: {}, ...(d.adminEdit ? { adminEdit: true } : {}) };
 }
 const stripNulls = o => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== null && v !== undefined && v !== ''));
 
@@ -1075,6 +1105,12 @@ async function sendSupabase(rec, saveProgress) {
     atividades: rec.atividades, impactos: rec.impactos,
     fotos: rec.fotos.map(({ dataUrl, ...m }) => ({ ...m, Caminho: p.fot[m.Title] }))
   };
+  if (rec.adminEdit) { // edição completa do administrador: a senha é conferida no banco (não fica guardada na fila)
+    if (!admin) throw new Error('Entre como administrador (⚙) para enviar a edição.');
+    const r = await sbRpc('rdc_admin_registrar', { p_nome: admin.nome, p_senha: admin.senha, payload });
+    if (!r || !r.ok) { const m = (r && r.erro) || 'Falha ao gravar a edição.'; if (/Sessão/.test(m)) setAdmin(null); throw new Error(m); }
+    return;
+  }
   await sbFetch('/rest/v1/rpc/registrar_rdc',
     { method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ payload }) });
 }
@@ -1327,7 +1363,9 @@ function renderImpacts() {
 }
 function renderRevBanner() {
   $('revBanner').classList.toggle('hidden', !draft.revisaoDe);
-  $('revBanner').innerHTML = draft.revisaoDe ? `<b>Revisão do ${esc(draft.revisaoDe)}</b>${draft.revisaoMotivo ? `<br>Motivo: ${esc(draft.revisaoMotivo)}` : ''}<br>Ao enviar, esta versão substitui a anterior.` : '';
+  $('revBanner').innerHTML = !draft.revisaoDe ? ''
+    : draft.adminEdit ? `<b>Edição do administrador · ${esc(draft.revisaoDe)}</b><br>Ao enviar, esta versão substitui a atual e mantém a situação dela.`
+    : `<b>Revisão do ${esc(draft.revisaoDe)}</b>${draft.revisaoMotivo ? `<br>Motivo: ${esc(draft.revisaoMotivo)}` : ''}<br>Ao enviar, esta versão substitui a anterior.`;
 }
 function openForm() {
   fillHeader(); renderRevBanner(); renderActivities(); renderImpacts(); go('scrRDC');
@@ -1670,6 +1708,7 @@ async function submit() {
   $('sucTitle').textContent = ok ? 'RDC enviado' : 'RDC salvo no aparelho';
   $('sucMsg').textContent = ok
     ? (CFG.mode === 'demo' ? 'Modo demonstração: registro guardado apenas neste aparelho.'
+      : rec.adminEdit ? `Edição gravada: esta versão substitui o ${rec.header.RevisaoDe}.`
       : rec.header.RevisaoDe ? `Revisão gravada: substitui o ${rec.header.RevisaoDe} e aguarda nova validação.` : 'Os dados foram gravados na base do Planejamento.')
     : 'Não foi possível enviar agora' + (res.error ? ` (${res.error.message})` : '') + '. Ele será reenviado automaticamente quando houver conexão.';
   $('sucCode').textContent = rec.code;
@@ -1832,6 +1871,7 @@ function renderDetalhe() {
     `<span><b>${esc(d.Title)}</b>${d.Revisao ? ` · revisão ${d.Revisao}` : ''}</span>`,
     `<span class="note" style="margin:0">Recebido em ${fmtDataHora(d.RecebidoEm)}</span>`,
     d.ValidadoPor ? `<span>${decisao} por <b>${esc(d.ValidadoPor)}</b> em ${fmtDataHora(d.ValidadoEm)}</span>` : '',
+    d.EditadoPor ? `<span>✎ Editado por <b>${esc(d.EditadoPor)}</b> em ${fmtDataHora(d.EditadoEm)}</span>` : '',
     d.ObsValidacao ? `<span>${liberouRev || d.Status === 'Cancelado' ? 'Motivo' : 'Obs.'}: ${esc(d.ObsValidacao)}</span>` : '',
     d.RevisaoDe ? `<span>Substitui o <a href="#" data-code="${esc(d.RevisaoDe)}">${esc(d.RevisaoDe)}</a></span>` : '',
     d.SubstituidoPor ? `<span>Substituído pelo <a href="#" data-code="${esc(d.SubstituidoPor)}">${esc(d.SubstituidoPor)}</a></span>` : ''
@@ -1877,6 +1917,7 @@ function renderDetalhe() {
   $('apagarNota').textContent = d.RevisaoDe ? 'Remove o RDC, as versões anteriores dele e as fotos. Não pode ser desfeito.' : 'Remove o RDC e as fotos. Não pode ser desfeito.';
   desarmar($('btnApagarRdc'));
   $('btnRevisarRdc').classList.toggle('hidden', d.Status !== 'Em revisão');
+  $('dtEditar').classList.add('hidden');
   $('btnAdminEntrar').classList.toggle('hidden', !!admin || !ativo || !adminDisponivel());
 }
 
@@ -1931,11 +1972,97 @@ async function apagarRdc(btn) {
   finally { busy(null); }
 }
 
+/* ----- Edição de dados pelo administrador (no próprio RDC, sem nova versão) ----- */
+const semV9 = e => e.status === 404 ? 'Banco sem a edição do administrador — rode supabase/migracao_v9_admin_editar.sql.' : null;
+function eAtivos(area, ativo) {
+  const tags = TAGS.filter(([t]) => areaDaTag(t) === area);
+  const outro = ativo && !tags.some(([t]) => t === ativo);
+  $('eAtivo').innerHTML = '<option value="">Selecione o ativo…</option>' + tags.map(([t, dsc]) => `<option value="${t}">${esc(dsc)} · ${t}</option>`).join('')
+    + `<option value="${ATIVO_OUTRO}">OUTRO (não listado)</option>`;
+  $('eAtivo').value = outro ? ATIVO_OUTRO : ativo || '';
+  $('eAtivoOutro').value = outro ? ativo : '';
+  $('eWrapOutro').classList.toggle('hidden', $('eAtivo').value !== ATIVO_OUTRO);
+}
+function eVisibilidade() {
+  $('eWrapPts').classList.toggle('hidden', $('ePts').value !== 'S');
+  $('eWrapBloq').classList.toggle('hidden', $('eBloq').value !== 'S');
+}
+function abrirEdicaoDados() {
+  const d = detalhe, sn = v => v == null ? '' : v ? 'S' : 'N';
+  const contratos = [...CONTRATOS, ...(d.Contrato && !nomeContrato(d.Contrato) ? [[d.ContratoNome || 'Contrato', d.Contrato]] : [])];
+  $('eContrato').innerHTML = '<option value="">Sem contrato</option>' + contratos.map(([n, num]) => `<option value="${num}">${esc(n)} · ${num}</option>`).join('');
+  $('eContrato').value = d.Contrato || '';
+  const nomes = [...LIDERES.map(l => l[0]), ...(LIDERES.some(l => l[0] === d.Responsavel) ? [] : [d.Responsavel])];
+  $('eResp').innerHTML = nomes.map(n => `<option value="${esc(n)}">${esc(n)}${funcaoLider(n) ? ' — ' + esc(funcaoLider(n)) : ''}</option>`).join('');
+  $('eResp').value = d.Responsavel;
+  $('eData').value = d.DataRDC; $('eOM').value = d.OM;
+  const area = (d.Area || '').split(' - ')[0];
+  $('eArea').innerHTML = '<option value="">Selecione a área…</option>' + AREAS.map(([c, n]) => `<option value="${c}">${c} - ${esc(n)}</option>`).join('');
+  $('eArea').value = area; eAtivos(area, d.Ativo);
+  $('ePts').value = sn(d.Pts); $('ePtsSol').value = fmtHora(d.PtsSolicitacao); $('ePtsAbe').value = fmtHora(d.PtsAbertura);
+  $('eBloq').value = sn(d.Bloqueio); $('eBloqAtivo').value = d.BloqueioAtivo || ''; $('eBloqHora').value = fmtHora(d.BloqueioHora);
+  $('eMotivo').value = '';
+  eVisibilidade();
+  $('dtEditar').classList.remove('hidden');
+  $('dtEditar').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+// Só os campos que mudaram vão para o banco
+function camposEditados() {
+  const d = detalhe, c = {}, data = $('eData').value;
+  if (!data) throw new Error('Informe a data.');
+  if (!$('eOM').value.trim()) throw new Error('Informe a OM.');
+  if (($('eContrato').value || null) !== (d.Contrato || null)) { c.contrato = $('eContrato').value || null; c.contrato_nome = nomeContrato($('eContrato').value) || (c.contrato ? d.ContratoNome : null); }
+  if ($('eResp').value !== d.Responsavel) { c.responsavel = $('eResp').value; c.responsavel_funcao = funcaoLider($('eResp').value) || null; }
+  if (data !== d.DataRDC) c.data_rdc = data;
+  if ($('eOM').value.trim() !== d.OM) c.om = $('eOM').value.trim();
+  const area = $('eArea').value, outro = $('eAtivo').value === ATIVO_OUTRO;
+  const ativo = outro ? $('eAtivoOutro').value.trim().toUpperCase() : $('eAtivo').value;
+  if (!area || !ativo) throw new Error('Escolha a área e o ativo.');
+  const areaTxt = `${area} - ${nomeArea(area)}`;
+  if (areaTxt !== (d.Area || '')) c.area = areaTxt;
+  if (ativo !== d.Ativo || c.area) { c.ativo = ativo; c.ativo_descricao = outro ? 'OUTRO (não listado)' : descTag(ativo); }
+  // horários: a data usada é a nova; abertura antes da solicitação = dia seguinte
+  const pts = $('ePts').value, sol = $('ePtsSol').value, abe = $('ePtsAbe').value;
+  const ptsAntes = d.Pts == null ? '' : d.Pts ? 'S' : 'N';
+  if (pts === 'S' && (!sol || !abe)) throw new Error('Informe os horários de solicitação e de abertura da PTS.');
+  if (pts !== ptsAntes) c.pts = pts === '' ? null : pts === 'S';
+  if (pts === 'S' && (pts !== ptsAntes || sol !== fmtHora(d.PtsSolicitacao) || abe !== fmtHora(d.PtsAbertura))) {
+    c.pts_solicitacao = toISO(data, sol); c.pts_abertura = toISO(data, abe, toMin(abe) < toMin(sol));
+  }
+  const bl = $('eBloq').value, bAtivo = $('eBloqAtivo').value.trim().toUpperCase(), bHora = $('eBloqHora').value;
+  const blAntes = d.Bloqueio == null ? '' : d.Bloqueio ? 'S' : 'N';
+  if (bl === 'S' && (!bAtivo || !bHora)) throw new Error('Informe o ativo e o horário do bloqueio.');
+  if (bl !== blAntes) c.bloqueio = bl === '' ? null : bl === 'S';
+  if (bl === 'S' && (bl !== blAntes || bAtivo !== (d.BloqueioAtivo || '') || bHora !== fmtHora(d.BloqueioHora))) {
+    c.bloqueio_ativo = bAtivo; c.bloqueio_hora = toISO(data, bHora);
+  }
+  return c;
+}
+async function salvarEdicaoDados() {
+  let campos;
+  try { campos = camposEditados(); } catch (e) { return toast(e.message, true); }
+  if (!Object.keys(campos).length) return toast('Nada foi alterado.');
+  busy('Salvando alterações…');
+  try {
+    const r = await sbRpc('rdc_admin_editar', { p_nome: admin.nome, p_senha: admin.senha, p_codigos: [detalhe.Title], p_campos: campos, p_motivo: $('eMotivo').value.trim() || null });
+    if (!r || !r.ok) {
+      const msg = (r && r.erro) || 'Falha ao salvar.';
+      if (/Sessão/.test(msg)) { setAdmin(null); renderDetalhe(); }
+      return toast(msg, true);
+    }
+    toast('Alterações salvas.');
+    const d = await sbRpc('rdc_detalhe', { p_codigo: detalhe.Title });
+    if (d) detalhe = d;
+    renderDetalhe(); window.scrollTo(0, 0);
+  } catch (e) { toast(semV9(e) || 'Não foi possível salvar: ' + e.message.replace(/^Supabase \d+: /, ''), true); }
+  finally { busy(null); }
+}
+
 // Carrega o RDC liberado (inclusive as fotos) como rascunho; ao enviar, a nova versão substitui a anterior
-async function iniciarRevisao(btn) {
-  const rotulo = 'REVISAR ESTE RDC';
+async function iniciarRevisao(btn, adminEdit) {
+  const rotulo = btn.dataset.rotulo || (btn.dataset.rotulo = btn.textContent);
   if (await Store.get('draft') && !btn.classList.contains('armed')) {
-    btn.classList.add('armed'); btn.textContent = 'DESCARTAR RASCUNHO ATUAL E REVISAR';
+    btn.classList.add('armed'); btn.textContent = 'DESCARTAR RASCUNHO ATUAL E CONTINUAR';
     setTimeout(() => { btn.classList.remove('armed'); btn.textContent = rotulo; }, 3000); return;
   }
   btn.classList.remove('armed'); btn.textContent = rotulo;
@@ -1959,7 +2086,7 @@ async function iniciarRevisao(btn) {
       pts: sn(d.Pts), ptsSolicitacao: fmtHora(d.PtsSolicitacao), ptsAbertura: fmtHora(d.PtsAbertura),
       bloqueio: sn(d.Bloqueio), bloqueioAtivo: d.BloqueioAtivo || '', bloqueioHora: fmtHora(d.BloqueioHora),
       impactos: d.impactos.map(x => ({ id: uid(), descricao: x.TipoImpacto, horaInicio: fmtHora(x.InicioImpacto), horaFim: fmtHora(x.FimImpacto) })),
-      revisaoDe: d.Title, revisaoMotivo: d.ObsValidacao || ''
+      revisaoDe: d.Title, revisaoMotivo: adminEdit ? '' : d.ObsValidacao || '', ...(adminEdit ? { adminEdit: true } : {})
     };
     await Store.set('draft', draft);
     openForm();
@@ -2194,6 +2321,13 @@ async function boot() {
   $('btnCancelarRdc').onclick = () => validar('Cancelado');
   $('btnApagarRdc').onclick = e => apagarRdc(e.currentTarget);
   $('btnRevisarRdc').onclick = e => iniciarRevisao(e.currentTarget);
+  $('btnEditarTudo').onclick = e => iniciarRevisao(e.currentTarget, true);
+  $('btnEditarDados').onclick = abrirEdicaoDados;
+  $('btnFecharEdicao').onclick = () => $('dtEditar').classList.add('hidden');
+  $('btnSalvarEdicao').onclick = salvarEdicaoDados;
+  $('ePts').onchange = $('eBloq').onchange = eVisibilidade;
+  $('eArea').onchange = () => eAtivos($('eArea').value, '');
+  $('eAtivo').onchange = () => { $('eWrapOutro').classList.toggle('hidden', $('eAtivo').value !== ATIVO_OUTRO); if ($('eAtivo').value === ATIVO_OUTRO) $('eAtivoOutro').focus(); };
   $('btnAdminEntrar').onclick = () => requireAdmin(() => { renderDetalhe(); go('scrDetalhe'); });
   $('btnLogin').onclick = () => login();
   $('btnNovo').onclick = $('btnNovo2').onclick = async () => { draft = newDraft(); await Store.set('draft', draft); openForm(); };

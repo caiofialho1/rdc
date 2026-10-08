@@ -151,9 +151,20 @@ async function sincronizar(codigo: string) {
   }
   if (!atualizado) await criarItem(codigo, LISTAS.cabecalho, d.cabecalho);
 
-  // atividades, impactos e fotos não mudam depois de enviados (a revisão gera um RDC novo)
-  for (const a of d.atividades) if (!m.has(a.Title)) await criarItem(codigo, LISTAS.atividades, a);
-  for (const x of d.impactos) if (!m.has(x.Title)) await criarItem(codigo, LISTAS.impactos, x);
+  // atividades e impactos: cria os que faltam; os existentes são atualizados (o administrador pode editar
+  // data, ativo, OM e contrato do RDC no lugar). Fotos não mudam (a edição completa gera um RDC novo).
+  for (const [lista, linhas] of [[LISTAS.atividades, d.atividades], [LISTAS.impactos, d.impactos]] as const) {
+    for (const x of linhas) {
+      const it = m.get(x.Title);
+      if (it && h) { // RDC novo (sem cabeçalho no SharePoint) não precisa atualizar
+        try {
+          await graph(`${await itens(lista)}/${it.item_id}/fields`, { method: 'PATCH', body: semNulos(await soColunas(lista, x)) });
+          continue;
+        } catch (e) { ignora404(e); } // apagado à mão no SharePoint: cria de novo
+      } else if (it) continue;
+      await criarItem(codigo, lista, x);
+    }
+  }
   for (const f of d.fotos) {
     if (m.has(f.Title)) continue;
     const { data: blob, error: e } = await sb.storage.from(BUCKET).download(f.Caminho);

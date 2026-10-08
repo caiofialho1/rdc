@@ -150,6 +150,14 @@ a{color:var(--s1)}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:10px;font-weight:600;z-index:70}
 .toast.err{background:var(--crit);color:#fff}
 .nota{color:var(--muted);font-size:12px;margin-top:8px}
+.lote{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--warn-bg);border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.lote b{color:var(--ink)}
+.lote .ctl{width:auto;min-width:200px}
+td.sel,th.sel{width:34px;text-align:center}
+td.sel input,th.sel input{width:16px;height:16px;cursor:pointer}
+.ed-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ed-grid .f{min-width:0}
+@media (max-width:520px){.ed-grid{grid-template-columns:1fr}}
 @media (max-width:640px){main{padding:16px}header{padding:12px 16px}.filtros .f,.filtros .f.data{flex:1 1 100%}}
 </style>
 </head>
@@ -244,6 +252,13 @@ a{color:var(--s1)}
       <div class="tbl-wrap" id="tblImp" style="max-height:360px"></div>
 
       <div class="secao"><div><h2>RDC</h2><p class="sub" style="margin:0" id="rdcCount"></p></div></div>
+      <div class="lote hidden" id="lote">
+        <span><b id="loteN">0</b> RDC selecionado(s)</span>
+        <label class="lbl" for="loteContrato" style="margin:0">Definir contrato:</label>
+        <select class="ctl" id="loteContrato"></select>
+        <button class="btn pri" id="btnLote">Aplicar</button>
+        <button class="btn gh" id="btnLoteLimpar">Limpar seleção</button>
+      </div>
       <div class="tbl-wrap" id="tblRdc"></div>
     </div>
   </section>
@@ -381,6 +396,7 @@ function preencherFiltros() {
   sel.innerHTML = '<option value="">Todos</option>' + nums.map(n => `<option value="${esc(n)}">${esc(fmtContrato(n, (dados.rdcs.find(r => r.contrato === n) || {}).contrato_nome))}</option>`).join('')
     + (dados.rdcs.some(r => !r.contrato) ? '<option value="-">Sem contrato (RDC antigos)</option>' : '');
   if ([...sel.options].some(o => o.value === atual)) sel.value = atual;
+  $('loteContrato').innerHTML = CONTRATOS.map(([n, c]) => `<option value="${c}">${esc(n)} · ${c}</option>`).join('') + '<option value="">Sem contrato (remover)</option>';
   opcoes($('fArea'), uniq(dados.rdcs.map(r => r.area)), 'Todas');
   opcoes($('fResp'), uniq([...LIDERES.map(l => l[0]), ...dados.rdcs.map(r => r.responsavel)]), 'Todos');
   opcoes($('fDisc'), uniq(dados.atividades.map(a => a.disciplina)), 'Todas');
@@ -548,10 +564,10 @@ const ordem = {};
 function tabela(el, id, cols, linhas, onClick) {
   const o = ordem[id] || (ordem[id] = { c: null, d: 1 });
   if (o.c != null) { const c = cols[o.c]; linhas = [...linhas].sort((a, b) => { const x = c.v(a), y = c.v(b); return (typeof x === 'number' ? x - y : String(x ?? '').localeCompare(String(y ?? ''), 'pt-BR')) * o.d; }); }
-  el.innerHTML = linhas.length ? `<table><thead><tr>${cols.map((c, i) => `<th class="${c.num ? 'num' : ''}" data-c="${i}">${c.t}${o.c === i ? (o.d > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('')}</tr></thead>
-    <tbody>${linhas.map((l, i) => `<tr data-r="${i}">${cols.map(c => `<td class="${c.num ? 'num' : ''}">${c.h ? c.h(l) : esc(c.v(l) ?? '')}</td>`).join('')}</tr>`).join('')}</tbody></table>` : '<div class="empty">Nada no filtro.</div>';
-  el.querySelectorAll('th').forEach(th => th.onclick = () => { const c = Number(th.dataset.c); o.d = o.c === c ? -o.d : (cols[c].num ? -1 : 1); o.c = c; tabela(el, id, cols, linhas, onClick); });
-  if (onClick) el.querySelectorAll('tbody tr').forEach(tr => tr.onclick = () => onClick(linhas[tr.dataset.r]));
+  el.innerHTML = linhas.length ? `<table><thead><tr>${cols.map((c, i) => `<th class="${c.num ? 'num' : ''}${c.cls ? ' ' + c.cls : ''}" data-c="${i}">${c.t}${o.c === i ? (o.d > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('')}</tr></thead>
+    <tbody>${linhas.map((l, i) => `<tr data-r="${i}">${cols.map(c => `<td class="${c.num ? 'num' : ''}${c.cls ? ' ' + c.cls : ''}">${c.h ? c.h(l) : esc(c.v(l) ?? '')}</td>`).join('')}</tr>`).join('')}</tbody></table>` : '<div class="empty">Nada no filtro.</div>';
+  el.querySelectorAll('th').forEach(th => th.onclick = e => { if (e.target.closest('input')) return; const c = Number(th.dataset.c); o.d = o.c === c ? -o.d : (cols[c].num ? -1 : 1); o.c = c; tabela(el, id, cols, linhas, onClick); });
+  if (onClick) el.querySelectorAll('tbody tr').forEach(tr => tr.onclick = e => { if (!e.target.closest('input,a')) onClick(linhas[tr.dataset.r]); });
 }
 function tabelaResp(rdcs) {
   const dias = diasDoPeriodo(), uteis = dias.filter(d => !d.dom).length || dias.length;
@@ -584,9 +600,22 @@ function tabelaImp(impactos) {
     { t: 'HH de impacto', num: 1, v: i => i.duracao_min * (porRdc.get(i.rdc)?.efetivo_max || 0), h: i => h(i.duracao_min * (porRdc.get(i.rdc)?.efetivo_max || 0)) }
   ], impactos, i => abrirDetalhe(i.rdc));
 }
+// Seleção para ações em lote (só versões atuais: substituídas não podem ser editadas)
+const selecionados = new Set();
+const editavel = r => r.status !== 'Substituído';
+function atualizarLote() {
+  const vis = new Set(F.rdcs.map(r => r.codigo));
+  for (const c of [...selecionados]) if (!vis.has(c)) selecionados.delete(c);
+  $('lote').classList.toggle('hidden', !selecionados.size);
+  $('loteN').textContent = selecionados.size;
+  const todos = $('selTodos'), ed = F.rdcs.filter(editavel);
+  if (todos) { todos.checked = ed.length > 0 && ed.every(r => selecionados.has(r.codigo)); todos.indeterminate = !todos.checked && ed.some(r => selecionados.has(r.codigo)); }
+}
 function tabelaRdc(rdcs) {
-  $('rdcCount').textContent = `${rdcs.length} RDC no filtro · clique numa linha para ver o detalhe e as fotos`;
+  $('rdcCount').textContent = `${rdcs.length} RDC no filtro · clique numa linha para ver o detalhe e as fotos · marque as caixas para definir o contrato de vários`;
   tabela($('tblRdc'), 'rdc', [
+    { t: '<input type="checkbox" id="selTodos" title="Selecionar todos do filtro">', cls: 'sel', v: r => selecionados.has(r.codigo) ? 1 : 0,
+      h: r => editavel(r) ? `<input type="checkbox" data-sel="${esc(r.codigo)}"${selecionados.has(r.codigo) ? ' checked' : ''} aria-label="Selecionar ${esc(r.codigo)}">` : '' },
     { t: 'Data', v: r => r.data_rdc, h: r => fmtData(r.data_rdc) }, { t: 'Código', v: r => r.codigo },
     { t: 'Contrato', v: r => nomeContrato(r.contrato, r.contrato_nome) || '—' },
     { t: 'Responsável', v: r => r.responsavel }, { t: 'Área', v: r => r.area }, { t: 'Ativo', v: r => r.ativo }, { t: 'OM', v: r => r.om },
@@ -596,6 +625,7 @@ function tabelaRdc(rdcs) {
     { t: 'Bloqueio', v: r => r.bloqueio == null ? '' : r.bloqueio ? 'Sim' : 'Não', h: r => r.bloqueio == null ? '—' : r.bloqueio ? `Sim · ${esc(r.bloqueio_ativo || '')}` : 'Não' },
     { t: 'Fotos', num: 1, v: r => r.qtd_fotos }, { t: 'Recebido', v: r => r.recebido_em, h: r => fmtDH(r.recebido_em) }
   ], rdcs, r => abrirDetalhe(r.codigo));
+  atualizarLote();
 }
 
 /* ---------- detalhe, validação e fotos ---------- */
@@ -612,7 +642,7 @@ function abrirDetalhe(cod) {
   <div class="det-body">
     <div class="card">${pill(r.status)}${r.revisao ? ` · revisão ${r.revisao}` : ''}
       <p class="nota">Recebido em ${fmtDH(r.recebido_em)}${r.validado_por ? ` · decisão de ${esc(r.validado_por)} em ${fmtDH(r.validado_em)}` : ''}</p>
-      ${r.obs_validacao ? `<p>Obs./motivo: ${esc(r.obs_validacao)}</p>` : ''}${r.revisao_de ? `<p class="nota">Substitui ${esc(r.revisao_de)}</p>` : ''}${r.substituido_por ? `<p class="nota">Substituído por ${esc(r.substituido_por)}</p>` : ''}</div>
+      ${r.obs_validacao ? `<p>Obs./motivo: ${esc(r.obs_validacao)}</p>` : ''}${r.revisao_de ? `<p class="nota">Substitui ${esc(r.revisao_de)}</p>` : ''}${r.substituido_por ? `<p class="nota">Substituído por ${esc(r.substituido_por)}</p>` : ''}${r.editado_por ? `<p class="nota">✎ Editado por ${esc(r.editado_por)} em ${fmtDH(r.editado_em)}</p>` : ''}</div>
     <div class="card">${rv([['Contrato', fmtContrato(r.contrato, r.contrato_nome)], ['Responsável', `${r.responsavel}${r.responsavel_funcao ? ' — ' + r.responsavel_funcao : ''}`], ['Data', fmtData(r.data_rdc)], ['Área', r.area], ['Ativo', r.ativo_descricao ? `${r.ativo} · ${r.ativo_descricao}` : r.ativo], ['OM', r.om],
       ['HH trabalhado', h(r.hh_min)], ['HH de impacto', h(r.hh_impacto_min)]])}</div>
     <div class="card">${rv([['PTS', r.pts == null ? '—' : r.pts ? 'Sim' : 'Não'], ...(r.pts ? [['Solicitação', fmtHora(r.pts_solicitacao)], ['Abertura', fmtHora(r.pts_abertura)], ['Espera', dur(r.espera_pts_min)]] : []),
@@ -627,6 +657,23 @@ function abrirDetalhe(cod) {
         <div class="thumbs">${fs.map(f => `<img data-g="${gal.indexOf(f)}" alt="">`).join('')}</div></div>`;
     }).join('') || '<p class="nota">Sem atividades.</p>'}</div>
     <div class="card"><h2>Impactos</h2>${imps.map(i => `<div class="blk"><p>${esc(i.descricao)}</p><p class="nota">${fmtHora(i.inicio)} → ${fmtHora(i.fim)} · ${dur(i.duracao_min)}</p></div>`).join('') || '<p class="nota">Nenhum impacto.</p>'}</div>
+    ${editavel(r) ? `<div class="card"><h2>Editar dados</h2>
+      <p class="nota" style="margin:0 0 10px">Altera este RDC no lugar (mesmo código e situação); fica registrado quem alterou e o valor anterior. Mudar a data move junto os horários. Área, ativo, atividades e fotos: edite pelo app (detalhe do RDC → Editar).</p>
+      <div class="ed-grid">
+        <div class="f"><label class="lbl" for="edContrato">Contrato</label><select class="ctl" id="edContrato">${opcoesContrato(r.contrato, r.contrato_nome)}</select></div>
+        <div class="f"><label class="lbl" for="edResp">Responsável</label><select class="ctl" id="edResp">${[...new Set([...LIDERES.map(l => l[0]), r.responsavel])].map(n => `<option${n === r.responsavel ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></div>
+        <div class="f"><label class="lbl" for="edData">Data</label><input class="ctl" type="date" id="edData" value="${r.data_rdc}"></div>
+        <div class="f"><label class="lbl" for="edOM">OM</label><input class="ctl" id="edOM" value="${esc(r.om)}"></div>
+        <div class="f"><label class="lbl" for="edPts">Teve PTS?</label><select class="ctl" id="edPts">${snOpcoes(r.pts)}</select></div>
+        <div class="f"></div>
+        <div class="f"><label class="lbl" for="edPtsSol">Solicitação da PTS</label><input class="ctl" type="time" id="edPtsSol" value="${fmtHora(r.pts_solicitacao)}"></div>
+        <div class="f"><label class="lbl" for="edPtsAbe">Abertura da PTS</label><input class="ctl" type="time" id="edPtsAbe" value="${fmtHora(r.pts_abertura)}"></div>
+        <div class="f"><label class="lbl" for="edBloq">Teve bloqueio?</label><select class="ctl" id="edBloq">${snOpcoes(r.bloqueio)}</select></div>
+        <div class="f"><label class="lbl" for="edBloqHora">Horário do bloqueio</label><input class="ctl" type="time" id="edBloqHora" value="${fmtHora(r.bloqueio_hora)}"></div>
+        <div class="f" style="grid-column:1/-1"><label class="lbl" for="edBloqAtivo">Ativo bloqueado</label><input class="ctl" id="edBloqAtivo" value="${esc(r.bloqueio_ativo || '')}"></div>
+        <div class="f" style="grid-column:1/-1"><label class="lbl" for="edMotivo">Motivo da edição (opcional)</label><input class="ctl" id="edMotivo"></div>
+      </div>
+      <div class="acoes"><button class="btn pri" id="btnEdSalvar">Salvar alterações</button></div></div>` : ''}
     ${podeDecidir ? `<div class="card"><h2>Validação</h2>
       <label class="lbl" for="vObs">Observação / motivo (obrigatório para revisão ou cancelamento)</label><textarea class="ctl" id="vObs"></textarea>
       <div class="acoes"><button class="btn pri" data-dec="Validado" ${r.status === 'Validado' ? 'disabled' : ''}>${r.status === 'Cancelado' ? 'Reativar e validar' : 'Validar'}</button>
@@ -639,6 +686,49 @@ function abrirDetalhe(cod) {
   $('det').querySelectorAll('img[data-g]').forEach(async im => { try { im.src = await fotoUrl(gal[im.dataset.g].caminho); } catch { im.alt = '✕'; } });
   $('det').querySelectorAll('img[data-g]').forEach(im => im.onclick = () => abrirFoto(Number(im.dataset.g)));
   $('det').querySelectorAll('[data-dec]').forEach(b => b.onclick = () => decidir(b.dataset.dec));
+  if ($('btnEdSalvar')) $('btnEdSalvar').onclick = () => salvarEdicao(r);
+}
+const snOpcoes = v => [['', 'Não informado'], ['S', 'Sim'], ['N', 'Não']].map(([k, t]) => `<option value="${k}"${k === (v == null ? '' : v ? 'S' : 'N') ? ' selected' : ''}>${t}</option>`).join('');
+function opcoesContrato(num, nome) {
+  const lista = [...CONTRATOS, ...(num && !CONTRATOS.some(c => c[1] === num) ? [[nome || 'Contrato', num]] : [])];
+  return '<option value="">Sem contrato</option>' + lista.map(([n, c]) => `<option value="${c}"${c === num ? ' selected' : ''}>${esc(n)} · ${c}</option>`).join('');
+}
+// Data + "HH:MM" (horário de São Luís / do navegador) -> ISO; abertura antes da solicitação = dia seguinte
+const isoHora = (data, hm, diaSeguinte) => { const d = new Date(`${data}T${hm}:00`); if (diaSeguinte) d.setDate(d.getDate() + 1); return d.toISOString(); };
+const minutos = hm => { const [a, b] = hm.split(':').map(Number); return a * 60 + b; };
+async function editar(codigos, campos, motivo) {
+  const r = await rpc('rdc_admin_editar', { p_nome: admin.nome, p_senha: admin.senha, p_codigos: codigos, p_campos: campos, p_motivo: motivo || null });
+  if (!r || !r.ok) { const m = (r && r.erro) || 'Falha ao salvar.'; if (/Sessão/.test(m)) setAdmin(null); throw new Error(m); }
+  return r;
+}
+async function salvarEdicao(r) {
+  const c = {}, data = $('edData').value, om = $('edOM').value.trim();
+  const falha = m => toast(m, true);
+  if (!data || !om) return falha('Informe data e OM.');
+  const con = $('edContrato').value;
+  if ((con || null) !== (r.contrato || null)) { c.contrato = con || null; c.contrato_nome = con ? nomeContrato(con, CONTRATOS.some(x => x[1] === con) ? '' : r.contrato_nome) : null; }
+  if ($('edResp').value !== r.responsavel) { c.responsavel = $('edResp').value; c.responsavel_funcao = (LIDERES.find(l => l[0] === c.responsavel) || [])[1] || null; }
+  if (data !== r.data_rdc) c.data_rdc = data;
+  if (om !== r.om) c.om = om;
+  const sn = v => v == null ? '' : v ? 'S' : 'N';
+  const pts = $('edPts').value, sol = $('edPtsSol').value, abe = $('edPtsAbe').value;
+  if (pts === 'S' && (!sol || !abe)) return falha('Informe os horários de solicitação e de abertura da PTS.');
+  if (pts !== sn(r.pts)) c.pts = pts === '' ? null : pts === 'S';
+  if (pts === 'S' && (pts !== sn(r.pts) || sol !== fmtHora(r.pts_solicitacao) || abe !== fmtHora(r.pts_abertura))) {
+    c.pts_solicitacao = isoHora(data, sol); c.pts_abertura = isoHora(data, abe, minutos(abe) < minutos(sol));
+  }
+  const bl = $('edBloq').value, ba = $('edBloqAtivo').value.trim().toUpperCase(), bh = $('edBloqHora').value;
+  if (bl === 'S' && (!ba || !bh)) return falha('Informe o ativo e o horário do bloqueio.');
+  if (bl !== sn(r.bloqueio)) c.bloqueio = bl === '' ? null : bl === 'S';
+  if (bl === 'S' && (bl !== sn(r.bloqueio) || ba !== (r.bloqueio_ativo || '') || bh !== fmtHora(r.bloqueio_hora))) { c.bloqueio_ativo = ba; c.bloqueio_hora = isoHora(data, bh); }
+  if (!Object.keys(c).length) return toast('Nada foi alterado.');
+  $('btnEdSalvar').disabled = true;
+  try {
+    await editar([r.codigo], c, $('edMotivo').value.trim());
+    toast('Alterações salvas.');
+    const cod = r.codigo; await carregar(); abrirDetalhe(cod);
+  } catch (e) { falha(e.status === 404 ? 'Banco sem a edição — rode supabase/migracao_v9_admin_editar.sql.' : e.message); }
+  finally { if ($('btnEdSalvar')) $('btnEdSalvar').disabled = false; }
 }
 function fecharDetalhe() { $('modal').classList.add('hidden'); detCod = null; }
 $('modal').addEventListener('click', e => { if (e.target === $('modal')) fecharDetalhe(); });
@@ -709,6 +799,31 @@ $('btnExcel').onclick = async () => {
     }
     toast('Excel indisponível; baixados arquivos CSV.');
   }
+};
+
+/* ---------- ações em lote ---------- */
+$('tblRdc').addEventListener('change', e => {
+  if (e.target.id === 'selTodos') {
+    for (const r of F.rdcs.filter(editavel)) e.target.checked ? selecionados.add(r.codigo) : selecionados.delete(r.codigo);
+    $('tblRdc').querySelectorAll('[data-sel]').forEach(cb => cb.checked = e.target.checked);
+  } else if (e.target.dataset.sel) e.target.checked ? selecionados.add(e.target.dataset.sel) : selecionados.delete(e.target.dataset.sel);
+  atualizarLote();
+});
+$('btnLoteLimpar').onclick = () => { selecionados.clear(); render(); };
+$('btnLote').onclick = async () => {
+  const con = $('loteContrato').value, cods = [...selecionados];
+  if (!cods.length) return;
+  const b = $('btnLote'); b.disabled = true;
+  try {
+    let n = 0;
+    for (let i = 0; i < cods.length; i += 200) {
+      const r = await editar(cods.slice(i, i + 200), { contrato: con || null, contrato_nome: con ? nomeContrato(con) : null }, 'Contrato definido em lote pelo painel');
+      n += r.editados;
+    }
+    toast(`${n} RDC atualizado(s)${n < cods.length ? `; ${cods.length - n} já estavam com esse contrato` : ''}.`);
+    selecionados.clear(); await carregar();
+  } catch (e) { toast(e.status === 404 ? 'Banco sem a edição — rode supabase/migracao_v9_admin_editar.sql.' : 'Não foi possível aplicar: ' + e.message, true); }
+  finally { b.disabled = false; }
 };
 
 /* ---------- eventos ---------- */

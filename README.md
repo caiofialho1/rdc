@@ -123,6 +123,16 @@ O que muda no app:
 
 **HH de impacto** = duração do impacto × maior efetivo entre as atividades do RDC (a equipe que ficou parada).
 
+## Edição de RDC pelo administrador (v9)
+
+Rode `supabase/migracao_v9_admin_editar.sql`. Ela pode rodar de novo sem problema. No detalhe do RDC (app, como administrador) há dois botões:
+- **Editar dados**: contrato, responsável, data, área/ativo, OM, PTS e bloqueio, alterados no próprio RDC (mesmo código e situação). Mudar a data move junto os horários das atividades, impactos, PTS e bloqueio.
+- **Editar tudo**: abre o RDC no formulário (atividades, fotos, impactos). Ao enviar, grava uma nova versão no lugar da atual e **mantém a situação** (validado continua validado; não precisa liberar revisão).
+
+No painel: **Editar dados** no detalhe e **definir o contrato de vários RDC de uma vez** (marque as caixas na tabela de RDC; filtro *Contrato → Sem contrato* para achar os antigos).
+
+Toda edição fica na tabela `rdc_edicoes` (quem, quando, motivo, valor antes e depois), e o RDC mostra "Editado por … em …". A cópia para o SharePoint atualiza também as atividades e os impactos já copiados (publique de novo a Edge Function).
+
 ## Painel de controle (administradores)
 
 `painel.html`, publicado junto com o app (ex.: `https://<seu-site>/painel.html`). Use o mesmo nome e senha de administrador do app; sem eles, nenhum dado é carregado. O painel tem:
