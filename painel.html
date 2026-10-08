@@ -85,6 +85,8 @@ svg text{fill:var(--muted);font-size:11px}
 .chart svg{display:block;width:100%;overflow:visible}
 .chart .hit{fill:transparent;cursor:pointer}
 .chart .hit:hover+.bar,.chart g.col:hover .bar{filter:brightness(1.12)}
+.chart g.col .foco{opacity:0;pointer-events:none}
+.chart g.col:hover .foco{opacity:1}
 .tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--surface);border-radius:8px;padding:8px 10px;font-size:12px;z-index:50;box-shadow:0 4px 16px rgba(0,0,0,.2);max-width:260px}
 .tip b{font-size:14px}
 .tip .k{display:inline-block;width:10px;height:2px;margin-right:6px;vertical-align:middle}
@@ -97,6 +99,26 @@ th{position:sticky;top:0;background:var(--surface);font-size:12px;color:var(--in
 th.num,td.num{text-align:right;font-variant-numeric:tabular-nums}
 tbody tr{cursor:pointer}
 tbody tr:hover{background:var(--hover)}
+/* agrupamento das tabelas */
+.secao .agr{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);white-space:nowrap}
+.secao .agr .ctl{width:auto;min-width:150px}
+tr.g-row td{background:var(--navy);color:#fff;font-weight:700;border-bottom:1px solid rgba(255,255,255,.15)}
+tr.g-row:hover td{background:var(--navy-2)}
+tr.g-row td small{font-weight:500;color:rgba(255,255,255,.75);margin-left:6px}
+tr.g-row .seta{display:inline-block;width:14px;transition:transform .15s}
+tr.g-row.fechado .seta{transform:rotate(-90deg)}
+/* rosca */
+.rosca{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.rosca svg{width:190px!important;flex:none}
+.rosca .lg{flex:1;min-width:180px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.rosca .lg div{display:flex;align-items:center;gap:8px}
+.rosca .lg i{width:10px;height:10px;border-radius:2px;flex:none}
+.rosca .lg span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
+.rosca .lg b{font-variant-numeric:tabular-nums}
+.rosca .lg em{font-style:normal;color:var(--muted);width:48px;text-align:right;font-variant-numeric:tabular-nums}
+.rosca path.fatia{cursor:pointer;transition:opacity .15s}
+.rosca svg:hover path.fatia{opacity:.55}
+.rosca svg path.fatia:hover{opacity:1}
 .pill{display:inline-block;font-size:12px;font-weight:700;border-radius:99px;padding:2px 9px;background:var(--rest);color:var(--ink-2)}
 .pill.ok{background:var(--good-bg);color:var(--good-ink)}
 .pill.wait{background:var(--warn-bg);color:var(--warn-ink)}
@@ -216,7 +238,7 @@ td.sel input,th.sel input{width:16px;height:16px;cursor:pointer}
         <div class="card">
           <h2>HH trabalhado e HH de impacto por <span id="hhPor">dia</span></h2>
           <p class="sub">Homem-hora = efetivo × duração. Impacto = duração do impacto × maior efetivo do RDC.</p>
-          <div class="legend"><span><i style="background:var(--s1)"></i>HH trabalhado</span><span><i style="background:var(--s2)"></i>HH de impacto</span></div>
+          <div class="legend"><span><i style="background:var(--s1);height:3px;width:16px;vertical-align:3px"></i>HH trabalhado</span><span><i style="background:var(--s2);height:3px;width:16px;vertical-align:3px"></i>HH de impacto</span></div>
           <div class="chart" id="chDia"></div>
         </div>
         <div class="card">
@@ -245,13 +267,13 @@ td.sel input,th.sel input{width:16px;height:16px;cursor:pointer}
       <div class="secao"><div><h2>Emissão por responsável</h2><p class="sub" style="margin:0">Quem emitiu RDC em cada dia do período. Domingo sem RDC não conta como falta.</p></div></div>
       <div class="card"><div class="tbl-wrap" style="max-height:none;border:0" id="matriz"></div></div>
 
-      <div class="secao"><div><h2>Resumo por responsável</h2></div></div>
+      <div class="secao"><div><h2>Resumo por responsável</h2></div><label class="agr" for="gResp">Agrupar por <select class="ctl" id="gResp"><option value="">Não agrupar</option><option value="funcao">Função</option></select></label></div>
       <div class="tbl-wrap" id="tblResp"></div>
 
-      <div class="secao"><div><h2>Impactos</h2><p class="sub" style="margin:0">Maiores primeiro.</p></div></div>
+      <div class="secao"><div><h2>Impactos</h2><p class="sub" style="margin:0">Maiores primeiro.</p></div><label class="agr" for="gImp">Agrupar por <select class="ctl" id="gImp"><option value="">Não agrupar</option><option value="data">Data</option><option value="responsavel">Responsável</option><option value="ativo">Ativo</option></select></label></div>
       <div class="tbl-wrap" id="tblImp" style="max-height:360px"></div>
 
-      <div class="secao"><div><h2>RDC</h2><p class="sub" style="margin:0" id="rdcCount"></p></div></div>
+      <div class="secao"><div><h2>RDC</h2><p class="sub" style="margin:0" id="rdcCount"></p></div><label class="agr" for="gRdc">Agrupar por <select class="ctl" id="gRdc"><option value="">Não agrupar</option><option value="data">Data</option><option value="contrato">Contrato</option><option value="responsavel">Responsável</option><option value="area">Área</option><option value="ativo">Ativo</option><option value="status">Situação</option></select></label></div>
       <div class="lote hidden" id="lote">
         <span><b id="loteN">0</b> RDC selecionado(s)</span>
         <label class="lbl" for="loteContrato" style="margin:0">Definir contrato:</label>
@@ -446,7 +468,7 @@ function render() {
   ].map(([k, v, s, hero]) => `<div class="kpi${hero ? ' hero' : ''}"><span>${k}</span><b>${esc(v)}</b><small>${esc(s)}</small></div>`).join('');
 
   graficoDia(rdcs);
-  barrasH($('chDisc'), agrupar(atividades, a => a.disciplina, a => a.efetivo_total * a.duracao_min), 'var(--s1)', v => `${h(v)} HH`);
+  rosca($('chDisc'), agrupar(atividades, a => a.disciplina, a => a.efetivo_total * a.duracao_min), v => `${h(v)} HH`);
   barrasH($('chContrato'), agrupar(rdcs, r => r.contrato ? nomeContrato(r.contrato, r.contrato_nome) : 'Sem contrato', r => r._hh), 'var(--s1)', v => `${h(v)} HH`);
   barrasH($('chImpResp'), agrupar(rdcs, r => r.responsavel, r => r.min_impacto).filter(x => x.v > 0), 'var(--s2)', v => `${h(v)} h`);
   resumoPts(rdcs, comPts, esperas);
@@ -484,20 +506,26 @@ function graficoDia(rdcs) {
   const iw = W - m.l - m.r, ih = H - m.t - m.b;
   const max = Math.max(...[...v.values()].map(x => Math.max(x.hh, x.imp))) / 60;
   const tk = ticks(max), top = tk[tk.length - 1] || 1, y = val => m.t + ih - val / top * ih;
-  const band = iw / cats.length, bw = Math.max(2, Math.min(24, (band - 6) / 2 - 1));
-  const lblCada = Math.ceil(cats.length / Math.floor(iw / 44));
+  const band = iw / cats.length, xs = cats.map((c, i) => m.l + i * band + band / 2), base = m.t + ih;
+  const lblCada = Math.ceil(cats.length / Math.floor(iw / 44)), pontos = cats.length <= 31;
   let s = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="HH trabalhado e HH de impacto por ${porMes ? 'mês' : 'dia'}">`;
   for (const t of tk) s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${m.l - 6}" y="${y(t) + 4}" text-anchor="end">${nf0.format(t)}</text>`;
+  cats.forEach((c, i) => { if (i % lblCada === 0) s += `<text x="${xs[i]}" y="${H - 8}" text-anchor="middle">${porMes ? c.slice(5) + '/' + c.slice(2, 4) : c.slice(8) + '/' + c.slice(5, 7)}</text>`; });
+  s += `<line x1="${m.l}" x2="${W - m.r}" y1="${base}" y2="${base}" stroke="var(--axis)"/>`;
+  // linhas suavizadas com área clara embaixo
+  for (const [campo, cor] of [['hh', 'var(--s1)'], ['imp', 'var(--s2)']]) {
+    const ps = cats.map((c, i) => [xs[i], y(v.get(c)[campo] / 60)]), curva = suave(ps);
+    s += `<path d="${curva}L${xs[xs.length - 1]},${base}L${xs[0]},${base}Z" fill="${cor}" opacity=".1"/>`;
+    s += `<path d="${curva}" fill="none" stroke="${cor}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    if (pontos) s += ps.map(([px, py]) => `<circle cx="${px}" cy="${py}" r="2.5" fill="var(--card)" stroke="${cor}" stroke-width="2"/>`).join('');
+  }
+  // faixa de cada dia/mês: ao passar o mouse mostra a guia e os valores
   cats.forEach((c, i) => {
-    const x0 = m.l + i * band + band / 2, d = v.get(c);
-    const hh = d.hh / 60, im = d.imp / 60;
-    s += `<g class="col" data-i="${i}"><rect class="hit" x="${m.l + i * band}" y="${m.t}" width="${band}" height="${ih}"/>`;
-    if (hh > 0) s += `<path class="bar" d="${barV(x0 - bw - 1, y(hh), bw, m.t + ih - y(hh))}" fill="var(--s1)"/>`;
-    if (im > 0) s += `<path class="bar" d="${barV(x0 + 1, y(im), bw, m.t + ih - y(im))}" fill="var(--s2)"/>`;
-    s += '</g>';
-    if (i % lblCada === 0) s += `<text x="${x0}" y="${H - 8}" text-anchor="middle">${porMes ? c.slice(5) + '/' + c.slice(2, 4) : c.slice(8) + '/' + c.slice(5, 7)}</text>`;
+    const d = v.get(c);
+    s += `<g class="col" data-i="${i}"><rect class="hit" x="${m.l + i * band}" y="${m.t}" width="${band}" height="${ih}"/><g class="foco"><line x1="${xs[i]}" x2="${xs[i]}" y1="${m.t}" y2="${base}" stroke="var(--axis)" stroke-dasharray="3 3"/>`
+      + `<circle cx="${xs[i]}" cy="${y(d.hh / 60)}" r="5" fill="var(--s1)" stroke="var(--card)" stroke-width="2"/><circle cx="${xs[i]}" cy="${y(d.imp / 60)}" r="5" fill="var(--s2)" stroke="var(--card)" stroke-width="2"/></g></g>`;
   });
-  s += `<line x1="${m.l}" x2="${W - m.r}" y1="${m.t + ih}" y2="${m.t + ih}" stroke="var(--axis)"/></svg>`;
+  s += '</svg>';
   el.innerHTML = s;
   el.querySelectorAll('g.col').forEach(g => {
     const c = cats[g.dataset.i], d = v.get(c);
@@ -527,6 +555,40 @@ function barrasH(el, itens, cor, fmt) {
     g.addEventListener('pointermove', e => mostrarTip(e, `<b>${esc(fmt(x.v))}</b><div style="opacity:.8">${esc(x.k)}</div>`));
     g.addEventListener('pointerleave', esconderTip);
   });
+}
+// rosca: até 7 fatias + "Outros", com legenda e percentuais
+const PALETA = ['#2a78d6', '#eb6834', '#12a150', '#8a5cd0', '#d4a20f', '#1a9fa6', '#d0457f', '#8b93a1'];
+function rosca(el, itens, fmt) {
+  itens = itens.filter(x => x.v > 0);
+  if (!itens.length) { el.innerHTML = '<div class="empty">Sem dados no filtro.</div>'; return; }
+  if (itens.length > 8) itens = [...itens.slice(0, 7), { k: 'Outros', v: itens.slice(7).reduce((t, x) => t + x.v, 0) }];
+  const tot = itens.reduce((t, x) => t + x.v, 0), R = 90, r0 = 56, c = 95, pct = v => nf1.format(v / tot * 100) + '%';
+  const pt = (a, rr) => `${(c + rr * Math.sin(a)).toFixed(2)},${(c - rr * Math.cos(a)).toFixed(2)}`;
+  let a = 0, s = `<svg viewBox="0 0 190 190" height="190" role="img" aria-label="HH trabalhado por disciplina">`;
+  itens.forEach((x, i) => {
+    const b = a + Math.min(x.v / tot * Math.PI * 2, Math.PI * 2 - 1e-4), g = itens.length > 1 ? 0.012 : 0, lg = b - a > Math.PI ? 1 : 0;
+    s += `<path class="fatia" data-i="${i}" fill="${PALETA[i % PALETA.length]}" d="M${pt(a + g, R)}A${R},${R} 0 ${lg} 1 ${pt(b - g, R)}L${pt(b - g, r0)}A${r0},${r0} 0 ${lg} 0 ${pt(a + g, r0)}Z"/>`;
+    a = b;
+  });
+  s += `<text x="${c}" y="${c - 2}" text-anchor="middle" style="fill:var(--ink);font-size:18px;font-weight:700">${esc(h(tot))}</text><text x="${c}" y="${c + 16}" text-anchor="middle">HH total</text></svg>`;
+  el.innerHTML = `<div class="rosca">${s}<div class="lg">${itens.map((x, i) => `<div><i style="background:${PALETA[i % PALETA.length]}"></i><span title="${esc(x.k)}">${esc(x.k)}</span><b>${esc(h(x.v))}</b><em>${pct(x.v)}</em></div>`).join('')}</div></div>`;
+  el.querySelectorAll('path.fatia').forEach(p => {
+    const x = itens[p.dataset.i];
+    p.addEventListener('pointermove', e => mostrarTip(e, `<b>${esc(fmt(x.v))}</b> · ${pct(x.v)}<div style="opacity:.8">${esc(x.k)}</div>`));
+    p.addEventListener('pointerleave', esconderTip);
+  });
+}
+// curva suave que não ultrapassa os pontos (cúbica monótona, Fritsch–Carlson): o HH nunca aparece negativo
+function suave(p) {
+  const n = p.length;
+  if (n < 2) return n ? `M${p[0][0]},${p[0][1]}` : '';
+  const d = [], t = [];
+  for (let i = 0; i < n - 1; i++) d.push((p[i + 1][1] - p[i][1]) / (p[i + 1][0] - p[i][0]));
+  t[0] = d[0]; t[n - 1] = d[n - 2];
+  for (let i = 1; i < n - 1; i++) t[i] = d[i - 1] * d[i] <= 0 ? 0 : 2 * d[i - 1] * d[i] / (d[i - 1] + d[i]); // pontos igualmente espaçados: média harmônica
+  let s = `M${p[0][0]},${p[0][1]}`;
+  for (let i = 0; i < n - 1; i++) { const k = (p[i + 1][0] - p[i][0]) / 3; s += `C${p[i][0] + k},${p[i][1] + t[i] * k} ${p[i + 1][0] - k},${p[i + 1][1] - t[i + 1] * k} ${p[i + 1][0]},${p[i + 1][1]}`; }
+  return s;
 }
 function resumoPts(rdcs, comPts, esperas) {
   const inf = rdcs.filter(r => r.pts != null), bloq = rdcs.filter(r => r.bloqueio === true);
@@ -560,15 +622,56 @@ function matriz(rdcs) {
 }
 
 /* ---------- tabelas ordenáveis ---------- */
-const ordem = {};
-function tabela(el, id, cols, linhas, onClick) {
+const ordem = {}, fechados = {};
+// grupo = { k: linha => [chave, rótulo], desc }: linhas agrupadas sob um cabeçalho que recolhe; colunas com "s" mostram o subtotal
+function tabela(el, id, cols, linhas, onClick, grupo) {
   const o = ordem[id] || (ordem[id] = { c: null, d: 1 });
   if (o.c != null) { const c = cols[o.c]; linhas = [...linhas].sort((a, b) => { const x = c.v(a), y = c.v(b); return (typeof x === 'number' ? x - y : String(x ?? '').localeCompare(String(y ?? ''), 'pt-BR')) * o.d; }); }
+  const linha = (l, i, g) => `<tr data-r="${i}"${g != null ? ` data-g="${g}"` : ''}>${cols.map(c => `<td class="${c.num ? 'num' : ''}${c.cls ? ' ' + c.cls : ''}">${c.h ? c.h(l) : esc(c.v(l) ?? '')}</td>`).join('')}</tr>`;
+  let corpo, chaves = [];
+  if (grupo) {
+    const fx = fechados[id] || (fechados[id] = new Set()), gs = new Map();
+    linhas.forEach((l, i) => { const [k, nome] = grupo.k(l); if (!gs.has(k)) gs.set(k, { nome, itens: [] }); gs.get(k).itens.push([l, i]); });
+    chaves = [...gs.keys()].sort((a, b) => String(a).localeCompare(String(b), 'pt-BR') * (grupo.desc ? -1 : 1));
+    const iRot = cols.findIndex(c => c.cls !== 'sel');
+    corpo = chaves.map((k, gi) => {
+      const g = gs.get(k), fechado = fx.has(k);
+      const cab = `<tr class="g-row${fechado ? ' fechado' : ''}" data-gi="${gi}">${cols.map((c, ci) =>
+        ci === iRot ? `<td><span class="seta">▾</span>${esc(g.nome)}<small>${g.itens.length}</small></td>`
+          : ci < iRot ? '<td></td>'
+            : `<td class="${c.num ? 'num' : ''}">${c.s ? c.s(g.itens.reduce((t, [l]) => t + (Number(c.v(l)) || 0), 0)) : ''}</td>`).join('')}</tr>`;
+      return cab + g.itens.map(([l, i]) => linha(l, i, gi)).join('');
+    }).join('');
+  } else corpo = linhas.map((l, i) => linha(l, i)).join('');
   el.innerHTML = linhas.length ? `<table><thead><tr>${cols.map((c, i) => `<th class="${c.num ? 'num' : ''}${c.cls ? ' ' + c.cls : ''}" data-c="${i}">${c.t}${o.c === i ? (o.d > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('')}</tr></thead>
-    <tbody>${linhas.map((l, i) => `<tr data-r="${i}">${cols.map(c => `<td class="${c.num ? 'num' : ''}${c.cls ? ' ' + c.cls : ''}">${c.h ? c.h(l) : esc(c.v(l) ?? '')}</td>`).join('')}</tr>`).join('')}</tbody></table>` : '<div class="empty">Nada no filtro.</div>';
-  el.querySelectorAll('th').forEach(th => th.onclick = e => { if (e.target.closest('input')) return; const c = Number(th.dataset.c); o.d = o.c === c ? -o.d : (cols[c].num ? -1 : 1); o.c = c; tabela(el, id, cols, linhas, onClick); });
-  if (onClick) el.querySelectorAll('tbody tr').forEach(tr => tr.onclick = e => { if (!e.target.closest('input,a')) onClick(linhas[tr.dataset.r]); });
+    <tbody>${corpo}</tbody></table>` : '<div class="empty">Nada no filtro.</div>';
+  el.querySelectorAll('th').forEach(th => th.onclick = e => { if (e.target.closest('input')) return; const c = Number(th.dataset.c); o.d = o.c === c ? -o.d : (cols[c].num ? -1 : 1); o.c = c; tabela(el, id, cols, linhas, onClick, grupo); });
+  if (onClick) el.querySelectorAll('tbody tr[data-r]').forEach(tr => tr.onclick = e => { if (!e.target.closest('input,a')) onClick(linhas[tr.dataset.r]); });
+  // clicar no cabeçalho do grupo recolhe/expande (lembrado enquanto a página estiver aberta)
+  const mostrar = (gi, sim) => el.querySelectorAll(`tr[data-g="${gi}"]`).forEach(tr => tr.classList.toggle('hidden', !sim));
+  el.querySelectorAll('tr.g-row').forEach(tr => {
+    const k = chaves[tr.dataset.gi];
+    if (tr.classList.contains('fechado')) mostrar(tr.dataset.gi, false);
+    tr.onclick = () => { const fechar = !tr.classList.contains('fechado'); fechados[id][fechar ? 'add' : 'delete'](k); tr.classList.toggle('fechado', fechar); mostrar(tr.dataset.gi, !fechar); };
+  });
 }
+// agrupamentos de cada tabela (a escolha fica lembrada neste navegador)
+const rdcDe = i => dados.rdcs.find(r => r.codigo === i.rdc);
+const AGRUP = {
+  gResp: { funcao: l => [l.funcao || '—', l.funcao || 'Sem função'] },
+  gImp: {
+    data: i => { const d = rdcDe(i)?.data_rdc || ''; return [d, d ? fmtData(d) : 'Sem data']; },
+    responsavel: i => { const v = rdcDe(i)?.responsavel || '—'; return [v, v]; },
+    ativo: i => { const v = rdcDe(i)?.ativo || '—'; return [v, v]; }
+  },
+  gRdc: {
+    data: r => [r.data_rdc, fmtData(r.data_rdc)],
+    contrato: r => { const n = nomeContrato(r.contrato, r.contrato_nome); return [n || '—', n || 'Sem contrato']; },
+    responsavel: r => [r.responsavel, r.responsavel], area: r => [r.area || '—', r.area || 'Sem área'], ativo: r => [r.ativo || '—', r.ativo || '—'],
+    status: r => [r.status, r.status === 'Enviado' ? 'Aguardando validação' : r.status === 'Em revisão' ? 'Revisão liberada' : r.status]
+  }
+};
+const grupoDe = id => { const v = $(id).value, k = AGRUP[id][v]; return k ? { k, desc: v === 'data' } : null; };
 function tabelaResp(rdcs) {
   const dias = diasDoPeriodo(), uteis = dias.filter(d => !d.dom).length || dias.length;
   const resp = $('fResp').value;
@@ -582,11 +685,11 @@ function tabelaResp(rdcs) {
   });
   tabela($('tblResp'), 'resp', [
     { t: 'Responsável', v: l => l.nome }, { t: 'Função', v: l => l.funcao },
-    { t: 'RDC', num: 1, v: l => l.rdc }, { t: `Dias com RDC (de ${uteis})`, num: 1, v: l => l.dias },
-    { t: 'HH trabalhado', num: 1, v: l => l.hh, h: l => h(l.hh) }, { t: 'Horas de impacto', num: 1, v: l => l.imp, h: l => h(l.imp) },
-    { t: 'HH de impacto', num: 1, v: l => l.hhimp, h: l => h(l.hhimp) }, { t: 'Espera média PTS', num: 1, v: l => l.espera ?? -1, h: l => l.espera == null ? '—' : dur(l.espera) },
-    { t: 'Aguardando validação', num: 1, v: l => l.aguard }
-  ], linhas, l => { $('fResp').value = l.nome; render(); scrollTo({ top: 0, behavior: 'smooth' }); });
+    { t: 'RDC', num: 1, v: l => l.rdc, s: nf0.format }, { t: `Dias com RDC (de ${uteis})`, num: 1, v: l => l.dias },
+    { t: 'HH trabalhado', num: 1, v: l => l.hh, h: l => h(l.hh), s: h }, { t: 'Horas de impacto', num: 1, v: l => l.imp, h: l => h(l.imp), s: h },
+    { t: 'HH de impacto', num: 1, v: l => l.hhimp, h: l => h(l.hhimp), s: h }, { t: 'Espera média PTS', num: 1, v: l => l.espera ?? -1, h: l => l.espera == null ? '—' : dur(l.espera) },
+    { t: 'Aguardando validação', num: 1, v: l => l.aguard, s: nf0.format }
+  ], linhas, l => { $('fResp').value = l.nome; render(); scrollTo({ top: 0, behavior: 'smooth' }); }, grupoDe('gResp'));
 }
 function tabelaImp(impactos) {
   const porRdc = new Map(dados.rdcs.map(r => [r.codigo, r]));
@@ -596,9 +699,9 @@ function tabelaImp(impactos) {
     { t: 'Responsável', v: i => porRdc.get(i.rdc)?.responsavel }, { t: 'Ativo', v: i => porRdc.get(i.rdc)?.ativo },
     { t: 'Descrição', v: i => i.descricao, h: i => `<span title="${esc(i.descricao)}">${esc(i.descricao.length > 70 ? i.descricao.slice(0, 69) + '…' : i.descricao)}</span>` },
     { t: 'Horário', v: i => i.inicio, h: i => `${fmtHora(i.inicio)} → ${fmtHora(i.fim)}` },
-    { t: 'Duração', num: 1, v: i => i.duracao_min, h: i => dur(i.duracao_min) },
-    { t: 'HH de impacto', num: 1, v: i => i.duracao_min * (porRdc.get(i.rdc)?.efetivo_max || 0), h: i => h(i.duracao_min * (porRdc.get(i.rdc)?.efetivo_max || 0)) }
-  ], impactos, i => abrirDetalhe(i.rdc));
+    { t: 'Duração', num: 1, v: i => i.duracao_min, h: i => dur(i.duracao_min), s: dur },
+    { t: 'HH de impacto', num: 1, v: i => i.duracao_min * (porRdc.get(i.rdc)?.efetivo_max || 0), h: i => h(i.duracao_min * (porRdc.get(i.rdc)?.efetivo_max || 0)), s: h }
+  ], impactos, i => abrirDetalhe(i.rdc), grupoDe('gImp'));
 }
 // Seleção para ações em lote (só versões atuais: substituídas não podem ser editadas)
 const selecionados = new Set();
@@ -620,11 +723,11 @@ function tabelaRdc(rdcs) {
     { t: 'Contrato', v: r => nomeContrato(r.contrato, r.contrato_nome) || '—' },
     { t: 'Responsável', v: r => r.responsavel }, { t: 'Área', v: r => r.area }, { t: 'Ativo', v: r => r.ativo }, { t: 'OM', v: r => r.om },
     { t: 'Situação', v: r => r.status, h: r => pill(r.status) },
-    { t: 'HH', num: 1, v: r => r._hh, h: r => h(r._hh) }, { t: 'Impacto (h)', num: 1, v: r => r.min_impacto, h: r => h(r.min_impacto) },
+    { t: 'HH', num: 1, v: r => r._hh, h: r => h(r._hh), s: h }, { t: 'Impacto (h)', num: 1, v: r => r.min_impacto, h: r => h(r.min_impacto), s: h },
     { t: 'PTS', v: r => r.pts == null ? '' : r.pts ? 'Sim' : 'Não', h: r => r.pts == null ? '—' : r.pts ? `Sim · ${dur(r.espera_pts_min)}` : 'Não' },
     { t: 'Bloqueio', v: r => r.bloqueio == null ? '' : r.bloqueio ? 'Sim' : 'Não', h: r => r.bloqueio == null ? '—' : r.bloqueio ? `Sim · ${esc(r.bloqueio_ativo || '')}` : 'Não' },
-    { t: 'Fotos', num: 1, v: r => r.qtd_fotos }, { t: 'Recebido', v: r => r.recebido_em, h: r => fmtDH(r.recebido_em) }
-  ], rdcs, r => abrirDetalhe(r.codigo));
+    { t: 'Fotos', num: 1, v: r => r.qtd_fotos, s: nf0.format }, { t: 'Recebido', v: r => r.recebido_em, h: r => fmtDH(r.recebido_em) }
+  ], rdcs, r => abrirDetalhe(r.codigo), grupoDe('gRdc'));
   atualizarLote();
 }
 
@@ -832,6 +935,10 @@ $('fIni').onchange = $('fFim').onchange = () => carregar();
 $('btnAtualizar').onclick = () => carregar();
 ['fContrato', 'fArea', 'fResp', 'fDisc', 'fStatus'].forEach(id => $(id).onchange = () => dados && render());
 let bt; $('fBusca').oninput = () => { clearTimeout(bt); bt = setTimeout(() => dados && render(), 250); };
+['gResp', 'gImp', 'gRdc'].forEach(id => {
+  try { $(id).value = localStorage.getItem('rdc-painel-' + id) || ''; } catch { }
+  $(id).onchange = () => { try { localStorage.setItem('rdc-painel-' + id, $(id).value); } catch { } dados && render(); };
+});
 let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => dados && render(), 200); });
 
 setAdmin(admin);
