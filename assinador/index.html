@@ -9,7 +9,7 @@
 <body>
 <title>Assinador PPL</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Great+Vibes&family=Allura&family=Mr+Dafoe&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   /* Layout: two-column workbench — signer settings + stamp on the left, document queue and page preview on the right; stacks on phones. Single dark look by request. */
   :root {
@@ -93,7 +93,7 @@
 <div class="wrap">
   <header>
     <h1>Assinador PPL</h1>
-    <p>Na primeira vez, envie a imagem da sua assinatura e o logo: eles ficam só neste navegador. Depois, envie um ou vários PDFs. Cada documento recebe a assinatura na última página, com data, hora, fuso, local e o código SHA-256 próprio. Ajuste a posição de cada um e exporte individualmente ou todos de uma vez.</p>
+    <p>Preencha os dados do assinante e, se desejar, envie o logo: ele fica só neste navegador. Depois, envie um ou vários PDFs. Cada documento recebe a assinatura na última página, com data, hora, fuso, local e o código SHA-256 próprio. Ajuste a posição de cada um e exporte individualmente ou todos de uma vez.</p>
   </header>
 
   <div class="main">
@@ -108,13 +108,6 @@
             <span class="row" style="flex-wrap:nowrap"><input type="text" id="f-place" placeholder="Ex.: São Luís - MA"><button type="button" class="btn small" id="gps">GPS</button></span>
             <span class="row" style="color:var(--muted)"><input type="checkbox" id="f-city"> Converter coordenadas em cidade (OpenStreetMap)</span>
           </label>
-          <label>Estilo<select id="f-font">
-            <option value="__own__">Minha assinatura (manuscrita)</option>
-            <option value="Great Vibes">Caligrafia 1</option>
-            <option value="Allura">Caligrafia 2</option>
-            <option value="Mr Dafoe">Caligrafia 3</option>
-          </select></label>
-          <label>Tinta<select id="f-ink"><option value="#0d2b6b">Azul caneta</option><option value="#111111">Preto</option></select></label>
           <label>Cor do logo<select id="f-logocolor"><option value="color">Colorido</option><option value="bw">Preto e branco</option></select></label>
           <label>Posição do logo<select id="f-logopos"><option value="side">Ao lado dos textos</option><option value="wm">Marca d'água</option></select></label>
           <label>Marca d'água<input type="range" id="f-wm" min="5" max="40" value="14"></label>
@@ -124,8 +117,6 @@
           <div class="logo-box" id="logo-box"><span>Sem logo</span></div>
           <div class="row">
             <label class="btn" for="f-logo">Enviar logo da PPL</label>
-            <label class="btn" for="f-sig">Enviar imagem da assinatura</label>
-            <input type="file" id="f-sig" accept="image/png,image/webp" hidden>
             <input type="file" id="f-logo" accept="image/png,image/jpeg,image/svg+xml,image/webp" hidden>
             <button class="btn ghost" id="logo-clear" hidden>Remover</button>
           </div>
@@ -188,10 +179,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 const $ = id => document.getElementById(id);
-const OWN_SIG = new Image();
-OWN_SIG.onload = () => refresh();
-try { const v = localStorage.getItem("ppl-sign:sig"); if (v) OWN_SIG.src = v; } catch {}
-const SW = 620, SH = 296, SS = 2;              // stamp canvas size (x2 for print quality)
+const SW = 620, SH = 160, SS = 2;              // compact stamp canvas size (x2 for print quality)
 const store = {
   get(k) { try { return localStorage.getItem("ppl-sign:" + k); } catch { return null; } },
   set(k, v) { try { v == null ? localStorage.removeItem("ppl-sign:" + k) : localStorage.setItem("ppl-sign:" + k, v); } catch {} }
@@ -205,7 +193,7 @@ let pagesEls = [];    // rendered pages of the active doc
 let renderToken = 0, busy = false, seq = 0;
 
 // ---------- saved fields ----------
-["name", "role", "company", "place", "font", "ink", "logocolor", "logopos", "wm", "size2"].forEach(k => {
+["name", "role", "company", "place", "logocolor", "logopos", "wm", "size2"].forEach(k => {
   const v = store.get(k); if (v != null) $("f-" + k).value = v;
   $("f-" + k).addEventListener("input", () => { store.set(k, $("f-" + k).value); if (k === "size2" && docs[active]) { docs[active].place.w = sizeFrac(); syncPlacement(docs[active]); } refresh(); });
 });
@@ -214,12 +202,6 @@ $("f-logo").onchange = e => {
   const f = e.target.files[0]; if (!f) return;
   const r = new FileReader();
   r.onload = () => { setLogo(r.result); store.set("logo", r.result); };
-  r.readAsDataURL(f);
-};
-$("f-sig").onchange = e => {
-  const f = e.target.files[0]; if (!f) return;
-  const r = new FileReader();
-  r.onload = () => { OWN_SIG.src = r.result; try { localStorage.setItem("ppl-sign:sig", r.result); } catch { setMsg("Assinatura carregada, mas o navegador não deixou salvá-la para a próxima vez.", "err"); } };
   r.readAsDataURL(f);
 };
 $("logo-clear").onclick = () => { logoImg = null; logoBW = null; store.set("logo", null); $("logo-box").innerHTML = "<span>Sem logo</span>"; $("logo-clear").hidden = true; refresh(); };
@@ -288,8 +270,7 @@ function drawStamp(doc, when) {
   const ctx = stampCanvas.getContext("2d");
   ctx.setTransform(SS, 0, 0, SS, 0, 0);
   ctx.clearRect(0, 0, SW, SH);
-  const ink = $("f-ink").value, name = $("f-name").value || " ";
-  let x0 = 20;
+  const name = $("f-name").value || " ";
 
   const logoSrc = logoImg ? ($("f-logocolor").value === "bw" && logoBW ? logoBW : logoImg) : null;
   const logoSide = logoSrc && $("f-logopos").value === "side";
@@ -302,45 +283,28 @@ function drawStamp(doc, when) {
     ctx.drawImage(logoSrc, (SW - w) / 2, (SH - hh) / 2, w, hh);
     ctx.restore();
   }
-  // layout: signature on top over the line, auto-generated text below it, all left-aligned
-  const TX = 18, TW = SW - 36, LINE_Y = 136;
-  const BLUE = "#0047d6", BLUE2 = "#0a5cf0";
-
-  ctx.fillStyle = ink; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
-  if ($("f-font").value === "__own__") {
-    if (OWN_SIG.complete && OWN_SIG.naturalWidth) {
-      // scanned signature: fit above the line, letting the tail cross it like a real pen stroke
-      const r = Math.min((TW * 0.75) / OWN_SIG.naturalWidth, 124 / OWN_SIG.naturalHeight);
-      const w = OWN_SIG.naturalWidth * r, h = OWN_SIG.naturalHeight * r;
-      ctx.save();
-      if (ink === "#111111") ctx.filter = "grayscale(1) brightness(0.45)";
-      ctx.drawImage(OWN_SIG, TX, LINE_Y + 12 - h, w, h);
-      ctx.restore();
-    }
-  } else {
-    fitText(ctx, name, TW * 0.8, 84, `'${$("f-font").value}', cursive`);
-    ctx.fillText(name, TX + 6, LINE_Y - 16);
-  }
-  ctx.strokeStyle = "#2a2f38"; ctx.lineWidth = 1.2;
-  ctx.beginPath(); ctx.moveTo(TX, LINE_Y); ctx.lineTo(TX + 340, LINE_Y); ctx.stroke();
+  // Compact layout starts with signer details, without a manual-signature area.
+  const TX = 18, TW = SW - 36;
+  const BLUE2 = "#0a5cf0";
+  ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
 
   const t = when || signedAt();
   const place = $("f-place").value.trim();
   const sans = "'IBM Plex Sans', sans-serif";
   const lines = [
-    [name, 22, sans, "600", "#111111", 164],
-    [$("f-role").value, 17, sans, "", "#111111", 188],
-    [$("f-company").value, 17, sans, "", "#111111", 210],
-    [`Assinado em ${t.date} às ${t.time} (${t.utc})`, 14, sans, "", BLUE2, 238],
-    [place ? `${place} · ${t.tz}` : t.tz, 14, sans, "", BLUE2, 258],
-    [doc ? `SHA-256: ${doc.hash.slice(0, 32)}… · ${doc.pageCount} pág.` : "SHA-256: gerado ao carregar o PDF", 12, "'IBM Plex Mono', monospace", "", BLUE2, 280],
+    [name, 22, sans, "600", "#111111", 28],
+    [$("f-role").value, 17, sans, "", "#111111", 52],
+    [$("f-company").value, 17, sans, "", "#111111", 74],
+    [`Assinado em ${t.date} às ${t.time} (${t.utc})`, 14, sans, "", BLUE2, 102],
+    [place ? `${place} · ${t.tz}` : t.tz, 14, sans, "", BLUE2, 122],
+    [doc ? `SHA-256: ${doc.hash.slice(0, 32)}… · ${doc.pageCount} pág.` : "SHA-256: gerado ao carregar o PDF", 12, "'IBM Plex Mono', monospace", "", BLUE2, 144],
   ];
-  // logo beside the text block (below the line), text shifts right
+  // Logo beside the text block; text shifts right.
   let textX = TX, textW = TW;
   if (logoSide) {
-    const boxW = 130, boxH = SH - LINE_Y - 22, r = Math.min(boxW / logoImg.width, boxH / logoImg.height);
+    const boxW = 130, boxH = SH - 22, r = Math.min(boxW / logoImg.width, boxH / logoImg.height);
     const w = logoImg.width * r, h = logoImg.height * r;
-    ctx.drawImage(logoSrc, TX, LINE_Y + 12 + (boxH - h) / 2, w, h);
+    ctx.drawImage(logoSrc, TX, 12 + (boxH - h) / 2, w, h);
     textX = TX + w + 18; textW = SW - 18 - textX;
   }
   ctx.textAlign = "left";
@@ -734,7 +698,7 @@ downloads = {
   }
 };
 setInterval(refresh, 20000);
-Promise.all(["Great Vibes", "Allura", "Mr Dafoe", "IBM Plex Sans", "IBM Plex Mono"].map(f => document.fonts.load(`40px '${f}'`).catch(() => {}))).then(refresh);
+Promise.all(["IBM Plex Sans", "IBM Plex Mono"].map(f => document.fonts.load(`40px '${f}'`).catch(() => {}))).then(refresh);
 renderQueue();
 refresh();
 initPwStore();
