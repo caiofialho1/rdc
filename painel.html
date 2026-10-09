@@ -5,305 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Painel de campo · RDC</title>
-<style>
-/* Contrato visual: Modelo/DESIGN.md (RDC — Planejamento e controle de campo) */
-:root{
-  color-scheme:light;
-  --navy:#102E49; --navy-2:#1B4467; --on-navy:#FFFFFF;
-  --page:#F4F6F9; --card:#FFFFFF; --surface:#F6F8FA; --line:#E1E7ED; --line-2:#DBE3EB;
-  --ink:#183752; --ink-2:#476078; --muted:#526B82; --muted-2:#708296;
-  --s1:#2B78D8; --s2:#ED7938; --s2-ink:#A74C20;
-  --chart-surface:#F8FAFC; --plot:#EDF3F8; --grid:#D2DDE8; --axis:#597087;
-  --good:#378268; --good-bg:#EEF7F2; --crit:#B64A31; --crit-bg:#FDF1EE; --warn-ink:#9C5A1E; --warn-bg:#FFF4E9;
-  --rest:#EEF2F6; --hover:rgba(16,46,73,.05); --overlay:rgba(16,46,73,.55); --focus:#77A9ED;
-  --r-control:6px; --r-card:10px;
-}
-*{box-sizing:border-box}
-html,body{margin:0;background:var(--page);color:var(--ink);font:13px/1.5 Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased}
-button,input,select,textarea{font:inherit;color:inherit}
-button{cursor:pointer}
-button:disabled{opacity:.55;cursor:not-allowed}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,a:focus-visible,svg:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
-.hidden{display:none!important}
-.ic{width:16px;height:16px;flex:none}
-.num,.metric-value,td.num{font-variant-numeric:tabular-nums}
-
-/* cabeçalho */
-.topbar{height:64px;background:var(--navy);color:var(--on-navy);position:sticky;top:0;z-index:20}
-.topbar-content{max-width:1500px;height:100%;margin:auto;padding:0 32px;display:flex;align-items:center;justify-content:space-between;gap:16px}
-.product{display:flex;align-items:center;gap:11px;font-size:15px;font-weight:700;min-width:0}
-.product .logo{background:#fff;border-radius:7px;padding:4px 7px;display:flex}
-.product .logo img{height:26px;width:auto;display:block}
-.product-divider{height:18px;width:1px;background:#426078;margin:0 4px}
-.product .sub-name{font-weight:400;color:#DBE7F0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.top-right{display:flex;align-items:center;gap:12px;font-size:12px;color:#DBE7F0}
-.top-btn{height:34px;border:1px solid #4B6379;background:transparent;color:#fff;border-radius:var(--r-control);padding:0 12px;font-size:12px;font-weight:700}
-.top-btn:hover{background:rgba(255,255,255,.08)}
-
-main{max-width:1500px;margin:auto;padding:28px 32px 16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:18px}
-h1{font-size:30px;letter-spacing:-.8px;margin:0;line-height:1.1;color:var(--ink)}
-h2{font-size:15px;margin:0;letter-spacing:-.15px;color:var(--ink)}
-.sub{color:var(--muted);font-size:12px;margin:6px 0 12px}
-.lbl{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px}
-.ctl{height:38px;width:100%;min-width:0;border:1px solid var(--line-2);border-radius:var(--r-control);background:#fff;color:var(--ink);padding:0 10px;font-size:12px}
-textarea.ctl{height:auto;min-height:70px;padding:8px 10px}
-
-/* botões */
-.button,.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:39px;padding:0 15px;border:1px solid #D9E1E9;border-radius:7px;background:#fff;color:var(--navy);font-size:12px;font-weight:700;white-space:nowrap}
-.button:hover,.btn:hover{filter:brightness(.97)}
-.button.primary,.btn.pri{background:var(--navy);border-color:var(--navy);color:#fff}
-.btn.gh{background:#fff}
-.btn.dan{background:var(--crit);border-color:var(--crit);color:#fff}
-.button.refresh{height:38px;background:var(--chart-surface);padding:0 18px}
-.text-button{border:0;background:transparent;color:#41607F;font-size:11px;font-weight:700;padding:4px 0;display:inline-flex;align-items:center;gap:7px}
-.text-button:hover{color:var(--s1)}
-.spinning{animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* login */
-.login{max-width:400px;margin:10vh auto 0;padding:24px}
-.login h2{font-size:19px}
-.login .f{margin-bottom:14px}
-.err{background:var(--crit-bg);color:var(--crit);border-radius:var(--r-control);padding:10px 12px;font-weight:700;margin:8px 0;font-size:12px}
-
-/* título da página */
-.page-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:25px}
-.eyebrow{font-size:10px;font-weight:700;letter-spacing:1.7px;color:#73859A;margin-bottom:8px;text-transform:uppercase}
-.page-heading p{color:var(--muted-2);font-size:13px;margin:9px 0 0}
-.heading-actions{display:flex;gap:17px;align-items:center}
-.update-label{font-size:11px;color:#718297}
-
-/* filtros */
-.filter-panel{background:#fff;border:1px solid var(--line);border-radius:var(--r-card);padding:16px 20px;margin-bottom:25px;box-shadow:0 2px 3px rgba(19,47,73,.03)}
-.filter-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
-.section-label{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--ink)}
-.filter-row,.filter-bottom{display:grid;gap:16px;align-items:end}
-.filter-row{grid-template-columns:2fr 2.5fr 1fr 1.08fr 1.1fr}
-.filter-bottom{grid-template-columns:1.2fr 1.3fr 2.5fr auto;margin-top:14px}
-.filter-panel label{display:flex;flex-direction:column;gap:7px;font-size:11px;font-weight:700;color:#677B8F;min-width:0}
-.date-group{display:grid;grid-template-columns:1fr 1fr;gap:10px;min-width:0}
-.period-group{margin:0;padding:0;border:0;min-width:0}
-.period-group legend{font-size:11px;font-weight:700;color:#677B8F;margin-bottom:7px;padding:0}
-.period-group>div{display:flex;background:#F3F6F9;border-radius:var(--r-control);padding:3px;height:38px;gap:2px}
-.period-group button{border:0;background:transparent;border-radius:4px;color:#6B8094;font-size:11px;font-weight:700;padding:0 8px;flex:1;white-space:nowrap}
-.period-group button.sel{background:#fff;color:#183A5B;box-shadow:0 1px 4px rgba(20,52,80,.13)}
-.search-wrap{display:flex;align-items:center;gap:9px;height:38px;border:1px solid var(--line-2);border-radius:var(--r-control);background:#fff;padding:0 10px;color:#8796A8}
-.search-wrap input{border:0;outline:0;height:34px;width:100%;padding:0;background:transparent;color:var(--ink);font-size:12px}
-.search-wrap:focus-within{outline:3px solid var(--focus);outline-offset:2px}
-.search-wrap input:focus-visible{outline:0}
-.search-wrap input::placeholder{color:#9AA7B5}
-.filter-error{color:var(--crit);font-size:12px;margin:12px 0 0;font-weight:700}
-
-/* resultados */
-.results-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:13px}
-.results-heading>div{display:flex;gap:15px;align-items:center}
-.period-caption,.results-caption{color:var(--muted-2);font-size:11px}
-.carregando{opacity:.5;transition:opacity .15s}
-
-/* indicadores */
-.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px}
-.metric{min-height:133px;background:#fff;padding:17px 17px 16px;border:1px solid var(--line);border-radius:9px;min-width:0}
-.metric-head{display:flex;align-items:center;justify-content:space-between;gap:4px;min-height:22px;font-size:11px;color:#5A7188}
-.metric-head .ic{width:19px;height:19px;color:#8597AB}
-.metric-value{font-size:31px;letter-spacing:-1px;font-weight:700;line-height:1.15;margin:13px 0 9px;white-space:nowrap;color:var(--ink)}
-.metric-value small{font-size:11px;font-weight:400;letter-spacing:0;color:#94A8BA;margin-left:6px}
-.metric-description{font-size:10px;color:#778A9B;line-height:1.4}
-.metric.featured{background:var(--navy);border-color:var(--navy);color:#fff}
-.metric.featured .metric-head{color:#BFD1DF}
-.metric.featured .metric-head .ic{color:#B9D6ED}
-.metric.featured .metric-value{color:#fff}
-.metric.featured .metric-value small{color:#BAD0E0}
-.metric.featured .metric-description{color:#B4C9D9}
-.metric.impact{background:#FFFAF6;border-color:#F0E1D5}
-.metric.impact .metric-value,.metric.impact .metric-head .ic{color:#C5672E}
-
-/* gráficos */
-.charts{display:grid;grid-template-columns:1.88fr 1fr;gap:18px;margin-bottom:20px}
-.charts.three{grid-template-columns:repeat(3,1fr)}
-.chart-card{background:var(--chart-surface);border:1px solid var(--line);border-radius:var(--r-card);padding:22px 22px 15px;min-width:0}
-.chart-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
-.chart-heading p{font-size:11px;color:var(--muted);margin:7px 0 0}
-.unit-tag{font-size:10px;white-space:nowrap;color:#7C8FA1;border:1px solid #E5EAF0;background:#fff;padding:5px 8px;border-radius:4px}
-.legend{display:flex;gap:20px;margin:19px 0 4px}
-.legend span{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted)}
-.legend i{width:8px;height:8px;border-radius:2px}
-.chart{position:relative;min-width:0;margin-top:10px}
-.chart svg{display:block;width:100%;overflow:visible}
-.chart svg text{font-family:Arial,Helvetica,sans-serif}
-.chart .hit{fill:transparent;cursor:pointer}
-.chart g.col.on .hl{opacity:1}
-.chart .hl{opacity:0;fill:rgba(43,120,216,.06)}
-.chart-tooltip{position:absolute;right:10px;top:4px;pointer-events:none;background:var(--navy);color:#fff;padding:10px 12px;border-radius:6px;font-size:11px;display:flex;flex-direction:column;gap:4px;box-shadow:0 5px 10px rgba(16,46,73,.13);z-index:2}
-.chart-tooltip b{font-size:12px}
-.chart-tooltip i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}
-.chart-data{font-size:10px;color:#486783;margin-top:7px}
-.chart-data summary{cursor:pointer;width:fit-content;font-weight:700}
-.chart-data .tbl-wrap{max-height:240px;margin-top:10px}
-.method-note{font-size:10px;color:var(--muted);margin-top:14px;border-top:1px solid #E0E7EE;padding-top:12px;line-height:1.5}
-.empty{color:var(--muted-2);padding:28px 0;text-align:center;font-size:12px}
-.empty-state{background:#fff;padding:50px 20px;text-align:center;border:1px solid var(--line);border-radius:var(--r-card);color:#688096;margin-bottom:20px}
-.empty-state h2{color:#16344E;font-size:19px;margin:10px 0 8px}
-.empty-state p{font-size:13px;margin:0 0 20px}
-.tip{position:fixed;pointer-events:none;background:var(--navy);color:#fff;border-radius:6px;padding:8px 10px;font-size:11px;z-index:50;box-shadow:0 5px 10px rgba(16,46,73,.13);max-width:260px}
-
-/* blocos de detalhamento (expansíveis) */
-.bloco{background:#fff;border:1px solid var(--line);border-radius:var(--r-card);margin-bottom:12px}
-.bloco>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px;cursor:pointer;min-height:52px}
-.bloco>summary::-webkit-details-marker{display:none}
-.bloco>summary h2{display:flex;align-items:center;gap:10px}
-.bloco>summary h2::before{content:'';width:8px;height:8px;border-right:2px solid var(--axis);border-bottom:2px solid var(--axis);transform:rotate(-45deg);transition:transform .15s}
-.bloco[open]>summary h2::before{transform:rotate(45deg)}
-.bloco>summary .meta{font-size:11px;color:var(--muted-2);text-align:right}
-.bloco-body{padding:0 18px 18px}
-.bloco-tools{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
-.bloco-tools .sub{margin:0}
-.agr{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap}
-.agr .ctl{width:auto;min-width:160px}
-.bloco .charts{margin-bottom:0}
-
-/* tabelas */
-.tbl-wrap{overflow:auto;max-height:560px;border:1px solid var(--line);border-radius:var(--r-card)}
-table{border-collapse:collapse;width:100%;font-size:12px;text-align:left}
-th,td{padding:10px 12px;border-bottom:1px solid #EDF0F3;white-space:nowrap}
-th{position:sticky;top:0;background:var(--surface);color:#677B8F;font-weight:700;font-size:11px;cursor:pointer;user-select:none;z-index:1}
-td{color:var(--ink-2)}
-th.num,td.num{text-align:right}
-tbody tr{cursor:pointer}
-tbody tr:hover{background:var(--hover)}
-tbody tr:last-child td{border-bottom:0}
-tr.g-row td{background:var(--navy);color:#fff;font-weight:700;border-bottom:1px solid rgba(255,255,255,.15)}
-tr.g-row:hover td{background:var(--navy-2)}
-tr.g-row td small{font-weight:400;color:#BAD0E0;margin-left:6px}
-tr.g-row .seta{display:inline-block;width:14px;transition:transform .15s}
-tr.g-row.fechado .seta{transform:rotate(-90deg)}
-.pill{display:inline-block;padding:4px 8px;font-size:10px;font-weight:700;border-radius:4px;white-space:nowrap;background:var(--rest);color:var(--muted)}
-.pill.ok{background:var(--good-bg);color:var(--good)}
-.pill.wait{background:var(--warn-bg);color:var(--warn-ink)}
-.pill.rev{background:var(--crit-bg);color:var(--crit)}
-td.sel,th.sel{width:34px;text-align:center}
-td.sel input,th.sel input{width:16px;height:16px;cursor:pointer}
-.lote{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--warn-bg);border:1px solid #F0E1D5;border-radius:var(--r-card);padding:10px 12px;margin-bottom:10px;font-size:12px}
-.lote .ctl{width:auto;min-width:200px}
-
-/* PTS e bloqueio */
-.rv{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:12px}
-.rv:last-child{border-bottom:0}
-.rv span{color:var(--muted)}
-.rv strong{text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
-.nota{color:var(--muted);font-size:11px;margin-top:8px;line-height:1.5}
-
-/* emissão por responsável: grade estilo calendário */
-.mat-wrap{overflow:auto}
-table.mat{width:auto;border-collapse:separate;border-spacing:0;border:1px solid var(--line);border-radius:var(--r-card);overflow:hidden;background:#fff}
-.mat td,.mat th{padding:0;border:0;text-align:center}
-.mat th{position:static;background:none;font-weight:700;color:var(--muted);font-size:11px;cursor:default}
-.mat thead tr.mes th{background:var(--navy);color:#fff;font-size:12px;padding:6px 8px;text-align:left;border-left:1px solid rgba(255,255,255,.18)}
-.mat thead tr.mes th.nome{border-left:0}
-.mat thead tr.dia th{background:var(--surface);padding:4px 0 5px;border-bottom:1px solid var(--line);line-height:1.15}
-.mat thead tr.dia th b{display:block;font-size:13px;color:var(--ink)}
-.mat thead tr.dia th.fds b{color:var(--crit)}
-.mat thead tr.dia th.hoje b{background:var(--s1);color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;margin:0 auto}
-.mat td.d{border-left:1px solid var(--line);border-bottom:1px solid var(--line);padding:2px}
-.mat tr:last-child td{border-bottom:0}
-.mat .seg{border-left:2px solid var(--line-2)!important}
-.mat .fds{background:var(--rest)}
-.mat td.hoje{background:rgba(43,120,216,.08)}
-.mat th.nome,.mat td.nome{text-align:left;padding:6px 12px;font-weight:700;color:var(--ink);font-size:12px;white-space:nowrap;background:var(--surface);border-bottom:1px solid var(--line)}
-.mat td.nome small{display:block;font-weight:400;color:var(--muted);font-size:11px}
-.mat .c{width:24px;height:24px;margin:0 auto;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
-.mat .c.ok{background:var(--good-bg);color:var(--good)}
-.mat .c.no{background:var(--crit-bg);color:var(--crit)}
-.mat .c.dom{background:transparent;color:var(--muted)}
-.mat tbody tr{cursor:default}
-.mat-leg{display:flex;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--muted);margin-top:8px}
-
-/* detalhe do RDC */
-.modal{position:fixed;inset:0;background:var(--overlay);z-index:40;display:flex;justify-content:flex-end}
-.painel-det{width:min(640px,100%);height:100%;overflow:auto;background:var(--page);padding:0 0 32px}
-.det-top{position:sticky;top:0;background:var(--navy);color:#fff;padding:14px 18px;display:flex;align-items:center;gap:12px;z-index:2}
-.det-top b{flex:1}
-.det-top button{background:rgba(255,255,255,.14);border:0;color:#fff;border-radius:var(--r-control);width:40px;height:40px;font-size:20px}
-.det-body{padding:16px 18px}
-.det-body .card{margin-bottom:12px}
-.det-body h2{margin-bottom:8px}
-.blk{padding:10px 0;border-bottom:1px solid var(--line)}
-.blk:last-child{border-bottom:0}
-.blk h4{margin:0 0 4px;font-size:13px}
-.blk p{margin:2px 0}
-.thumbs{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
-.thumbs img{width:64px;height:64px;object-fit:cover;border-radius:8px;background:var(--rest);cursor:zoom-in}
-.acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.ed-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.ed-grid .f{min-width:0}
-a{color:var(--s1)}
-
-/* fotos */
-.lb{position:fixed;inset:0;background:#0B0F17;color:#fff;z-index:60;display:flex;flex-direction:column}
-.lb-top{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-weight:700}
-.lb-top button{width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:24px}
-.lb-st{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center}
-.lb-st img{max-width:100%;max-height:100%;object-fit:contain}
-.lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:52px;height:72px;border:0;border-radius:12px;background:rgba(255,255,255,.14);color:#fff;font-size:36px}
-.lb-nav.p{left:12px}.lb-nav.n{right:12px}
-.lb-nav:disabled{opacity:.2}
-.lb-cap{padding:10px 16px 16px;font-size:13px;color:#D0D5DD}
-.lb-cap a{color:#FDBA74}
-
-.toast{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:14px 18px;border-radius:8px;box-shadow:0 4px 20px rgba(21,57,84,.2);font-size:12px;font-weight:700;max-width:92vw;z-index:70}
-.toast.err{background:var(--crit)}
-footer{max-width:1500px;margin:0 auto;padding:10px 32px 28px;display:flex;align-items:center;gap:10px;color:#8393A3;font-size:10px}
-footer>span+span{border-left:1px solid #CED8E1;padding-left:10px}
-
-/* responsivo */
-@media (min-width:1600px){main{padding-top:36px}.metric{min-height:147px}.metric-value{font-size:35px}.chart-card{padding:26px}.metrics{gap:16px}}
-@media (max-width:1200px){
-  .filter-row{grid-template-columns:1.5fr 1fr 1fr}
-  .date-group{grid-column:1}.period-group{grid-column:2/4}
-  .metrics{grid-template-columns:repeat(3,1fr)}
-  .metric-description{font-size:11px}
-  .charts.three{grid-template-columns:1fr 1fr}
-  .heading-actions{flex-direction:column-reverse;align-items:flex-end;gap:8px}
-  .filter-bottom{grid-template-columns:1fr 1fr auto}
-  .status-filter{grid-column:2/4}
-  .search-filter{grid-column:1/3}
-}
-@media (max-width:1000px){.charts{grid-template-columns:1fr}}
-@media (max-width:800px){
-  main{padding:23px 20px}.topbar-content,footer{padding-left:20px;padding-right:20px}
-  .charts,.charts.three{grid-template-columns:1fr}
-  .filter-panel{padding:16px}
-  .filter-bottom{grid-template-columns:1fr auto}
-  .filter-bottom>label:first-child{grid-column:1/-1}
-  .status-filter,.search-filter{grid-column:1/-1}
-  .filter-bottom .button.refresh{grid-column:1/-1}
-}
-@media (max-width:560px){
-  .topbar{height:56px}.product{font-size:12px;gap:7px}.product .logo img{height:22px}.product .sub-name,.product-divider{display:none}
-  .topbar-content{padding:0 16px}.top-right #who{display:none}
-  main{padding:23px 16px}footer{padding:10px 16px 24px}
-  .page-heading{align-items:flex-start;gap:10px;margin-bottom:21px}
-  h1{font-size:25px}.page-heading p{font-size:12px;line-height:1.6}.eyebrow{font-size:9px}
-  .heading-actions .update-label{display:none}
-  .filter-row{grid-template-columns:1fr 1fr;gap:13px 10px}
-  .date-group,.period-group{grid-column:1/-1}
-  .filter-row>label:last-child{grid-column:1/-1}
-  .filter-bottom{gap:13px 10px}
-  .period-group button{padding:0 4px;font-size:10px}
-  .ctl,.search-wrap,.period-group>div,.button.refresh{height:44px}
-  .metrics{grid-template-columns:repeat(2,1fr);gap:10px}
-  .metric{padding:13px;min-height:126px}.metric-value{font-size:28px}.metric-description{font-size:10px}
-  .results-heading,.results-heading>div{align-items:flex-start;flex-direction:column;gap:5px}
-  .chart-card{padding:18px 15px 14px}.unit-tag{display:none}
-  .bloco>summary{padding:14px}.bloco-body{padding:0 14px 14px}.bloco>summary .meta{display:none}
-  .ed-grid{grid-template-columns:1fr}
-}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-@media print{.topbar{position:static}.filter-panel,.heading-actions,.toast,.bloco{display:none}.metrics{grid-template-columns:repeat(6,1fr)}.metric.featured{background:#fff;color:var(--ink)}.metric,.chart-card{break-inside:avoid}}
-</style>
+<link rel="stylesheet" href="painel.css">
 
 </head>
 <body>
+<a class="skip-link" href="#overview">Ir para os resultados</a>
+<aside class="workspace-nav hidden" id="workspaceNav" aria-label="Navegação do painel">
+  <a class="workspace-brand" href="#overview" data-nav="overview"><span class="brand-symbol">R<span>DC</span></span><span>Controle de campo<small>Planejamento & manutenção</small></span></a>
+  <div class="nav-caption">ÁREA DE TRABALHO</div>
+  <nav class="workspace-links" aria-label="Seções do painel">
+    <a href="#overview" data-nav="overview" aria-current="location"><span data-ic="chart">Visão geral</span></a>
+    <a href="#sec-analise" data-nav="sec-analise"><span data-ic="clock">Distribuição e PTS</span></a>
+    <a href="#sec-emissao" data-nav="sec-emissao"><span data-ic="file">Emissão diária</span></a>
+    <a href="#sec-resp" data-nav="sec-resp"><span data-ic="users">Responsáveis</span></a>
+    <a href="#sec-imp" data-nav="sec-imp"><span data-ic="alert">Impactos</span><b id="navImp">—</b></a>
+    <a href="#sec-rdc" data-nav="sec-rdc"><span data-ic="file">Registros RDC</span><b id="navRdc">—</b></a>
+  </nav>
+  <div class="nav-foot"><span class="nav-foot-mark">PPL</span><p>Planejamento com dados.<br>Controle em campo.</p><a href="index.html">Abrir app RDC <span aria-hidden="true">↗</span></a></div>
+</aside>
 <header class="topbar">
   <div class="topbar-content">
     <div class="product">
@@ -320,34 +39,36 @@ footer>span+span{border-left:1px solid #CED8E1;padding-left:10px}
 <main>
   <!-- LOGIN -->
   <section class="login card" id="scrLogin">
-    <h2>Acesso do administrador</h2>
-    <p class="sub">Use o mesmo nome e senha de administrador do app RDC.</p>
+    <div class="login-story"><span class="section-kicker">RDC / CONTROLE DE CAMPO</span><h1>A operação,<br>em perspectiva.</h1><p>Da execução em campo à análise dos contratos. Acompanhe produção, interferências e registros em um só lugar.</p><div class="login-topics"><span>01 <b>Produção e efetivo</b></span><span>02 <b>Impactos e PTS</b></span><span>03 <b>Registros e validação</b></span></div></div>
+    <div class="login-form"><span class="section-kicker">ACESSO RESTRITO</span><h2>Entrar no painel</h2>
+    <p class="sub">Use seu nome e senha de administrador do app RDC.</p>
     <div class="f"><label class="lbl" for="lNome">Nome</label><input class="ctl" id="lNome" autocomplete="username"></div>
     <div class="f"><label class="lbl" for="lSenha">Senha</label><input class="ctl" id="lSenha" type="password" autocomplete="current-password"></div>
     <div class="err hidden" id="lErr"></div>
     <button class="button primary" id="btnEntrar" style="width:100%">Entrar</button>
+    <p class="login-note">Relatório Diário de Campo · PPL</p></div>
   </section>
 
   <!-- PAINEL -->
   <section class="hidden" id="scrPainel">
     <div class="page-heading">
       <div>
-        <div class="eyebrow">Planejamento e controle de campo</div>
-        <h1>Painel de campo</h1>
-        <p>HH trabalhado, impactos e registros de RDC dos contratos de manutenção.</p>
+        <div class="eyebrow">CONTROLE OPERACIONAL / MANUTENÇÃO</div>
+        <h1>Visão geral da operação<span class="heading-dot">.</span></h1>
+        <p>Produção, interferências e rotina de campo no período selecionado.</p>
       </div>
       <div class="heading-actions">
         <span class="update-label" id="updLabel" aria-live="polite"></span>
-        <button class="button primary" id="btnExcel" data-ic="download">Exportar Excel</button>
+        <button class="button" id="btnExcel" data-ic="download">Exportar Excel</button>
       </div>
     </div>
 
     <section class="filter-panel" aria-labelledby="tFiltros">
       <div class="filter-top">
-        <span class="section-label" id="tFiltros" data-ic="filter">Filtros</span>
+        <span class="section-label" id="tFiltros" data-ic="filter">Recorte da operação</span>
         <button class="text-button" id="btnLimpar" data-ic="reset">Limpar filtros</button>
       </div>
-      <div class="filter-row">
+      <div class="filter-primary">
         <div class="date-group">
           <label>De<input class="ctl" type="date" id="fIni"></label>
           <label>Até<input class="ctl" type="date" id="fFim"></label>
@@ -355,14 +76,17 @@ footer>span+span{border-left:1px solid #CED8E1;padding-left:10px}
         <fieldset class="period-group">
           <legend>Período</legend>
           <div id="presets">
-            <button type="button" data-p="hoje">Hoje</button><button type="button" data-p="7">7 dias</button><button type="button" data-p="30">30 dias</button><button type="button" data-p="mes">Este mês</button><button type="button" data-p="mesant">Mês anterior</button>
+            <button type="button" data-p="hoje" aria-pressed="false">Hoje</button><button type="button" data-p="7" aria-pressed="false">7 dias</button><button type="button" data-p="30" aria-pressed="false">30 dias</button><button type="button" data-p="mes" aria-pressed="false">Este mês</button><button type="button" data-p="mesant" aria-pressed="false">Mês anterior</button>
           </div>
         </fieldset>
+        <button class="button refresh" id="btnAtualizar" data-ic="refresh">Atualizar</button>
+      </div>
+      <details class="filter-extra" id="fDetalhes">
+        <summary><span>Área, contrato e outros filtros</span><span class="filter-count" id="fCount">Nenhum ativo</span></summary>
+        <div class="filter-fields">
         <label>Área<select class="ctl" id="fArea"></select></label>
         <label>Responsável<select class="ctl" id="fResp"></select></label>
         <label>Disciplina<select class="ctl" id="fDisc"></select></label>
-      </div>
-      <div class="filter-bottom">
         <label>Contrato<select class="ctl" id="fContrato"></select></label>
         <label class="status-filter">Situação
           <select class="ctl" id="fStatus">
@@ -378,13 +102,14 @@ footer>span+span{border-left:1px solid #CED8E1;padding-left:10px}
         <label class="search-filter">Buscar por OM, ativo ou código
           <span class="search-wrap" data-ic="search"><input id="fBusca" type="search" placeholder="Ex.: 4300123, TR_813K_01, RDC-…"></span>
         </label>
-        <button class="button refresh" id="btnAtualizar" data-ic="refresh">Atualizar</button>
-      </div>
+        </div>
+      </details>
+      <div class="active-filters hidden" id="fAtivos" aria-label="Filtros aplicados"></div>
       <p class="filter-error hidden" id="fErro" role="alert"></p>
     </section>
 
-    <div class="results-heading">
-      <div><span class="section-label">Resultados</span><span class="period-caption" id="perCap"></span></div>
+    <div class="results-heading" id="overview" tabindex="-1">
+      <div><span class="section-kicker">01 / BALANÇO DO PERÍODO</span><span class="period-caption" id="perCap"></span></div>
       <span class="results-caption" id="resCap" aria-live="polite"></span>
     </div>
 
@@ -397,29 +122,30 @@ footer>span+span{border-left:1px solid #CED8E1;padding-left:10px}
         <button class="button" id="btnLimpar2" data-ic="reset">Limpar filtros</button>
       </div>
 
+      <div class="section-intro" id="chartIntro"><div><span class="section-kicker">PRODUÇÃO & INTERFERÊNCIAS</span><h2>O ritmo da operação</h2></div><p>Compare a evolução e a distribuição do homem-hora.</p></div>
       <div class="charts" id="graficos">
         <section class="chart-card">
           <div class="chart-heading">
-            <div><h2>HH trabalhado e HH de impacto por <span id="hhPor">dia</span></h2>
-              <p>Homem-hora = efetivo × duração. Impacto = duração do impacto × maior efetivo do RDC.</p></div>
+            <div><span class="chart-kicker">EVOLUÇÃO NO TEMPO</span><h2>Trabalho e impacto</h2>
+              <p>HH trabalhado e HH de impacto por <span id="hhPor">dia</span>.</p></div>
             <span class="unit-tag">Unidade: HH</span>
           </div>
-          <div class="legend"><span><i style="background:var(--s1)"></i>HH trabalhado</span><span><i style="background:var(--s2)"></i>HH de impacto</span></div>
+          <div class="legend"><span><i style="background:var(--s1)"></i>HH trabalhado<strong id="chTotalHH"></strong></span><span><i style="background:var(--s2)"></i>HH de impacto<strong id="chTotalImp"></strong></span></div>
           <div class="chart" id="chDia"></div>
           <details class="chart-data"><summary>Ver dados do gráfico</summary><div class="tbl-wrap" id="chDiaDados"></div></details>
-          <p class="method-note">Trabalho e impacto usam a mesma escala, com base no zero. Passe o mouse, toque numa coluna ou use as setas do teclado para ver os valores do dia.</p>
+          <p class="method-note">HH = efetivo × duração. Impacto = duração × maior efetivo do RDC. Mesma escala, a partir do zero. Toque nas barras ou use ← → para consultar os valores.</p>
         </section>
         <section class="chart-card">
           <div class="chart-heading">
-            <div><h2>HH trabalhado por disciplina</h2><p>Soma das atividades no filtro, com a participação no total.</p></div>
+            <div><span class="chart-kicker">COMPOSIÇÃO DA PRODUÇÃO</span><h2>HH por disciplina</h2><p>Participação das atividades no total trabalhado.</p></div>
             <span class="unit-tag">Unidade: HH</span>
           </div>
           <div class="chart" id="chDisc"></div>
         </section>
       </div>
 
-      <details class="bloco" data-bloco="analise">
-        <summary><h2>Contratos, impactos por responsável e PTS</h2><span class="meta">Distribuição do HH e das esperas</span></summary>
+      <details class="bloco" data-bloco="analise" id="sec-analise">
+        <summary><span class="section-number" aria-hidden="true">02</span><div><h2>Distribuição e disponibilidade</h2><p>Contratos, interferências por responsável e liberação de trabalho.</p></div><span class="meta">Contratos · Impactos · PTS</span></summary>
         <div class="bloco-body">
           <div class="charts three">
             <section class="chart-card">
@@ -431,23 +157,23 @@ footer>span+span{border-left:1px solid #CED8E1;padding-left:10px}
               <div class="chart" id="chImpResp"></div>
             </section>
             <section class="chart-card">
-              <div class="chart-heading"><div><h2>PTS e bloqueio</h2><p>RDC que informaram PTS e bloqueio (versão nova do app).</p></div></div>
+              <div class="chart-heading"><div><h2>PTS e bloqueio</h2><p>Disponibilidade informada nos registros de campo.</p></div></div>
               <div id="ptsResumo"></div>
             </section>
           </div>
         </div>
       </details>
 
-      <details class="bloco" data-bloco="emissao">
-        <summary><h2>Emissão por responsável</h2><span class="meta">Quem emitiu RDC em cada dia</span></summary>
+      <details class="bloco" data-bloco="emissao" id="sec-emissao">
+        <summary><span class="section-number" aria-hidden="true">03</span><div><h2>Emissão diária</h2><p>Presença dos registros na rotina de cada responsável.</p></div><span class="meta">Calendário de emissão</span></summary>
         <div class="bloco-body">
           <p class="sub" style="margin-top:0">Domingo sem RDC não conta como falta.</p>
           <div class="mat-wrap" id="matriz"></div>
         </div>
       </details>
 
-      <details class="bloco" data-bloco="resp">
-        <summary><h2>Resumo por responsável</h2><span class="meta">RDC, HH e espera de PTS por líder</span></summary>
+      <details class="bloco" data-bloco="resp" id="sec-resp">
+        <summary><span class="section-number" aria-hidden="true">04</span><div><h2>Responsáveis</h2><p>Produção e condições de trabalho por liderança.</p></div><span class="meta">RDC · HH · Espera</span></summary>
         <div class="bloco-body">
           <div class="bloco-tools"><p class="sub">Clique num responsável para filtrar o painel.</p>
             <label class="agr" for="gResp">Agrupar por <select class="ctl" id="gResp"><option value="">Não agrupar</option><option value="funcao">Função</option></select></label></div>
@@ -455,8 +181,8 @@ footer>span+span{border-left:1px solid #CED8E1;padding-left:10px}
         </div>
       </details>
 
-      <details class="bloco" data-bloco="imp">
-        <summary><h2>Impactos</h2><span class="meta" id="impCount"></span></summary>
+      <details class="bloco" data-bloco="imp" id="sec-imp">
+        <summary><span class="section-number" aria-hidden="true">05</span><div><h2>Interferências da operação</h2><p>Consulte os impactos e identifique os maiores tempos de parada.</p></div><span class="meta" id="impCount"></span></summary>
         <div class="bloco-body">
           <div class="bloco-tools"><p class="sub">Maiores primeiro.</p>
             <label class="agr" for="gImp">Agrupar por <select class="ctl" id="gImp"><option value="">Não agrupar</option><option value="data">Data</option><option value="responsavel">Responsável</option><option value="ativo">Ativo</option></select></label></div>
@@ -464,8 +190,8 @@ footer>span+span{border-left:1px solid #CED8E1;padding-left:10px}
         </div>
       </details>
 
-      <details class="bloco" data-bloco="rdc">
-        <summary><h2>Registros de RDC</h2><span class="meta" id="rdcMeta"></span></summary>
+      <details class="bloco" data-bloco="rdc" id="sec-rdc">
+        <summary><span class="section-number" aria-hidden="true">06</span><div><h2>Registros de campo</h2><p>Consulte, valide e organize os relatórios da equipe.</p></div><span class="meta" id="rdcMeta"></span></summary>
         <div class="bloco-body">
           <div class="bloco-tools"><p class="sub" id="rdcCount"></p>
             <label class="agr" for="gRdc">Agrupar por <select class="ctl" id="gRdc"><option value="">Não agrupar</option><option value="data">Data</option><option value="contrato">Contrato</option><option value="responsavel">Responsável</option><option value="area">Área</option><option value="ativo">Ativo</option><option value="status">Situação</option></select></label></div>
@@ -482,7 +208,7 @@ footer>span+span{border-left:1px solid #CED8E1;padding-left:10px}
     </div>
   </section>
 </main>
-<footer><span>RDC · Relatório Diário de Campo</span><span>Dados do Supabase do app RDC</span></footer>
+<footer><span>RDC · Relatório Diário de Campo</span><span>PPL · Planejamento e controle de manutenção</span></footer>
 
 <div class="modal hidden" id="modal"><div class="painel-det" id="det"></div></div>
 <div class="lb hidden" id="lb">
@@ -516,6 +242,8 @@ const STATUS = { 'Enviado': ['Aguardando validação', 'wait'], 'Validado': ['Va
 const $ = id => document.getElementById(id);
 // ícones de linha (Lucide, licença MIT)
 const ICONES = {
+  chart: '<path d="M3 3v18h18M7 14v3M12 9v8M17 5v12"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
   download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
   filter: '<path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>',
   reset: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
@@ -564,6 +292,7 @@ function setAdmin(a) {
   admin = a;
   try { a ? sessionStorage.setItem('rdc-painel-admin', JSON.stringify(a)) : sessionStorage.removeItem('rdc-painel-admin'); } catch { }
   $('scrLogin').classList.toggle('hidden', !!a); $('scrPainel').classList.toggle('hidden', !a);
+  $('workspaceNav').classList.toggle('hidden', !a); document.body.classList.toggle('workspace-ready', !!a);
   $('who').classList.toggle('hidden', !a); $('btnSair').classList.toggle('hidden', !a);
   $('who').textContent = a ? a.nome : '';
 }
@@ -595,7 +324,7 @@ function preset(p) {
   carregar(p);
 }
 async function carregar(p) {
-  if (p !== undefined) $('presets').querySelectorAll('button').forEach(b => b.classList.toggle('sel', b.dataset.p === p));
+  if (p !== undefined) $('presets').querySelectorAll('button').forEach(b => { const ativo = b.dataset.p === p; b.classList.toggle('sel', ativo); b.setAttribute('aria-pressed', String(ativo)); });
   const ini = $('fIni').value, fim = $('fFim').value, erro = $('fErro');
   const falha = m => { erro.textContent = m; erro.classList.remove('hidden'); };
   if (!ini || !fim) return falha('Informe as datas De e Até.');
@@ -603,6 +332,7 @@ async function carregar(p) {
   erro.classList.add('hidden');
   const s = ++seq, b = $('btnAtualizar');
   $('conteudo').classList.add('carregando'); b.disabled = true; b.querySelector('.ic').classList.add('spinning');
+  $('conteudo').setAttribute('aria-busy', 'true');
   $('resCap').textContent = 'Carregando…';
   try {
     const r = await rpc('rdc_admin_exportar', { p_nome: admin.nome, p_senha: admin.senha, p_ini: ini, p_fim: fim });
@@ -615,7 +345,7 @@ async function carregar(p) {
     if (s !== seq) return;
     const m = e.status === 404 ? 'Banco sem o painel — rode supabase/migracao_v8_pts_gps_painel.sql.' : 'Não foi possível carregar: ' + e.message;
     falha(m); toast(m, true); $('resCap').textContent = dados ? '' : 'Sem dados';
-  } finally { if (s === seq) { $('conteudo').classList.remove('carregando'); b.disabled = false; b.querySelector('.ic').classList.remove('spinning'); } }
+  } finally { if (s === seq) { $('conteudo').classList.remove('carregando'); $('conteudo').setAttribute('aria-busy', 'false'); b.disabled = false; b.querySelector('.ic').classList.remove('spinning'); } }
 }
 function opcoes(sel, valores, todos) {
   const atual = sel.value;
@@ -671,23 +401,27 @@ function render() {
 
   const nPts = rdcs.filter(r => r.pts != null).length, nBloq = rdcs.filter(r => r.bloqueio === true).length, nDias = diasDoPeriodo().length;
   // "—" = dado indisponível; 0 = zero conhecido
-  const kpi = (t, valor, unid, desc, icone, tom = '') => `<div class="metric ${tom}"><div class="metric-head"><span>${t}</span>${ico(icone)}</div><div class="metric-value">${esc(valor)}${unid ? `<small>${unid}</small>` : ''}</div><div class="metric-description">${esc(desc)}</div></div>`;
-  $('kpis').innerHTML = [
-    kpi('HH trabalhado', h(hhMin), 'HH', `${nf0.format(atividades.length)} atividades`, 'clock', 'featured'),
-    kpi('RDC emitidos', nf0.format(rdcs.length), 'RDC', `${aguard} aguardando validação`, 'file'),
-    kpi('HH de impacto', h(hhImpMin), 'HH', hhMin ? `${nf1.format(hhImpMin / hhMin * 100)}% do HH trabalhado` : 'sem HH trabalhado no filtro', 'alert', 'impact'),
-    kpi('Horas de impacto', h(impMin), 'h', `${nf0.format(impactos.length)} impactos registrados`, 'hourglass', 'impact'),
-    kpi('Espera média pela PTS', esperas.length ? dur(esperas.reduce((a, b) => a + b, 0) / esperas.length) : '—', '', esperas.length ? `${esperas.length} RDC com horários de PTS` : (nPts ? 'sem horários de PTS informados' : 'nenhum RDC informou PTS'), 'pts'),
-    kpi('Bloqueios', nPts || nBloq ? nf0.format(nBloq) : '—', nPts || nBloq ? 'RDC' : '', nPts || nBloq ? 'RDC com bloqueio informado' : 'nenhum RDC informou bloqueio', 'lock')
-  ].join('');
+  const kpi = (t, valor, unid, desc, icone, tom = '') => `<article class="metric ${tom}"><div class="metric-head"><span>${t}</span>${ico(icone)}</div><div class="metric-value">${esc(valor)}${unid ? `<small>${unid}</small>` : ''}</div><div class="metric-description">${esc(desc)}</div></article>`;
+  const validados = rdcs.filter(r => r.status === 'Validado').length, taxaValidada = rdcs.length ? validados / rdcs.length * 100 : 0;
+  $('kpis').innerHTML = `<article class="production-hero"><div class="hero-label"><span>PRODUÇÃO NO PERÍODO</span>${ico('chart')}</div><h2>HH trabalhado</h2><div class="hero-value">${h(hhMin)}<small>HH</small></div><p>Homem-hora aplicado nas atividades de campo.</p><div class="hero-facts"><div><strong>${nf0.format(atividades.length)}</strong><span>atividades</span></div><div><strong>${nDias}</strong><span>dias no período</span></div></div></article>
+    <article class="metric records-metric"><div class="metric-head"><span>Registros de campo</span>${ico('file')}</div><div class="metric-value">${nf0.format(rdcs.length)}<small>RDC</small></div><div class="metric-description">${aguard} aguardando validação</div><div class="validation-caption"><span>Validados no filtro</span><b>${validados} de ${rdcs.length}</b></div><div class="validation-track" role="img" aria-label="${validados} de ${rdcs.length} RDC validados"><span style="width:${taxaValidada}%"></span></div></article>
+    ${kpi('HH de impacto', h(hhImpMin), 'HH', hhMin ? `${nf1.format(hhImpMin / hhMin * 100)}% em relação ao HH trabalhado` : 'Sem HH trabalhado no filtro', 'alert', 'impact')}
+    <div class="support-metrics">${[
+      kpi('Tempo de impacto', h(impMin), 'h', `${nf0.format(impactos.length)} impactos registrados`, 'hourglass', 'support impact-time'),
+      kpi('Espera pela PTS', esperas.length ? dur(esperas.reduce((a, b) => a + b, 0) / esperas.length) : '—', '', esperas.length ? `Média de ${esperas.length} RDC com horários` : (nPts ? 'Sem horários informados' : 'Sem informação de PTS'), 'pts', 'support'),
+      kpi('Bloqueios', nPts || nBloq ? nf0.format(nBloq) : '—', nPts || nBloq ? 'RDC' : '', nPts || nBloq ? 'Com bloqueio informado' : 'Sem informação de bloqueio', 'lock', 'support')
+    ].join('')}</div>`;
+  $('navImp').textContent = nf0.format(impactos.length); $('navRdc').textContent = nf0.format(rdcs.length);
   $('perCap').textContent = `${fmtData(dados.ini)} a ${fmtData(dados.fim)} · ${nDias} ${nDias === 1 ? 'dia' : 'dias'}`;
   $('resCap').textContent = `${nf0.format(rdcs.length)} RDC encontrados · ${nf0.format(atividades.length)} atividades`;
   $('impCount').textContent = `${nf0.format(impactos.length)} impactos · ${h(impMin)} h`;
   $('rdcMeta').textContent = `${nf0.format(rdcs.length)} RDC`;
   const vazio = !rdcs.length;
   $('vazio').classList.toggle('hidden', !vazio); $('graficos').classList.toggle('hidden', vazio);
+  $('chartIntro').classList.toggle('hidden', vazio);
   document.querySelectorAll('.bloco').forEach(b => b.classList.toggle('hidden', vazio));
   $('btnLimpar').disabled = !filtrosAtivos();
+  mostrarFiltrosAtivos();
 
   graficoDia(rdcs);
   barrasH($('chDisc'), agrupar(atividades, a => a.disciplina, a => a.efetivo_total * a.duracao_min), { fmt: v => `${h(v)} HH`, pct: true, rotulo: 'HH trabalhado por disciplina' });
@@ -706,12 +440,13 @@ function agrupar(lista, chave, valor) {
 }
 
 /* ---------- gráficos (SVG, padrão Modelo/DESIGN.md) ---------- */
-const COR = { plot: '#EDF3F8', grid: '#D2DDE8', axis: '#597087', text: '#183752', muted: '#526B82', prod: '#2B78D8', imp: '#ED7938', impText: '#A74C20' };
+const tokensGrafico = getComputedStyle(document.documentElement);
+const COR = Object.fromEntries(Object.entries({ plot: '--plot', grid: '--grid', axis: '--axis', text: '--ink', muted: '--muted', prod: '--s1', imp: '--s2', impText: '--s2-ink' }).map(([nome, token]) => [nome, tokensGrafico.getPropertyValue(token).trim()]));
 const tip = $('tip');
 function mostrarTip(e, html) { tip.innerHTML = html; tip.classList.remove('hidden'); const r = tip.getBoundingClientRect(); let x = e.clientX + 14, y = e.clientY + 14; if (x + r.width > innerWidth - 8) x = e.clientX - r.width - 14; if (y + r.height > innerHeight - 8) y = e.clientY - r.height - 14; tip.style.left = x + 'px'; tip.style.top = y + 'px'; }
 function esconderTip() { tip.classList.add('hidden'); }
 // escala a partir do zero com limite superior arredondado
-const ticks = max => { if (max <= 0) return [0, 1]; const p = Math.pow(10, Math.floor(Math.log10(max))), st = [1, 2, 2.5, 5, 10].map(m => m * p).find(s => max / s <= 5) || p * 10; const out = []; for (let v = 0; v <= max + st * 0.001; v += st) out.push(v); if (out[out.length - 1] < max) out.push(out[out.length - 1] + st); return out; };
+const ticks = max => { if (max <= 0) return [0, 1]; const alvo = max / 4, p = Math.pow(10, Math.floor(Math.log10(alvo))), st = [1, 2, 2.5, 5, 10].map(m => m * p).find(s => s >= alvo) || p * 10; const out = []; for (let v = 0; v <= max + st * 0.001; v += st) out.push(v); if (out[out.length - 1] < max) out.push(out[out.length - 1] + st); return out; };
 const fmtTick = v => nf1.format(Math.round(v * 10) / 10);
 // coluna: base reta no zero, cantos superiores arredondados até 5px
 const colV = (x, y, w, hgt) => { if (hgt <= 0) return ''; const r = Math.min(5, w / 2, hgt); return `M${x},${y + hgt}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + hgt}Z`; };
@@ -719,8 +454,45 @@ const colV = (x, y, w, hgt) => { if (hgt <= 0) return ''; const r = Math.min(5, 
 const barH = (x, y, w, hgt) => { if (w <= 0) return ''; const r = Math.min(5, hgt / 2, w); return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + hgt - r}Q${x + w},${y + hgt} ${x + w - r},${y + hgt}H${x}Z`; };
 const eixos = (x0, y0, x1, y1) => `<path d="M${x0 + .5},${y0}V${y1 + .5}H${x1}" fill="none" stroke="${COR.axis}" stroke-width="1.4"/>`;
 
+// Medir o card, inclusive ao abrir um detalhamento, sem reconstruir o painel inteiro.
+const desenhos = new Map();
+const chartObserver = new ResizeObserver(entries => {
+  for (const { target } of entries) {
+    const desenho = desenhos.get(target), largura = target.clientWidth;
+    if (desenho && largura > 0 && largura !== desenho.largura) desenho.render();
+  }
+});
+function observarGrafico(el, render) {
+  if (!desenhos.has(el)) chartObserver.observe(el);
+  desenhos.set(el, { largura: el.clientWidth, render });
+}
+const medidaTexto = document.createElement('canvas').getContext('2d');
+function larguraTexto(texto, tamanho = 11, peso = 400) {
+  medidaTexto.font = `${peso} ${tamanho}px Arial`;
+  return medidaTexto.measureText(String(texto)).width;
+}
+function linhasTexto(texto, largura) {
+  const linhas = []; let linha = '';
+  for (const palavra of String(texto).split(/\s+/)) {
+    if (linha && larguraTexto(linha + ' ' + palavra) > largura) { linhas.push(linha); linha = ''; }
+    for (const letra of palavra) {
+      if (larguraTexto(linha + letra) > largura) { linhas.push(linha); linha = ''; }
+      linha += letra;
+    }
+    linha += ' ';
+  }
+  if (linha.trim()) linhas.push(linha.trim());
+  return linhas;
+}
+
 function graficoDia(rdcs) {
   const el = $('chDia'), dias = diasDoPeriodo();
+  observarGrafico(el, () => graficoDia(rdcs));
+  const scrollAnterior = el.querySelector('.chart-scroll')?.scrollLeft || 0;
+  const tinhaFoco = el.contains(document.activeElement);
+  const selecao = el.querySelector('.col.on')?.dataset.i;
+  $('chTotalHH').textContent = h(rdcs.reduce((s, r) => s + r._hh, 0)) + ' HH';
+  $('chTotalImp').textContent = h(rdcs.reduce((s, r) => s + r.hh_impacto_min, 0)) + ' HH';
   // até 62 dias: por dia; depois, por mês (nenhum dia é omitido: o mês soma todos)
   const porMes = dias.length > 62;
   $('hhPor').textContent = porMes ? 'mês' : 'dia';
@@ -733,13 +505,18 @@ function graficoDia(rdcs) {
   // tabela acessível com os mesmos valores do gráfico
   $('chDiaDados').innerHTML = `<table><thead><tr><th>${porMes ? 'Mês' : 'Data'}</th><th class="num">HH trabalhado</th><th class="num">HH de impacto</th><th class="num">RDC</th></tr></thead><tbody>${cats.map(c => { const d = v.get(c); return `<tr><td>${nomeCat(c)}</td><td class="num">${h(d.hh)}</td><td class="num">${h(d.imp)}</td><td class="num">${d.n}</td></tr>`; }).join('')}</tbody></table>`;
   if (!rdcs.length) { el.innerHTML = '<div class="empty">Nenhum RDC no filtro.</div>'; return; }
-  const W = Math.max(300, el.clientWidth || 640), H = 280, m = { l: 46, r: 10, t: 30, b: 34 };
-  const iw = W - m.l - m.r, ih = H - m.t - m.b, base = m.t + ih;
   const max = Math.max(...[...v.values()].map(x => Math.max(x.hh, x.imp))) / 60;
-  const tk = ticks(max), top = tk[tk.length - 1], y = val => base - val / top * ih;
-  const band = iw / cats.length, gap = 2, bw = Math.max(2, Math.min(27, (band * .72 - gap) / 2));
-  const comValores = cats.length <= 12 && band >= 62, lblCada = cats.length <= 12 ? 1 : Math.ceil(cats.length / Math.max(3, Math.floor(iw / 52)));
-  let s = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" tabindex="0" aria-label="HH trabalhado e HH de impacto por ${porMes ? 'mês' : 'dia'}. Use as setas para consultar os valores ou abra a tabela abaixo.">`;
+  const tk = ticks(max), top = tk[tk.length - 1];
+  const largura = el.clientWidth || 640, H = largura < 420 ? 260 : 280;
+  const m = { l: Math.max(38, ...tk.map(t => larguraTexto(fmtTick(t)) + 14)), r: 16, t: 30, b: 34 };
+  // Cada par de barras mantém espaço para toque; todos os períodos continuam representados.
+  const W = Math.max(largura, m.l + m.r + cats.length * (cats.length <= 7 ? 28 : 44));
+  const iw = W - m.l - m.r, ih = H - m.t - m.b, base = m.t + ih, y = val => base - val / top * ih;
+  const band = iw / cats.length, gap = 4, bw = Math.min(27, (band * .72 - gap) / 2);
+  const maiorValor = Math.max(...[...v.values()].flatMap(d => [larguraTexto(h(d.hh), 11, 700), larguraTexto(h(d.imp), 11, 700)]));
+  const comValores = cats.length <= 12 && band >= Math.max(72, maiorValor * 2 + 16);
+  const lblCada = Math.max(1, Math.ceil((porMes ? 54 : 48) / band));
+  let s = `<div class="chart-scroll"><svg viewBox="0 0 ${W} ${H}" style="width:${W}px" height="${H}" role="img" tabindex="0" aria-label="HH trabalhado e HH de impacto por ${porMes ? 'mês' : 'dia'}. Use as setas para consultar os valores ou abra a tabela abaixo.">`;
   s += `<rect x="${m.l}" y="${m.t}" width="${iw}" height="${ih}" fill="${COR.plot}"/>`;
   for (const t of tk) s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(t)}" y2="${y(t)}" stroke="${COR.grid}" stroke-width=".6"/><text x="${m.l - 7}" y="${y(t) + 4}" text-anchor="end" font-size="11" fill="${COR.muted}">${fmtTick(t)}</text>`;
   s += `<text x="${m.l - 7}" y="${m.t - 12}" text-anchor="end" font-size="10" fill="${COR.muted}">HH</text>`;
@@ -748,14 +525,20 @@ function graficoDia(rdcs) {
     s += `<g class="col" data-i="${i}"><rect class="hl" x="${m.l + i * band}" y="${m.t}" width="${band}" height="${ih}"/>`;
     s += `<path d="${colV(x0 - bw - gap / 2, y(hh), bw, base - y(hh))}" fill="${COR.prod}"/><path d="${colV(x0 + gap / 2, y(im), bw, base - y(im))}" fill="${COR.imp}"/>`;
     if (comValores && hh > 0) s += `<text x="${x0 - gap / 2 - bw / 2}" y="${y(hh) - 6}" text-anchor="middle" font-size="11" font-weight="700" fill="${COR.text}">${h(d.hh)}</text>`;
-    if (comValores && im > 0) s += `<text x="${x0 + gap / 2 + bw / 2}" y="${Math.min(y(im) - 6, y(hh) - (hh > 0 && Math.abs(y(hh) - y(im)) < 14 ? 20 : 6))}" text-anchor="middle" font-size="11" font-weight="700" fill="${COR.impText}">${h(d.imp)}</text>`;
+    if (comValores && im > 0) {
+      const proximos = hh > 0 && Math.abs(y(hh) - y(im)) < 14 && (larguraTexto(h(d.hh), 11, 700) + larguraTexto(h(d.imp), 11, 700)) / 2 + 4 > bw + gap;
+      s += `<text x="${x0 + gap / 2 + bw / 2}" y="${proximos ? Math.min(y(hh), y(im)) - 22 : y(im) - 6}" text-anchor="middle" font-size="11" font-weight="700" fill="${COR.impText}">${h(d.imp)}</text>`;
+    }
     if (i % lblCada === 0) s += `<text x="${x0}" y="${H - 12}" text-anchor="middle" font-size="11" fill="${COR.muted}">${rotCat(c)}</text>`;
     s += `<rect class="hit" x="${m.l + i * band}" y="${m.t}" width="${band}" height="${ih + 24}"/></g>`;
   });
-  s += eixos(m.l, m.t, W - m.r, base) + '</svg><div class="chart-tooltip hidden" role="status"></div>';
+  s += eixos(m.l, m.t, W - m.r, base) + '</svg></div><div class="chart-tooltip hidden" role="status"></div>';
+  if (W > largura) s += '<p class="chart-scroll-hint">Deslize para ver todo o período · use ← → com o gráfico em foco.</p>';
   el.innerHTML = s;
   // consulta por ponteiro, toque ou teclado (setas / Esc)
   const svg = el.querySelector('svg'), tt = el.querySelector('.chart-tooltip'), cols = [...el.querySelectorAll('g.col')];
+  const scroller = el.querySelector('.chart-scroll');
+  scroller.scrollLeft = scrollAnterior;
   let atual = -1;
   const mostrar = i => {
     atual = i; cols.forEach((g, k) => g.classList.toggle('on', k === i));
@@ -771,31 +554,54 @@ function graficoDia(rdcs) {
       e.preventDefault();
       const prox = atual < 0 ? (e.key === 'ArrowRight' ? 0 : cats.length - 1) : atual + (e.key === 'ArrowRight' ? 1 : -1);
       mostrar(Math.max(0, Math.min(cats.length - 1, prox)));
+      const inicio = m.l + atual * band, fim = inicio + band;
+      if (inicio < scroller.scrollLeft) scroller.scrollLeft = Math.max(0, inicio - m.l);
+      else if (fim > scroller.scrollLeft + scroller.clientWidth) scroller.scrollLeft = fim - scroller.clientWidth + 12;
     }
     else if (e.key === 'Escape') mostrar(-1);
   });
   svg.addEventListener('blur', () => mostrar(-1));
+  if (tinhaFoco) { svg.focus({ preventScroll: true }); if (selecao != null) mostrar(Math.min(Number(selecao), cats.length - 1)); }
 }
 
 // barras horizontais: mesma cor para todas as categorias; valor (e participação) junto da extremidade
 function barrasH(el, itens, o) {
+  const originais = itens;
+  observarGrafico(el, () => barrasH(el, originais, o));
   const { cor = COR.prod, corTexto = COR.text, fmt, pct = false, rotulo = 'valores', max: maxItens = 12 } = o;
   itens = itens.filter(x => x.v > 0);
   if (!itens.length) { el.innerHTML = '<div class="empty">Sem dados no filtro.</div>'; return; }
   const tot = itens.reduce((t, x) => t + x.v, 0);
   if (itens.length > maxItens) itens = [...itens.slice(0, maxItens - 1), { k: 'Outros', v: itens.slice(maxItens - 1).reduce((t, x) => t + x.v, 0) }];
-  const W = Math.max(260, el.clientWidth || 360), lw = Math.min(130, Math.max(80, W * .3)), vw = pct ? 74 : 64;
-  const row = pct ? 46 : 38, bh = pct ? 26 : 22, mt = 6, mb = 26, H = itens.length * row + mt + mb;
+  const W = el.clientWidth || 360, compacto = W < 460;
+  const vw = Math.max(pct ? 74 : 64, ...itens.map(it => larguraTexto(fmt(it.v), 12, 700) + 16));
+  const lw = compacto ? 8 : Math.min(145, W * .3), bh = pct ? 26 : 22, mt = 8, mb = 30;
+  let cursor = mt;
+  const linhas = itens.map(it => {
+    const nomes = linhasTexto(it.k, compacto ? W - 16 : lw - 16);
+    const row = compacto ? nomes.length * 15 + bh + 22 : Math.max(pct ? 52 : 44, nomes.length * 15 + 16);
+    const yc = compacto ? cursor + nomes.length * 15 + 8 + bh / 2 : cursor + row / 2;
+    const linha = { nomes, inicio: cursor, row, yc }; cursor += row; return linha;
+  });
+  const H = cursor + mb;
   const iw = W - lw - vw, vmax = Math.max(...itens.map(x => x.v)) / 60, tk = ticks(vmax), top = tk[tk.length - 1], x = val => lw + val / top * iw;
   const pc = v => nf1.format(v / tot * 100) + '%';
   let s = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="${esc(rotulo)}: ${esc(itens.map(i => `${i.k} ${fmt(i.v)}${pct ? ' (' + pc(i.v) + ')' : ''}`).join('; '))}">`;
   s += `<rect x="${lw}" y="0" width="${iw}" height="${H - mb}" fill="${COR.plot}"/>`;
-  for (const t of tk) s += `<line x1="${x(t)}" x2="${x(t)}" y1="0" y2="${H - mb}" stroke="${COR.grid}" stroke-width=".6"/><text x="${x(t)}" y="${H - 9}" text-anchor="middle" font-size="10" fill="${COR.muted}">${fmtTick(t)}</text>`;
+  const passoTick = Math.max(1, Math.ceil((Math.max(...tk.map(t => larguraTexto(fmtTick(t), 10))) + 14) / (iw / (tk.length - 1))));
+  for (const [i, t] of tk.entries()) {
+    s += `<line x1="${x(t)}" x2="${x(t)}" y1="0" y2="${H - mb}" stroke="${COR.grid}" stroke-width=".6"/>`;
+    if (i % passoTick === 0) s += `<text x="${x(t)}" y="${H - 9}" text-anchor="${i === 0 ? 'start' : 'middle'}" font-size="10" fill="${COR.muted}">${fmtTick(t)}</text>`;
+  }
   itens.forEach((it, i) => {
-    const yc = mt + i * row + row / 2, w = it.v / 60 / top * iw, nome = it.k.length > 18 ? it.k.slice(0, 17) + '…' : it.k;
-    s += `<g class="col" data-i="${i}"><rect class="hit" x="0" y="${yc - row / 2}" width="${W}" height="${row}"/>`;
-    s += `<text x="${lw - 8}" y="${yc + 4}" text-anchor="end" font-size="11" fill="${COR.muted}">${esc(nome)}</text>`;
-    s += `<path d="${barH(lw, yc - bh / 2, Math.max(2, w), bh)}" fill="${cor}"/>`;
+    const { nomes, inicio, row, yc } = linhas[i], w = it.v / 60 / top * iw;
+    s += `<g class="col" data-i="${i}"><title>${esc(it.k)}: ${esc(fmt(it.v))}${pct ? ' · ' + pc(it.v) : ''}</title><rect class="hit" x="0" y="${inicio}" width="${W}" height="${row}"/>`;
+    nomes.forEach((nome, n) => {
+      const ty = compacto ? inicio + 12 + n * 15 : yc + 4 + (n - (nomes.length - 1) / 2) * 15;
+      if (compacto) s += `<rect x="0" y="${ty - 12}" width="${W}" height="15" fill="var(--chart-surface)"/>`;
+      s += `<text x="${compacto ? lw : lw - 8}" y="${ty}" text-anchor="${compacto ? 'start' : 'end'}" font-size="11" fill="${COR.muted}">${esc(nome)}</text>`;
+    });
+    s += `<path d="${barH(lw, yc - bh / 2, w, bh)}" fill="${cor}"/>`;
     if (pct) s += `<text x="${lw + w + 8}" y="${yc - 2}" font-size="12" font-weight="700" fill="${corTexto}">${esc(fmt(it.v))}</text><text x="${lw + w + 8}" y="${yc + 12}" font-size="10" fill="${COR.muted}">${pc(it.v)}</text>`;
     else s += `<text x="${lw + w + 8}" y="${yc + 4}" font-size="12" font-weight="700" fill="${corTexto}">${esc(fmt(it.v))}</text>`;
     s += '</g>';
@@ -1154,7 +960,27 @@ $('btnLote').onclick = async () => {
 };
 
 /* ---------- eventos ---------- */
-const filtrosAtivos = () => ['fContrato', 'fArea', 'fResp', 'fDisc'].some(id => $(id).value) || $('fStatus').value !== 'validos' || !!$('fBusca').value.trim();
+const camposFiltro = [['fArea', 'Área'], ['fResp', 'Responsável'], ['fDisc', 'Disciplina'], ['fContrato', 'Contrato'], ['fStatus', 'Situação'], ['fBusca', 'Busca']];
+const listaFiltrosAtivos = () => camposFiltro.filter(([id]) => id === 'fStatus' ? $(id).value !== 'validos' : !!$(id).value.trim());
+const filtrosAtivos = () => listaFiltrosAtivos().length > 0;
+function mostrarFiltrosAtivos() {
+  const ativos = listaFiltrosAtivos();
+  $('fCount').textContent = ativos.length ? `${ativos.length} ${ativos.length === 1 ? 'ativo' : 'ativos'}` : 'Nenhum ativo';
+  $('fCount').classList.toggle('active', !!ativos.length);
+  $('fAtivos').classList.toggle('hidden', !ativos.length);
+  $('fAtivos').innerHTML = ativos.map(([id, nome]) => {
+    const campo = $(id), valor = campo.tagName === 'SELECT' ? campo.selectedOptions[0]?.textContent || campo.value : campo.value.trim();
+    return `<button type="button" class="filter-chip" data-filter="${id}" aria-label="${esc('Remover filtro ' + nome + ': ' + valor)}"><span>${esc(nome)}: ${esc(valor)}</span><span aria-hidden="true">×</span></button>`;
+  }).join('');
+}
+$('fAtivos').addEventListener('click', e => {
+  const chip = e.target.closest('[data-filter]'); if (!chip) return;
+  const id = chip.dataset.filter, indice = [...$('fAtivos').children].indexOf(chip);
+  $(id).value = id === 'fStatus' ? 'validos' : '';
+  if (dados) render(); else mostrarFiltrosAtivos();
+  const proximos = $('fAtivos').querySelectorAll('button');
+  (proximos[Math.min(indice, proximos.length - 1)] || $('fDetalhes').querySelector('summary')).focus();
+});
 function limparFiltros() {
   ['fContrato', 'fArea', 'fResp', 'fDisc'].forEach(id => $(id).value = ''); $('fStatus').value = 'validos'; $('fBusca').value = '';
   if (dados) render();
@@ -1162,10 +988,22 @@ function limparFiltros() {
 $('btnLimpar').onclick = $('btnLimpar2').onclick = limparFiltros;
 // blocos de detalhamento: lembra quais ficam abertos e redesenha ao abrir (gráficos medem a largura visível)
 document.querySelectorAll('.bloco').forEach(b => {
-  try { b.open = localStorage.getItem('rdc-painel-bloco-' + b.dataset.bloco) === '1'; } catch { }
+  try { const aberto = localStorage.getItem('rdc-painel-bloco-' + b.dataset.bloco); b.open = aberto === null ? b.dataset.bloco === 'analise' : aberto === '1'; } catch { b.open = b.dataset.bloco === 'analise'; }
   b.addEventListener('toggle', () => { try { localStorage.setItem('rdc-painel-bloco-' + b.dataset.bloco, b.open ? '1' : '0'); } catch { } if (b.open && dados) render(); });
 });
 $('presets').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (b) preset(b.dataset.p); });
+// Atalhos reais para os mesmos dados e ações; abrir o detalhamento antes de navegar.
+document.querySelectorAll('[data-nav]').forEach(link => link.addEventListener('click', e => {
+  e.preventDefault();
+  let destino = $(link.dataset.nav); if (!destino) return;
+  if (destino.classList.contains('hidden')) destino = $('vazio');
+  if (destino.tagName === 'DETAILS') destino.open = true;
+  document.querySelectorAll('.workspace-links [data-nav]').forEach(a => { if (a.dataset.nav === link.dataset.nav) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current'); });
+  requestAnimationFrame(() => {
+    destino.scrollIntoView({ block: 'start', behavior: 'instant' });
+    const foco = destino.querySelector('summary') || destino; if (foco.tagName !== 'SUMMARY') foco.setAttribute('tabindex', '-1'); foco.focus({ preventScroll: true });
+  });
+}));
 $('fIni').onchange = $('fFim').onchange = () => carregar(null);
 $('btnAtualizar').onclick = () => carregar();
 ['fContrato', 'fArea', 'fResp', 'fDisc', 'fStatus'].forEach(id => $(id).onchange = () => dados && render());
@@ -1174,7 +1012,6 @@ let bt; $('fBusca').oninput = () => { clearTimeout(bt); bt = setTimeout(() => da
   try { $(id).value = localStorage.getItem('rdc-painel-' + id) || ''; } catch { }
   $(id).onchange = () => { try { localStorage.setItem('rdc-painel-' + id, $(id).value); } catch { } dados && render(); };
 });
-let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => dados && render(), 200); });
 
 setAdmin(admin);
 if (admin) preset('mes');
