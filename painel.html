@@ -131,6 +131,7 @@
             <span class="unit-tag">Unidade: HH</span>
           </div>
           <div class="legend"><span><i style="background:var(--s1)"></i>HH trabalhado<strong id="chTotalHH"></strong></span><span><i style="background:var(--s2)"></i>HH de impacto<strong id="chTotalImp"></strong></span></div>
+          <p class="chart-average" id="chMedia"></p>
           <div class="chart" id="chDia"></div>
           <details class="chart-data"><summary>Ver dados do gráfico</summary><div class="tbl-wrap" id="chDiaDados"></div></details>
           <p class="method-note">HH = efetivo × duração. Impacto = duração × maior efetivo do RDC. Mesma escala, a partir do zero. Toque nas barras ou use ← → para consultar os valores.</p>
@@ -140,6 +141,7 @@
             <div><span class="chart-kicker">COMPOSIÇÃO DA PRODUÇÃO</span><h2>HH por disciplina</h2><p>Participação das atividades no total trabalhado.</p></div>
             <span class="unit-tag">Unidade: HH</span>
           </div>
+          <div class="chart-insight hidden" id="chDiscInsight"></div>
           <div class="chart" id="chDisc"></div>
         </section>
       </div>
@@ -424,7 +426,7 @@ function render() {
   mostrarFiltrosAtivos();
 
   graficoDia(rdcs);
-  barrasH($('chDisc'), agrupar(atividades, a => a.disciplina, a => a.efetivo_total * a.duracao_min), { fmt: v => `${h(v)} HH`, pct: true, rotulo: 'HH trabalhado por disciplina' });
+  barrasH($('chDisc'), agrupar(atividades, a => a.disciplina, a => a.efetivo_total * a.duracao_min), { fmt: v => `${h(v)} HH`, pct: true, resumo: true, rotulo: 'HH trabalhado por disciplina' });
   barrasH($('chContrato'), agrupar(rdcs, r => r.contrato ? nomeContrato(r.contrato, r.contrato_nome) : 'Sem contrato', r => r._hh), { fmt: v => `${h(v)} HH`, pct: true, rotulo: 'HH trabalhado por contrato' });
   barrasH($('chImpResp'), agrupar(rdcs, r => r.responsavel, r => r.min_impacto), { cor: COR.imp, corTexto: COR.impText, fmt: v => `${h(v)} h`, rotulo: 'Horas de impacto por responsável' });
   resumoPts(rdcs, comPts, esperas);
@@ -500,6 +502,8 @@ function graficoDia(rdcs) {
   const cats = [...new Set(dias.map(d => chave(d.iso)))];
   const v = new Map(cats.map(c => [c, { hh: 0, imp: 0, n: 0 }]));
   for (const r of rdcs) { const c = v.get(chave(r.data_rdc)); if (c) { c.hh += r._hh; c.imp += r.hh_impacto_min; c.n++; } }
+  const media = cats.length ? [...v.values()].reduce((s, d) => s + d.hh, 0) / cats.length / 60 : 0;
+  $('chMedia').innerHTML = rdcs.length ? `<span class="average-mark" aria-hidden="true"></span>Média de trabalho: <strong>${nf1.format(media)} HH/${porMes ? 'mês' : 'dia'}</strong><span class="average-note">inclui períodos sem RDC</span>` : '';
   const nomeCat = c => porMes ? `${c.slice(5)}/${c.slice(0, 4)}` : fmtData(c);
   const rotCat = c => porMes ? `${c.slice(5)}/${c.slice(2, 4)}` : `${c.slice(8)}/${c.slice(5, 7)}`;
   // tabela acessível com os mesmos valores do gráfico
@@ -519,6 +523,7 @@ function graficoDia(rdcs) {
   let s = `<div class="chart-scroll"><svg viewBox="0 0 ${W} ${H}" style="width:${W}px" height="${H}" role="img" tabindex="0" aria-label="HH trabalhado e HH de impacto por ${porMes ? 'mês' : 'dia'}. Use as setas para consultar os valores ou abra a tabela abaixo.">`;
   s += `<rect x="${m.l}" y="${m.t}" width="${iw}" height="${ih}" fill="${COR.plot}"/>`;
   for (const t of tk) s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(t)}" y2="${y(t)}" stroke="${COR.grid}" stroke-width=".6"/><text x="${m.l - 7}" y="${y(t) + 4}" text-anchor="end" font-size="11" fill="${COR.muted}">${fmtTick(t)}</text>`;
+  if (media > 0) s += `<line class="average-line" x1="${m.l}" x2="${W - m.r}" y1="${y(media)}" y2="${y(media)}" stroke="${COR.axis}" stroke-width="1.5" stroke-dasharray="5 4"/>`;
   s += `<text x="${m.l - 7}" y="${m.t - 12}" text-anchor="end" font-size="10" fill="${COR.muted}">HH</text>`;
   cats.forEach((c, i) => {
     const d = v.get(c), x0 = m.l + i * band + band / 2, hh = d.hh / 60, im = d.imp / 60;
@@ -568,10 +573,16 @@ function graficoDia(rdcs) {
 function barrasH(el, itens, o) {
   const originais = itens;
   observarGrafico(el, () => barrasH(el, originais, o));
-  const { cor = COR.prod, corTexto = COR.text, fmt, pct = false, rotulo = 'valores', max: maxItens = 12 } = o;
+  const { cor = COR.prod, corTexto = COR.text, fmt, pct = false, resumo = false, rotulo = 'valores', max: maxItens = 12 } = o;
   itens = itens.filter(x => x.v > 0);
-  if (!itens.length) { el.innerHTML = '<div class="empty">Sem dados no filtro.</div>'; return; }
+  const insight = resumo ? $('chDiscInsight') : null;
+  if (!itens.length) { if (insight) { insight.innerHTML = ''; insight.classList.add('hidden'); } el.innerHTML = '<div class="empty">Sem dados no filtro.</div>'; return; }
   const tot = itens.reduce((t, x) => t + x.v, 0);
+  if (insight) {
+    const lider = itens[0], parte = lider.v / tot * 100;
+    insight.innerHTML = `<svg viewBox="0 0 72 72" width="72" height="72" role="img" aria-label="${esc(nf1.format(parte))}% do HH trabalhado pertence à disciplina ${esc(lider.k)}"><circle cx="36" cy="36" r="28" fill="none" stroke="var(--rest)" stroke-width="8"/><circle cx="36" cy="36" r="28" fill="none" stroke="var(--s1)" stroke-width="8" pathLength="100" stroke-dasharray="${parte.toFixed(2)} 100" transform="rotate(-90 36 36)"/><text x="36" y="40" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)">${Math.round(parte)}%</text></svg><div><span class="insight-label">DISCIPLINA LÍDER</span><strong class="insight-name">${esc(lider.k)}</strong><span class="insight-detail">${fmt(lider.v)} de ${fmt(tot)} no período</span></div>`;
+    insight.classList.remove('hidden');
+  }
   if (itens.length > maxItens) itens = [...itens.slice(0, maxItens - 1), { k: 'Outros', v: itens.slice(maxItens - 1).reduce((t, x) => t + x.v, 0) }];
   const W = el.clientWidth || 360, compacto = W < 460;
   const vw = Math.max(pct ? 74 : 64, ...itens.map(it => larguraTexto(fmt(it.v), 12, 700) + 16));
@@ -587,7 +598,7 @@ function barrasH(el, itens, o) {
   const iw = W - lw - vw, vmax = Math.max(...itens.map(x => x.v)) / 60, tk = ticks(vmax), top = tk[tk.length - 1], x = val => lw + val / top * iw;
   const pc = v => nf1.format(v / tot * 100) + '%';
   let s = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="${esc(rotulo)}: ${esc(itens.map(i => `${i.k} ${fmt(i.v)}${pct ? ' (' + pc(i.v) + ')' : ''}`).join('; '))}">`;
-  s += `<rect x="${lw}" y="0" width="${iw}" height="${H - mb}" fill="${COR.plot}"/>`;
+  linhas.forEach(({ yc }) => { s += `<rect x="${lw}" y="${yc - bh / 2}" width="${iw}" height="${bh}" rx="5" fill="${COR.plot}"/>`; });
   const passoTick = Math.max(1, Math.ceil((Math.max(...tk.map(t => larguraTexto(fmtTick(t), 10))) + 14) / (iw / (tk.length - 1))));
   for (const [i, t] of tk.entries()) {
     s += `<line x1="${x(t)}" x2="${x(t)}" y1="0" y2="${H - mb}" stroke="${COR.grid}" stroke-width=".6"/>`;

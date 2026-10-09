@@ -34,6 +34,8 @@ Base de espaçamento de 4 px, com escala de 4, 8, 12, 16, 24 e 32 px. Raio de ca
 
 Os SVGs usam as variáveis da paleta. `ResizeObserver` ajusta cada gráfico à largura do card. Evolução diária compartilha a escala de HH trabalhado e impacto, com base zero. Até 62 dias, mostrar por dia; acima disso, somar por mês. Em períodos extensos, permitir rolagem dentro do gráfico, sem alargar a página. Tooltip, teclado e tabela textual mantêm os valores acessíveis.
 
+Na evolução, a linha tracejada indica a média de HH trabalhado por período exibido, incluindo dias ou meses sem RDC; o valor e a unidade ficam legíveis acima do gráfico. No gráfico de disciplinas, destacar apenas a disciplina líder com anel azul e participação no total. O ranking abaixo mantém barras azuis de mesma escala, com trilhos neutros por linha, para comparar os valores sem introduzir novas cores.
+
 Barras horizontais mantêm valor e participação junto à extremidade. Nomes longos quebram em linhas; em cards com menos de 460 px, os nomes ficam acima das barras. As colunas têm até 27 px e cantos superiores arredondados; barras horizontais têm base quadrada e ponta arredondada. Grade discreta, eixos legíveis, sem gradiente e sem animação que altere a leitura.
 
 ## Estados e verificação
