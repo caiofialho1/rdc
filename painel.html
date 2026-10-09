@@ -39,7 +39,7 @@
 <main>
   <!-- LOGIN -->
   <section class="login card" id="scrLogin">
-    <div class="login-story"><span class="section-kicker">RDC / CONTROLE DE CAMPO</span><h1>A operação,<br>em perspectiva.</h1><p>Da execução em campo à análise dos contratos. Acompanhe produção, interferências e registros em um só lugar.</p><div class="login-topics"><span>01 <b>Produção e efetivo</b></span><span>02 <b>Impactos e PTS</b></span><span>03 <b>Registros e validação</b></span></div></div>
+    <div class="login-story"><span class="section-kicker">RDC / CONTROLE DE CAMPO</span><h1>A operação,<br>em perspectiva.</h1><p>Da execução em campo à análise dos contratos. Acompanhe HH, interferências e registros em um só lugar.</p><div class="login-topics"><span>01 <b>Trabalho e efetivo</b></span><span>02 <b>Impactos e PTS</b></span><span>03 <b>Registros e validação</b></span></div></div>
     <div class="login-form"><span class="section-kicker">ACESSO RESTRITO</span><h2>Entrar no painel</h2>
     <p class="sub">Use seu nome e senha de administrador do app RDC.</p>
     <div class="f"><label class="lbl" for="lNome">Nome</label><input class="ctl" id="lNome" autocomplete="username"></div>
@@ -54,8 +54,8 @@
     <div class="page-heading">
       <div>
         <div class="eyebrow">CONTROLE OPERACIONAL / MANUTENÇÃO</div>
-        <h1>Visão geral da operação<span class="heading-dot">.</span></h1>
-        <p>Produção, interferências e rotina de campo no período selecionado.</p>
+        <h1>Painel de campo<span class="heading-dot">.</span></h1>
+        <p>HH, impactos e RDC no período.</p>
       </div>
       <div class="heading-actions">
         <span class="update-label" id="updLabel" aria-live="polite"></span>
@@ -65,7 +65,7 @@
 
     <section class="filter-panel" aria-labelledby="tFiltros">
       <div class="filter-top">
-        <span class="section-label" id="tFiltros" data-ic="filter">Recorte da operação</span>
+        <span class="section-label" id="tFiltros" data-ic="filter">Filtros</span>
         <button class="text-button" id="btnLimpar" data-ic="reset">Limpar filtros</button>
       </div>
       <div class="filter-primary">
@@ -114,6 +114,7 @@
     </div>
 
     <div id="conteudo">
+      <p class="data-context" id="dataContext"></p>
       <div class="metrics" id="kpis"></div>
 
       <div class="empty-state hidden" id="vazio">
@@ -122,23 +123,23 @@
         <button class="button" id="btnLimpar2" data-ic="reset">Limpar filtros</button>
       </div>
 
-      <div class="section-intro" id="chartIntro"><div><span class="section-kicker">PRODUÇÃO & INTERFERÊNCIAS</span><h2>O ritmo da operação</h2></div><p>Compare a evolução e a distribuição do homem-hora.</p></div>
+      <div class="section-intro" id="chartIntro"><div><span class="section-kicker">TRABALHO & INTERFERÊNCIAS</span><h2>HH no período</h2></div><p>Esforço e impactos registrados.</p></div>
       <div class="charts" id="graficos">
         <section class="chart-card">
           <div class="chart-heading">
             <div><span class="chart-kicker">EVOLUÇÃO NO TEMPO</span><h2>Trabalho e impacto</h2>
-              <p>HH trabalhado e HH de impacto por <span id="hhPor">dia</span>.</p></div>
+              <p>HH trabalhado + impacto por <span id="hhPor">dia</span>.</p></div>
             <span class="unit-tag">Unidade: HH</span>
           </div>
           <div class="legend"><span><i style="background:var(--s1)"></i>HH trabalhado<strong id="chTotalHH"></strong></span><span><i style="background:var(--s2)"></i>HH de impacto<strong id="chTotalImp"></strong></span></div>
           <p class="chart-average" id="chMedia"></p>
           <div class="chart" id="chDia"></div>
-          <details class="chart-data"><summary>Ver dados do gráfico</summary><div class="tbl-wrap" id="chDiaDados"></div></details>
-          <p class="method-note">HH = efetivo × duração. Impacto = duração × maior efetivo do RDC. Mesma escala, a partir do zero. Toque nas barras ou use ← → para consultar os valores.</p>
+          <details class="chart-data"><summary>Ver dados</summary><div class="tbl-wrap" id="chDiaDados"></div></details>
+          <p class="method-note">Impacto estimado. Soma ≠ HH disponível. Sem RDC ≠ execução zero.</p><details class="chart-data method-details"><summary>Como é calculado</summary><p class="method-explanation">HH trabalhado = soma de efetivo × duração das atividades. HH de impacto = duração dos impactos × maior efetivo do RDC (estimativa). A coluna soma as duas medidas; não representa HH disponível. Intervalos simultâneos são somados; não representam tempo único de parada. Sem RDC significa ausência de registro, não zero de execução.</p></details>
         </section>
         <section class="chart-card">
           <div class="chart-heading">
-            <div><span class="chart-kicker">COMPOSIÇÃO DA PRODUÇÃO</span><h2>HH por disciplina</h2><p>Participação das atividades no total trabalhado.</p></div>
+            <div><span class="chart-kicker">DISTRIBUIÇÃO DO TRABALHO</span><h2>HH por disciplina</h2><p>Distribuição do HH trabalhado.</p></div>
             <span class="unit-tag">Unidade: HH</span>
           </div>
           <div class="chart-insight hidden" id="chDiscInsight"></div>
@@ -147,19 +148,19 @@
       </div>
 
       <details class="bloco" data-bloco="analise" id="sec-analise">
-        <summary><span class="section-number" aria-hidden="true">02</span><div><h2>Distribuição e disponibilidade</h2><p>Contratos, interferências por responsável e liberação de trabalho.</p></div><span class="meta">Contratos · Impactos · PTS</span></summary>
+        <summary><span class="section-number" aria-hidden="true">02</span><div><h2>Distribuição e PTS</h2><p>Contratos, impactos e liberação.</p></div><span class="meta">Contratos · Impactos · PTS</span></summary>
         <div class="bloco-body">
           <div class="charts three">
             <section class="chart-card">
-              <div class="chart-heading"><div><h2>HH trabalhado por contrato</h2><p>Soma dos RDC no filtro.</p></div></div>
+              <div class="chart-heading"><div><h2>HH por contrato</h2><p>RDC filtrados.</p></div></div>
               <div class="chart" id="chContrato"></div>
             </section>
             <section class="chart-card">
-              <div class="chart-heading"><div><h2>Horas de impacto por responsável</h2><p>Tempo parado registrado nos RDC.</p></div></div>
+              <div class="chart-heading"><div><h2>Impacto por responsável</h2><p>Duração registrada (h).</p></div></div>
               <div class="chart" id="chImpResp"></div>
             </section>
             <section class="chart-card">
-              <div class="chart-heading"><div><h2>PTS e bloqueio</h2><p>Disponibilidade informada nos registros de campo.</p></div></div>
+              <div class="chart-heading"><div><h2>PTS e bloqueio</h2><p>Condições informadas.</p></div></div>
               <div id="ptsResumo"></div>
             </section>
           </div>
@@ -167,7 +168,7 @@
       </details>
 
       <details class="bloco" data-bloco="emissao" id="sec-emissao">
-        <summary><span class="section-number" aria-hidden="true">03</span><div><h2>Emissão diária</h2><p>Presença dos registros na rotina de cada responsável.</p></div><span class="meta">Calendário de emissão</span></summary>
+        <summary><span class="section-number" aria-hidden="true">03</span><div><h2>Emissão diária</h2><p>Registros por responsável.</p></div><span class="meta">Calendário de emissão</span></summary>
         <div class="bloco-body">
           <p class="sub" style="margin-top:0">Domingo sem RDC não conta como falta.</p>
           <div class="mat-wrap" id="matriz"></div>
@@ -175,16 +176,16 @@
       </details>
 
       <details class="bloco" data-bloco="resp" id="sec-resp">
-        <summary><span class="section-number" aria-hidden="true">04</span><div><h2>Responsáveis</h2><p>Produção e condições de trabalho por liderança.</p></div><span class="meta">RDC · HH · Espera</span></summary>
+        <summary><span class="section-number" aria-hidden="true">04</span><div><h2>Responsáveis</h2><p>HH, impactos e espera.</p></div><span class="meta">RDC · HH · Espera</span></summary>
         <div class="bloco-body">
-          <div class="bloco-tools"><p class="sub">Clique num responsável para filtrar o painel.</p>
+          <div class="bloco-tools"><p class="sub">Selecione um responsável para filtrar.</p>
             <label class="agr" for="gResp">Agrupar por <select class="ctl" id="gResp"><option value="">Não agrupar</option><option value="funcao">Função</option></select></label></div>
           <div class="tbl-wrap" id="tblResp"></div>
         </div>
       </details>
 
       <details class="bloco" data-bloco="imp" id="sec-imp">
-        <summary><span class="section-number" aria-hidden="true">05</span><div><h2>Interferências da operação</h2><p>Consulte os impactos e identifique os maiores tempos de parada.</p></div><span class="meta" id="impCount"></span></summary>
+        <summary><span class="section-number" aria-hidden="true">05</span><div><h2>Impactos</h2><p>Ordenados por duração.</p></div><span class="meta" id="impCount"></span></summary>
         <div class="bloco-body">
           <div class="bloco-tools"><p class="sub">Maiores primeiro.</p>
             <label class="agr" for="gImp">Agrupar por <select class="ctl" id="gImp"><option value="">Não agrupar</option><option value="data">Data</option><option value="responsavel">Responsável</option><option value="ativo">Ativo</option></select></label></div>
@@ -193,7 +194,7 @@
       </details>
 
       <details class="bloco" data-bloco="rdc" id="sec-rdc">
-        <summary><span class="section-number" aria-hidden="true">06</span><div><h2>Registros de campo</h2><p>Consulte, valide e organize os relatórios da equipe.</p></div><span class="meta" id="rdcMeta"></span></summary>
+        <summary><span class="section-number" aria-hidden="true">06</span><div><h2>Registros de campo</h2><p>Consulta e validação.</p></div><span class="meta" id="rdcMeta"></span></summary>
         <div class="bloco-body">
           <div class="bloco-tools"><p class="sub" id="rdcCount"></p>
             <label class="agr" for="gRdc">Agrupar por <select class="ctl" id="gRdc"><option value="">Não agrupar</option><option value="data">Data</option><option value="contrato">Contrato</option><option value="responsavel">Responsável</option><option value="area">Área</option><option value="ativo">Ativo</option><option value="status">Situação</option></select></label></div>
@@ -269,7 +270,7 @@ const fmtDH = iso => iso ? new Date(iso).toLocaleString('pt-BR', { dateStyle: 's
 const nf1 = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
 const nf0 = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
 const h = min => nf1.format((min || 0) / 60);           // minutos → horas com 1 casa
-const dur = min => min == null ? '—' : `${Math.floor(min / 60)}h${pad(Math.round(min % 60))}`;
+const dur = min => { if (min == null) return '—'; const total = Math.round(min); return `${Math.floor(total / 60)}h${pad(total % 60)}`; };
 const pill = s => { const [t, c] = STATUS[s] || [s, '']; return `<span class="pill ${c}">${esc(t)}</span>`; };
 let toastT;
 function toast(msg, err) { const t = $('toast'); t.textContent = msg; t.className = 'toast' + (err ? ' err' : ''); clearTimeout(toastT); toastT = setTimeout(() => t.classList.add('hidden'), 3500); }
@@ -401,21 +402,22 @@ function render() {
   const comPts = rdcs.filter(r => r.pts === true), esperas = comPts.map(r => r.espera_pts_min).filter(v => v != null);
   const aguard = rdcs.filter(r => r.status === 'Enviado').length;
 
-  const nPts = rdcs.filter(r => r.pts != null).length, nBloq = rdcs.filter(r => r.bloqueio === true).length, nDias = diasDoPeriodo().length;
+  const nPts = rdcs.filter(r => r.pts != null).length, nBloqInf = rdcs.filter(r => typeof r.bloqueio === 'boolean').length, nBloq = rdcs.filter(r => r.bloqueio === true).length, nDias = diasDoPeriodo().length;
   // "—" = dado indisponível; 0 = zero conhecido
   const kpi = (t, valor, unid, desc, icone, tom = '') => `<article class="metric ${tom}"><div class="metric-head"><span>${t}</span>${ico(icone)}</div><div class="metric-value">${esc(valor)}${unid ? `<small>${unid}</small>` : ''}</div><div class="metric-description">${esc(desc)}</div></article>`;
   const validados = rdcs.filter(r => r.status === 'Validado').length, taxaValidada = rdcs.length ? validados / rdcs.length * 100 : 0;
-  $('kpis').innerHTML = `<article class="production-hero"><div class="hero-label"><span>PRODUÇÃO NO PERÍODO</span>${ico('chart')}</div><h2>HH trabalhado</h2><div class="hero-value">${h(hhMin)}<small>HH</small></div><p>Homem-hora aplicado nas atividades de campo.</p><div class="hero-facts"><div><strong>${nf0.format(atividades.length)}</strong><span>atividades</span></div><div><strong>${nDias}</strong><span>dias no período</span></div></div></article>
-    <article class="metric records-metric"><div class="metric-head"><span>Registros de campo</span>${ico('file')}</div><div class="metric-value">${nf0.format(rdcs.length)}<small>RDC</small></div><div class="metric-description">${aguard} aguardando validação</div><div class="validation-caption"><span>Validados no filtro</span><b>${validados} de ${rdcs.length}</b></div><div class="validation-track" role="img" aria-label="${validados} de ${rdcs.length} RDC validados"><span style="width:${taxaValidada}%"></span></div></article>
-    ${kpi('HH de impacto', h(hhImpMin), 'HH', hhMin ? `${nf1.format(hhImpMin / hhMin * 100)}% em relação ao HH trabalhado` : 'Sem HH trabalhado no filtro', 'alert', 'impact')}
+  $('kpis').innerHTML = `<article class="metric production-hero"><div class="metric-head"><span>HH trabalhado</span>${ico("chart")}</div><div class="metric-value">${h(hhMin)}<small>HH</small></div><div class="metric-description">${nf0.format(atividades.length)} atividades · ${nDias} dias</div></article>
+    <article class="metric records-metric"><div class="metric-head"><span>Registros de campo</span>${ico('file')}</div><div class="metric-value">${nf0.format(rdcs.length)}<small>RDC</small></div><div class="metric-description">${aguard} por validar</div><div class="validation-caption"><span>Validados</span><b>${validados} de ${rdcs.length}</b></div><div class="validation-track" role="img" aria-label="${validados} de ${rdcs.length} RDC validados"><span style="width:${taxaValidada}%"></span></div></article>
+    ${kpi('HH de impacto estimado', h(hhImpMin), 'HH', $('fDisc').value ? 'Impacto do RDC completo.' : hhMin ? `${nf1.format(hhImpMin / hhMin * 100)}% do HH trabalhado` : 'Sem HH trabalhado', 'alert', 'impact')}
     <div class="support-metrics">${[
-      kpi('Tempo de impacto', h(impMin), 'h', `${nf0.format(impactos.length)} impactos registrados`, 'hourglass', 'support impact-time'),
-      kpi('Espera pela PTS', esperas.length ? dur(esperas.reduce((a, b) => a + b, 0) / esperas.length) : '—', '', esperas.length ? `Média de ${esperas.length} RDC com horários` : (nPts ? 'Sem horários informados' : 'Sem informação de PTS'), 'pts', 'support'),
-      kpi('Bloqueios', nPts || nBloq ? nf0.format(nBloq) : '—', nPts || nBloq ? 'RDC' : '', nPts || nBloq ? 'Com bloqueio informado' : 'Sem informação de bloqueio', 'lock', 'support')
+      kpi('Tempo de impacto', h(impMin), 'h', `${nf0.format(impactos.length)} registros`, 'hourglass', 'support impact-time'),
+      kpi('Espera PTS', esperas.length ? dur(esperas.reduce((a, b) => a + b, 0) / esperas.length) : '—', '', esperas.length ? `Média · ${esperas.length} RDC` : (nPts ? 'Horários não informados' : 'PTS não informada'), 'pts', 'support'),
+      kpi('Bloqueios', nBloqInf ? nf0.format(nBloq) : '—', nBloqInf ? 'RDC' : '', nBloqInf ? `${nBloqInf}/${rdcs.length} RDC informaram` : 'Não informado', 'lock', 'support')
     ].join('')}</div>`;
+  $('dataContext').textContent = 'Fonte: RDC · Data de execução · HH = esforço aplicado. ' + ($('fDisc').value ? 'Disciplina filtra HH; impactos, PTS e bloqueios usam o RDC completo.' : '');
   $('navImp').textContent = nf0.format(impactos.length); $('navRdc').textContent = nf0.format(rdcs.length);
   $('perCap').textContent = `${fmtData(dados.ini)} a ${fmtData(dados.fim)} · ${nDias} ${nDias === 1 ? 'dia' : 'dias'}`;
-  $('resCap').textContent = `${nf0.format(rdcs.length)} RDC encontrados · ${nf0.format(atividades.length)} atividades`;
+  $('resCap').textContent = `${nf0.format(rdcs.length)} RDC · ${nf0.format(atividades.length)} atividades`;
   $('impCount').textContent = `${nf0.format(impactos.length)} impactos · ${h(impMin)} h`;
   $('rdcMeta').textContent = `${nf0.format(rdcs.length)} RDC`;
   const vazio = !rdcs.length;
@@ -427,8 +429,8 @@ function render() {
 
   graficoDia(rdcs);
   barrasH($('chDisc'), agrupar(atividades, a => a.disciplina, a => a.efetivo_total * a.duracao_min), { fmt: v => `${h(v)} HH`, pct: true, resumo: true, rotulo: 'HH trabalhado por disciplina' });
-  barrasH($('chContrato'), agrupar(rdcs, r => r.contrato ? nomeContrato(r.contrato, r.contrato_nome) : 'Sem contrato', r => r._hh), { fmt: v => `${h(v)} HH`, pct: true, rotulo: 'HH trabalhado por contrato' });
-  barrasH($('chImpResp'), agrupar(rdcs, r => r.responsavel, r => r.min_impacto), { cor: COR.imp, corTexto: COR.impText, fmt: v => `${h(v)} h`, rotulo: 'Horas de impacto por responsável' });
+  barrasH($('chContrato'), agrupar(rdcs, r => r.contrato ? nomeContrato(r.contrato, r.contrato_nome) : 'Sem contrato', r => r._hh), { fmt: v => `${h(v)} HH`, pct: true, rotulo: 'HH por contrato' });
+  barrasH($('chImpResp'), agrupar(rdcs, r => r.responsavel, r => r.min_impacto), { cor: COR.imp, corTexto: COR.impText, fmt: v => `${h(v)} h`, rotulo: 'Impacto por responsável' });
   resumoPts(rdcs, comPts, esperas);
   matriz(rdcs);
   tabelaResp(rdcs);
@@ -448,28 +450,31 @@ const tip = $('tip');
 function mostrarTip(e, html) { tip.innerHTML = html; tip.classList.remove('hidden'); const r = tip.getBoundingClientRect(); let x = e.clientX + 14, y = e.clientY + 14; if (x + r.width > innerWidth - 8) x = e.clientX - r.width - 14; if (y + r.height > innerHeight - 8) y = e.clientY - r.height - 14; tip.style.left = x + 'px'; tip.style.top = y + 'px'; }
 function esconderTip() { tip.classList.add('hidden'); }
 // escala a partir do zero com limite superior arredondado
-const ticks = max => { if (max <= 0) return [0, 1]; const alvo = max / 4, p = Math.pow(10, Math.floor(Math.log10(alvo))), st = [1, 2, 2.5, 5, 10].map(m => m * p).find(s => s >= alvo) || p * 10; const out = []; for (let v = 0; v <= max + st * 0.001; v += st) out.push(v); if (out[out.length - 1] < max) out.push(out[out.length - 1] + st); return out; };
+const ticks = (max, intervalos = 4) => { if (max <= 0) return [0, 1]; const alvo = max / intervalos, p = Math.pow(10, Math.floor(Math.log10(alvo))), st = [1, 2, 2.5, 5, 10].map(m => m * p).find(s => s >= alvo) || p * 10; const out = []; for (let v = 0; v <= max + st * 0.001; v += st) out.push(v); if (out[out.length - 1] < max) out.push(out[out.length - 1] + st); return out; };
 const fmtTick = v => nf1.format(Math.round(v * 10) / 10);
-// coluna: base reta no zero, cantos superiores arredondados até 5px
-const colV = (x, y, w, hgt) => { if (hgt <= 0) return ''; const r = Math.min(5, w / 2, hgt); return `M${x},${y + hgt}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + hgt}Z`; };
-// barra horizontal: origem reta, extremidade direita arredondada até 5px
-const barH = (x, y, w, hgt) => { if (w <= 0) return ''; const r = Math.min(5, hgt / 2, w); return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + hgt - r}Q${x + w},${y + hgt} ${x + w - r},${y + hgt}H${x}Z`; };
-const eixos = (x0, y0, x1, y1) => `<path d="M${x0 + .5},${y0}V${y1 + .5}H${x1}" fill="none" stroke="${COR.axis}" stroke-width="1.4"/>`;
+// Colunas retangulares com origem no zero.
+const colV = (x, y, w, hgt) => hgt > 0 ? `M${x},${y}h${w}v${hgt}h${-w}Z` : '';
+// Barras horizontais retangulares com origem no zero.
+const barH = (x, y, w, hgt) => w > 0 ? `M${x},${y}h${w}v${hgt}h${-w}Z` : '';
+const eixos = (x0, y0, x1, y1) => `<path d="M${x0 + .5},${y0}V${y1 + .5}H${x1}" fill="none" stroke="${COR.axis}" stroke-width="1.2"/>`;
 
 // Medir o card, inclusive ao abrir um detalhamento, sem reconstruir o painel inteiro.
 const desenhos = new Map();
 const chartObserver = new ResizeObserver(entries => {
-  for (const { target } of entries) {
-    const desenho = desenhos.get(target), largura = target.clientWidth;
-    if (desenho && largura > 0 && largura !== desenho.largura) desenho.render();
-  }
+  // Redesenhar fora da notificação de layout para evitar ciclos de ResizeObserver.
+  requestAnimationFrame(() => {
+    for (const { target } of entries) {
+      const desenho = desenhos.get(target), largura = target.clientWidth;
+      if (desenho && largura > 0 && largura !== desenho.largura) desenho.render();
+    }
+  });
 });
 function observarGrafico(el, render) {
   if (!desenhos.has(el)) chartObserver.observe(el);
   desenhos.set(el, { largura: el.clientWidth, render });
 }
 const medidaTexto = document.createElement('canvas').getContext('2d');
-function larguraTexto(texto, tamanho = 11, peso = 400) {
+function larguraTexto(texto, tamanho = 12, peso = 400) {
   medidaTexto.font = `${peso} ${tamanho}px Arial`;
   return medidaTexto.measureText(String(texto)).width;
 }
@@ -502,42 +507,45 @@ function graficoDia(rdcs) {
   const cats = [...new Set(dias.map(d => chave(d.iso)))];
   const v = new Map(cats.map(c => [c, { hh: 0, imp: 0, n: 0 }]));
   for (const r of rdcs) { const c = v.get(chave(r.data_rdc)); if (c) { c.hh += r._hh; c.imp += r.hh_impacto_min; c.n++; } }
-  const media = cats.length ? [...v.values()].reduce((s, d) => s + d.hh, 0) / cats.length / 60 : 0;
-  $('chMedia').innerHTML = rdcs.length ? `<span class="average-mark" aria-hidden="true"></span>Média de trabalho: <strong>${nf1.format(media)} HH/${porMes ? 'mês' : 'dia'}</strong><span class="average-note">inclui períodos sem RDC</span>` : '';
+  const comRegistro = [...v.values()].filter(d => d.n > 0);
+  const media = comRegistro.length ? comRegistro.reduce((s, d) => s + d.hh, 0) / comRegistro.length / 60 : 0;
+  $('chMedia').innerHTML = rdcs.length ? `<span class="average-mark" aria-hidden="true"></span>Média: <strong>${nf1.format(media)} HH/${porMes ? 'mês' : 'dia'}</strong><span class="average-note">${comRegistro.length}/${cats.length} períodos com RDC · sem meta</span>` : '';
   const nomeCat = c => porMes ? `${c.slice(5)}/${c.slice(0, 4)}` : fmtData(c);
   const rotCat = c => porMes ? `${c.slice(5)}/${c.slice(2, 4)}` : `${c.slice(8)}/${c.slice(5, 7)}`;
   // tabela acessível com os mesmos valores do gráfico
-  $('chDiaDados').innerHTML = `<table><thead><tr><th>${porMes ? 'Mês' : 'Data'}</th><th class="num">HH trabalhado</th><th class="num">HH de impacto</th><th class="num">RDC</th></tr></thead><tbody>${cats.map(c => { const d = v.get(c); return `<tr><td>${nomeCat(c)}</td><td class="num">${h(d.hh)}</td><td class="num">${h(d.imp)}</td><td class="num">${d.n}</td></tr>`; }).join('')}</tbody></table>`;
+  $('chDiaDados').innerHTML = `<table><thead><tr><th>${porMes ? 'Mês' : 'Data'}</th><th class="num">HH trabalhado</th><th class="num">HH de impacto</th><th class="num">RDC</th></tr></thead><tbody>${cats.map(c => { const d = v.get(c); return `<tr><td>${nomeCat(c)}</td><td class="num">${d.n ? h(d.hh) : "N/D"}</td><td class="num">${d.n ? h(d.imp) : "N/D"}</td><td class="num">${d.n}</td></tr>`; }).join('')}</tbody></table>`;
   if (!rdcs.length) { el.innerHTML = '<div class="empty">Nenhum RDC no filtro.</div>'; return; }
-  const max = Math.max(...[...v.values()].map(x => Math.max(x.hh, x.imp))) / 60;
-  const tk = ticks(max), top = tk[tk.length - 1];
-  const largura = el.clientWidth || 640, H = largura < 420 ? 260 : 280;
-  const m = { l: Math.max(38, ...tk.map(t => larguraTexto(fmtTick(t)) + 14)), r: 16, t: 30, b: 34 };
-  // Cada par de barras mantém espaço para toque; todos os períodos continuam representados.
-  const W = Math.max(largura, m.l + m.r + cats.length * (cats.length <= 7 ? 28 : 44));
+  const max = Math.max(...[...v.values()].map(x => x.hh + x.imp)) / 60;
+  const tk = ticks(max, 5), top = tk[tk.length - 1];
+  const largura = el.clientWidth || 640, H = largura < 420 ? 300 : 336;
+  const m = { l: Math.max(44, ...tk.map(t => larguraTexto(fmtTick(t)) + 16)), r: 16, t: 36, b: 40 };
+  const maiorValor = Math.max(...[...v.values()].flatMap(d => [larguraTexto(h(d.hh), 12, 700), larguraTexto(h(d.imp), 12, 700)]));
+  // Reservar espaço real para datas e valores: no celular, rolar em vez de ocultar rótulos.
+  const W = Math.max(largura, m.l + m.r + cats.length * Math.max(84, maiorValor + 58));
   const iw = W - m.l - m.r, ih = H - m.t - m.b, base = m.t + ih, y = val => base - val / top * ih;
-  const band = iw / cats.length, gap = 4, bw = Math.min(27, (band * .72 - gap) / 2);
-  const maiorValor = Math.max(...[...v.values()].flatMap(d => [larguraTexto(h(d.hh), 11, 700), larguraTexto(h(d.imp), 11, 700)]));
-  const comValores = cats.length <= 12 && band >= Math.max(72, maiorValor * 2 + 16);
-  const lblCada = Math.max(1, Math.ceil((porMes ? 54 : 48) / band));
-  let s = `<div class="chart-scroll"><svg viewBox="0 0 ${W} ${H}" style="width:${W}px" height="${H}" role="img" tabindex="0" aria-label="HH trabalhado e HH de impacto por ${porMes ? 'mês' : 'dia'}. Use as setas para consultar os valores ou abra a tabela abaixo.">`;
+  const band = iw / cats.length, bw = 30;
+  let s = `<div class="chart-scroll"><svg viewBox="0 0 ${W} ${H}" style="width:${W}px" height="${H}" role="img" tabindex="0" aria-label="Colunas empilhadas: HH trabalhado na base e HH de impacto no topo, por ${porMes ? 'mês' : 'dia'}. Use as setas para consultar os valores ou abra a tabela abaixo.">`;
   s += `<rect x="${m.l}" y="${m.t}" width="${iw}" height="${ih}" fill="${COR.plot}"/>`;
-  for (const t of tk) s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(t)}" y2="${y(t)}" stroke="${COR.grid}" stroke-width=".6"/><text x="${m.l - 7}" y="${y(t) + 4}" text-anchor="end" font-size="11" fill="${COR.muted}">${fmtTick(t)}</text>`;
-  if (media > 0) s += `<line class="average-line" x1="${m.l}" x2="${W - m.r}" y1="${y(media)}" y2="${y(media)}" stroke="${COR.axis}" stroke-width="1.5" stroke-dasharray="5 4"/>`;
-  s += `<text x="${m.l - 7}" y="${m.t - 12}" text-anchor="end" font-size="10" fill="${COR.muted}">HH</text>`;
+  for (const t of tk) s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(t)}" y2="${y(t)}" stroke="${COR.grid}" stroke-width=".6"/><text x="${m.l - 7}" y="${y(t) + 4}" text-anchor="end" font-size="12" fill="${COR.muted}">${fmtTick(t)}</text>`;
+  if (media > 0) s += `<line class="average-line" x1="${m.l}" x2="${W - m.r}" y1="${y(media)}" y2="${y(media)}" stroke="${COR.axis}" stroke-width="1.2" stroke-dasharray="5 4"/>`;
+  s += `<text x="${m.l - 7}" y="${m.t - 12}" text-anchor="end" font-size="12" fill="${COR.muted}">HH</text>`;
   cats.forEach((c, i) => {
     const d = v.get(c), x0 = m.l + i * band + band / 2, hh = d.hh / 60, im = d.imp / 60;
-    s += `<g class="col" data-i="${i}"><rect class="hl" x="${m.l + i * band}" y="${m.t}" width="${band}" height="${ih}"/>`;
-    s += `<path d="${colV(x0 - bw - gap / 2, y(hh), bw, base - y(hh))}" fill="${COR.prod}"/><path d="${colV(x0 + gap / 2, y(im), bw, base - y(im))}" fill="${COR.imp}"/>`;
-    if (comValores && hh > 0) s += `<text x="${x0 - gap / 2 - bw / 2}" y="${y(hh) - 6}" text-anchor="middle" font-size="11" font-weight="700" fill="${COR.text}">${h(d.hh)}</text>`;
-    if (comValores && im > 0) {
-      const proximos = hh > 0 && Math.abs(y(hh) - y(im)) < 14 && (larguraTexto(h(d.hh), 11, 700) + larguraTexto(h(d.imp), 11, 700)) / 2 + 4 > bw + gap;
-      s += `<text x="${x0 + gap / 2 + bw / 2}" y="${proximos ? Math.min(y(hh), y(im)) - 22 : y(im) - 6}" text-anchor="middle" font-size="11" font-weight="700" fill="${COR.impText}">${h(d.imp)}</text>`;
+    s += `<g class="col" data-i="${i}"><title>${esc(nomeCat(c))}: ${d.n ? `${h(d.hh)} HH trabalhado; ${h(d.imp)} HH de impacto; ${d.n} RDC` : 'Sem RDC no filtro'}</title><rect class="hl" x="${m.l + i * band}" y="${m.t}" width="${band}" height="${ih}"/>`;
+    if (d.n) {
+      const bx = x0 - (bw + 8 + maiorValor) / 2, lx = bx + bw + 8;
+      const meioHH = (y(hh) + base) / 2, meioImp = (y(hh + im) + y(hh)) / 2;
+      const labelHH = Math.min(base - 8, meioHH + 4), labelImp = Math.min(labelHH - 18, meioImp + 4);
+      s += `<path class="stack-work" d="${colV(bx, y(hh), bw, base - y(hh))}" fill="${COR.prod}"/><path class="stack-impact" d="${colV(bx, y(hh + im), bw, y(hh) - y(hh + im))}" fill="${COR.imp}" stroke="${COR.impText}" stroke-width=".7"/>`;
+      s += `<path d="M${bx + bw},${meioHH}L${lx - 3},${labelHH - 4}" fill="none" stroke="${COR.prod}" stroke-width=".7"/><path d="M${bx + bw},${meioImp}L${lx - 3},${labelImp - 4}" fill="none" stroke="${COR.impText}" stroke-width=".7"/>`;
+      s += `<text class="bar-value" x="${lx}" y="${labelHH}" font-size="12" font-weight="700" fill="${COR.text}">${h(d.hh)}</text><text class="bar-value" x="${lx}" y="${labelImp}" font-size="12" font-weight="700" fill="${COR.impText}">${h(d.imp)}</text>`;
+    } else {
+      s += `<text x="${x0}" y="${base - 12}" text-anchor="middle" font-size="12" fill="${COR.muted}">Sem RDC</text>`;
     }
-    if (i % lblCada === 0) s += `<text x="${x0}" y="${H - 12}" text-anchor="middle" font-size="11" fill="${COR.muted}">${rotCat(c)}</text>`;
+    s += `<text x="${x0}" y="${H - 14}" text-anchor="middle" font-size="12" fill="${COR.muted}">${rotCat(c)}</text>`;
     s += `<rect class="hit" x="${m.l + i * band}" y="${m.t}" width="${band}" height="${ih + 24}"/></g>`;
   });
-  s += eixos(m.l, m.t, W - m.r, base) + '</svg></div><div class="chart-tooltip hidden" role="status"></div>';
+  s += eixos(m.l, m.t, W - m.r, base) + '</svg></div><div class="chart-tooltip chart-inspection hidden" role="status"></div>';
   if (W > largura) s += '<p class="chart-scroll-hint">Deslize para ver todo o período · use ← → com o gráfico em foco.</p>';
   el.innerHTML = s;
   // consulta por ponteiro, toque ou teclado (setas / Esc)
@@ -549,7 +557,7 @@ function graficoDia(rdcs) {
     atual = i; cols.forEach((g, k) => g.classList.toggle('on', k === i));
     if (i < 0) return tt.classList.add('hidden');
     const c = cats[i], d = v.get(c);
-    tt.innerHTML = `<b>${nomeCat(c)}</b><span><i style="background:${COR.prod}"></i>Trabalhado: ${h(d.hh)} HH</span><span><i style="background:${COR.imp}"></i>Impacto: ${h(d.imp)} HH</span><span>${d.n} RDC</span>`;
+    tt.innerHTML = `<b>${nomeCat(c)}</b><span><i style="background:${COR.prod}"></i>Trabalhado: ${d.n ? h(d.hh) + " HH" : "N/D · sem RDC"}</span><span><i style="background:${COR.imp}"></i>Impacto: ${d.n ? h(d.imp) + " HH" : "N/D · sem RDC"}</span><span>${d.n} RDC</span>`;
     tt.classList.remove('hidden');
   };
   cols.forEach((g, i) => { g.addEventListener('pointerenter', () => mostrar(i)); g.addEventListener('pointerdown', () => mostrar(i)); });
@@ -572,15 +580,16 @@ function graficoDia(rdcs) {
 // barras horizontais: mesma cor para todas as categorias; valor (e participação) junto da extremidade
 function barrasH(el, itens, o) {
   const originais = itens;
+  const tabelaAberta = el.querySelector('details')?.open || false;
   observarGrafico(el, () => barrasH(el, originais, o));
   const { cor = COR.prod, corTexto = COR.text, fmt, pct = false, resumo = false, rotulo = 'valores', max: maxItens = 12 } = o;
   itens = itens.filter(x => x.v > 0);
   const insight = resumo ? $('chDiscInsight') : null;
-  if (!itens.length) { if (insight) { insight.innerHTML = ''; insight.classList.add('hidden'); } el.innerHTML = '<div class="empty">Sem dados no filtro.</div>'; return; }
+  if (!itens.length) { if (insight) { insight.innerHTML = ''; insight.classList.add('hidden'); } el.innerHTML = `<div class="empty">${originais.length ? 'Total registrado: ' + esc(fmt(0)) + '.' : 'Sem dados no filtro.'}</div>`; return; }
   const tot = itens.reduce((t, x) => t + x.v, 0);
   if (insight) {
     const lider = itens[0], parte = lider.v / tot * 100;
-    insight.innerHTML = `<svg viewBox="0 0 72 72" width="72" height="72" role="img" aria-label="${esc(nf1.format(parte))}% do HH trabalhado pertence à disciplina ${esc(lider.k)}"><circle cx="36" cy="36" r="28" fill="none" stroke="var(--rest)" stroke-width="8"/><circle cx="36" cy="36" r="28" fill="none" stroke="var(--s1)" stroke-width="8" pathLength="100" stroke-dasharray="${parte.toFixed(2)} 100" transform="rotate(-90 36 36)"/><text x="36" y="40" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)">${Math.round(parte)}%</text></svg><div><span class="insight-label">DISCIPLINA LÍDER</span><strong class="insight-name">${esc(lider.k)}</strong><span class="insight-detail">${fmt(lider.v)} de ${fmt(tot)} no período</span></div>`;
+    insight.innerHTML = `<svg class="share-donut" viewBox="0 0 144 144" width="144" height="144" role="img" aria-label="${esc(lider.k)}: ${nf1.format(parte)}% do HH trabalhado; demais disciplinas: ${nf1.format(100 - parte)}%"><circle cx="72" cy="72" r="54" fill="none" stroke="var(--axis)" stroke-width="16"/><circle class="share-segment" cx="72" cy="72" r="54" fill="none" stroke="var(--s1)" stroke-width="16" pathLength="100" stroke-dasharray="${parte} ${100 - parte}" transform="rotate(-90 72 72)"/><text x="72" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="700" fill="var(--ink)">${nf1.format(parte)}%</text><text x="72" y="91" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="var(--muted)">do HH</text></svg><div><span class="insight-label">MAIOR PARTICIPAÇÃO</span><strong class="insight-name"><i class="share-key leader" aria-hidden="true"></i>${esc(lider.k)}</strong><span class="insight-detail">${fmt(lider.v)} de ${fmt(tot)}</span><span class="insight-detail share-rest"><i class="share-key" aria-hidden="true"></i>Demais: ${nf1.format(100 - parte)}% · ${fmt(tot - lider.v)}</span></div>`;
     insight.classList.remove('hidden');
   }
   if (itens.length > maxItens) itens = [...itens.slice(0, maxItens - 1), { k: 'Outros', v: itens.slice(maxItens - 1).reduce((t, x) => t + x.v, 0) }];
@@ -598,11 +607,11 @@ function barrasH(el, itens, o) {
   const iw = W - lw - vw, vmax = Math.max(...itens.map(x => x.v)) / 60, tk = ticks(vmax), top = tk[tk.length - 1], x = val => lw + val / top * iw;
   const pc = v => nf1.format(v / tot * 100) + '%';
   let s = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="${esc(rotulo)}: ${esc(itens.map(i => `${i.k} ${fmt(i.v)}${pct ? ' (' + pc(i.v) + ')' : ''}`).join('; '))}">`;
-  linhas.forEach(({ yc }) => { s += `<rect x="${lw}" y="${yc - bh / 2}" width="${iw}" height="${bh}" rx="5" fill="${COR.plot}"/>`; });
-  const passoTick = Math.max(1, Math.ceil((Math.max(...tk.map(t => larguraTexto(fmtTick(t), 10))) + 14) / (iw / (tk.length - 1))));
+  linhas.forEach(({ yc }) => { s += `<rect x="${lw}" y="${yc - bh / 2}" width="${iw}" height="${bh}" rx="0" fill="${COR.plot}"/>`; });
+  const passoTick = Math.max(1, Math.ceil((Math.max(...tk.map(t => larguraTexto(fmtTick(t), 12))) + 14) / (iw / (tk.length - 1))));
   for (const [i, t] of tk.entries()) {
     s += `<line x1="${x(t)}" x2="${x(t)}" y1="0" y2="${H - mb}" stroke="${COR.grid}" stroke-width=".6"/>`;
-    if (i % passoTick === 0) s += `<text x="${x(t)}" y="${H - 9}" text-anchor="${i === 0 ? 'start' : 'middle'}" font-size="10" fill="${COR.muted}">${fmtTick(t)}</text>`;
+    if (i % passoTick === 0) s += `<text x="${x(t)}" y="${H - 9}" text-anchor="${i === 0 ? 'start' : 'middle'}" font-size="12" fill="${COR.muted}">${fmtTick(t)}</text>`;
   }
   itens.forEach((it, i) => {
     const { nomes, inicio, row, yc } = linhas[i], w = it.v / 60 / top * iw;
@@ -610,14 +619,16 @@ function barrasH(el, itens, o) {
     nomes.forEach((nome, n) => {
       const ty = compacto ? inicio + 12 + n * 15 : yc + 4 + (n - (nomes.length - 1) / 2) * 15;
       if (compacto) s += `<rect x="0" y="${ty - 12}" width="${W}" height="15" fill="var(--chart-surface)"/>`;
-      s += `<text x="${compacto ? lw : lw - 8}" y="${ty}" text-anchor="${compacto ? 'start' : 'end'}" font-size="11" fill="${COR.muted}">${esc(nome)}</text>`;
+      s += `<text x="${compacto ? lw : lw - 8}" y="${ty}" text-anchor="${compacto ? 'start' : 'end'}" font-size="12" fill="${COR.muted}">${esc(nome)}</text>`;
     });
     s += `<path d="${barH(lw, yc - bh / 2, w, bh)}" fill="${cor}"/>`;
-    if (pct) s += `<text x="${lw + w + 8}" y="${yc - 2}" font-size="12" font-weight="700" fill="${corTexto}">${esc(fmt(it.v))}</text><text x="${lw + w + 8}" y="${yc + 12}" font-size="10" fill="${COR.muted}">${pc(it.v)}</text>`;
+    if (pct) s += `<text x="${lw + w + 8}" y="${yc - 2}" font-size="12" font-weight="700" fill="${corTexto}">${esc(fmt(it.v))}</text><text x="${lw + w + 8}" y="${yc + 12}" font-size="12" fill="${COR.muted}">${pc(it.v)}</text>`;
     else s += `<text x="${lw + w + 8}" y="${yc + 4}" font-size="12" font-weight="700" fill="${corTexto}">${esc(fmt(it.v))}</text>`;
     s += '</g>';
   });
   s += eixos(lw, 0, lw + iw, H - mb) + '</svg>';
+  if (originais.filter(it => it.v > 0).length > maxItens) s += `<p class="chart-scroll-hint">Outros reúne ${originais.filter(it => it.v > 0).length - maxItens + 1} categorias. Lista completa abaixo.</p>`;
+  s += `<details class="chart-data"${tabelaAberta ? ' open' : ''}><summary>Ver todas as categorias</summary><div class="tbl-wrap"><table><thead><tr><th>Categoria</th><th class="num">${esc(rotulo)}</th>${pct ? '<th class="num">Participação</th>' : ''}</tr></thead><tbody>${originais.map(it => `<tr><td class="table-copy">${esc(it.k)}</td><td class="num">${esc(fmt(it.v))}</td>${pct ? `<td class="num">${pc(it.v)}</td>` : ''}</tr>`).join('')}</tbody></table></div></details>`;
   el.innerHTML = s;
   el.querySelectorAll('g.col').forEach(g => {
     const it = itens[g.dataset.i];
@@ -631,8 +642,10 @@ function resumoPts(rdcs, comPts, esperas) {
   const ativos = agrupar(bloq, r => r.bloqueio_ativo, () => 1).slice(0, 5);
   $('ptsResumo').innerHTML = [
     ['RDC que informaram', `${inf.length} de ${rdcs.length}`],
-    ['Com PTS', `${comPts.length}`], ['Espera média', esperas.length ? dur(esperas.reduce((a, b) => a + b, 0) / esperas.length) : '—'],
-    ['Maior espera', maior != null ? dur(maior) : '—'], ['Com bloqueio', `${bloq.length}`]
+    ['Com PTS', inf.length ? `${comPts.length}` : '—'], ['Espera média', esperas.length ? dur(esperas.reduce((a, b) => a + b, 0) / esperas.length) : '—'],
+    ['Maior espera', maior != null ? dur(maior) : '—'],
+    ['Bloqueio informado', `${rdcs.filter(r => typeof r.bloqueio === 'boolean').length} de ${rdcs.length}`],
+    ['Com bloqueio', rdcs.some(r => typeof r.bloqueio === 'boolean') ? `${bloq.length}` : '—']
   ].map(([k, v]) => `<div class="rv"><span>${k}</span><strong>${esc(v)}</strong></div>`).join('') +
     (ativos.length ? `<p class="nota">Ativos mais bloqueados: ${ativos.map(a => `${esc(a.k)} (${a.v})`).join(' · ')}</p>` : '');
 }
@@ -714,11 +727,11 @@ const AGRUP = {
 };
 const grupoDe = id => { const v = $(id).value, k = AGRUP[id][v]; return k ? { k, desc: v === 'data' } : null; };
 function tabelaResp(rdcs) {
-  const dias = diasDoPeriodo(), uteis = dias.filter(d => !d.dom).length || dias.length;
+  const dias = diasDoPeriodo();
   const resp = $('fResp').value;
   const nomes = resp ? [resp] : [...new Set([...LIDERES.map(l => l[0]), ...rdcs.map(r => r.responsavel)])];
   const linhas = nomes.map(n => {
-    const rs = rdcs.filter(r => r.responsavel === n), esp = rs.map(r => r.espera_pts_min).filter(v => v != null);
+    const rs = rdcs.filter(r => r.responsavel === n), esp = rs.filter(r => r.pts === true).map(r => r.espera_pts_min).filter(v => v != null);
     return { nome: n, funcao: (LIDERES.find(l => l[0] === n) || [])[1] || rs[0]?.responsavel_funcao || '', rdc: rs.length,
       dias: new Set(rs.map(r => r.data_rdc)).size, hh: rs.reduce((s, r) => s + r._hh, 0), imp: rs.reduce((s, r) => s + r.min_impacto, 0),
       hhimp: rs.reduce((s, r) => s + r.hh_impacto_min, 0), aguard: rs.filter(r => r.status === 'Enviado').length,
@@ -726,7 +739,7 @@ function tabelaResp(rdcs) {
   });
   tabela($('tblResp'), 'resp', [
     { t: 'Responsável', v: l => l.nome }, { t: 'Função', v: l => l.funcao },
-    { t: 'RDC', num: 1, v: l => l.rdc, s: nf0.format }, { t: `Dias com RDC (de ${uteis})`, num: 1, v: l => l.dias },
+    { t: 'RDC', num: 1, v: l => l.rdc, s: nf0.format }, { t: `Dias com RDC (de ${dias.length})`, num: 1, v: l => l.dias },
     { t: 'HH trabalhado', num: 1, v: l => l.hh, h: l => h(l.hh), s: h }, { t: 'Horas de impacto', num: 1, v: l => l.imp, h: l => h(l.imp), s: h },
     { t: 'HH de impacto', num: 1, v: l => l.hhimp, h: l => h(l.hhimp), s: h }, { t: 'Espera média PTS', num: 1, v: l => l.espera ?? -1, h: l => l.espera == null ? '—' : dur(l.espera) },
     { t: 'Aguardando validação', num: 1, v: l => l.aguard, s: nf0.format }
@@ -738,7 +751,7 @@ function tabelaImp(impactos) {
   tabela($('tblImp'), 'imp', [
     { t: 'Data', v: i => porRdc.get(i.rdc)?.data_rdc, h: i => fmtData(porRdc.get(i.rdc)?.data_rdc) },
     { t: 'Responsável', v: i => porRdc.get(i.rdc)?.responsavel }, { t: 'Ativo', v: i => porRdc.get(i.rdc)?.ativo },
-    { t: 'Descrição', v: i => i.descricao, h: i => `<span title="${esc(i.descricao)}">${esc(i.descricao.length > 70 ? i.descricao.slice(0, 69) + '…' : i.descricao)}</span>` },
+    { t: 'Descrição', cls: 'table-copy', v: i => i.descricao },
     { t: 'Horário', v: i => i.inicio, h: i => `${fmtHora(i.inicio)} → ${fmtHora(i.fim)}` },
     { t: 'Duração', num: 1, v: i => i.duracao_min, h: i => dur(i.duracao_min), s: dur },
     { t: 'HH de impacto', num: 1, v: i => i.duracao_min * (porRdc.get(i.rdc)?.efetivo_max || 0), h: i => h(i.duracao_min * (porRdc.get(i.rdc)?.efetivo_max || 0)), s: h }
@@ -756,7 +769,7 @@ function atualizarLote() {
   if (todos) { todos.checked = ed.length > 0 && ed.every(r => selecionados.has(r.codigo)); todos.indeterminate = !todos.checked && ed.some(r => selecionados.has(r.codigo)); }
 }
 function tabelaRdc(rdcs) {
-  $('rdcCount').textContent = 'Clique numa linha para ver o detalhe e as fotos. Marque as caixas para definir o contrato de vários.';
+  $('rdcCount').textContent = 'Abra um RDC para detalhes. Selecione para editar em lote.';
   tabela($('tblRdc'), 'rdc', [
     { t: '<input type="checkbox" id="selTodos" title="Selecionar todos do filtro">', cls: 'sel', v: r => selecionados.has(r.codigo) ? 1 : 0,
       h: r => editavel(r) ? `<input type="checkbox" data-sel="${esc(r.codigo)}"${selecionados.has(r.codigo) ? ' checked' : ''} aria-label="Selecionar ${esc(r.codigo)}">` : '' },
