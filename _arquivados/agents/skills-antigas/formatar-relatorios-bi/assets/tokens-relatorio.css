@@ -1,0 +1,57 @@
+/* Padrão neutro; aplicar à raiz .relatorio-bi e adaptar a marca. */
+.relatorio-bi {
+  --bi-page: #f7f7f5; --bi-plot: #f1f2f0;
+  --bi-ink: #111111; --bi-muted: #555555;
+  --bi-grid: #dde0de; --bi-axis: #737b78;
+  --bi-real: #303030; --bi-plan: #737b78; --bi-target: #86642c;
+  --bi-good: #256445; --bi-warning: #8a5a00; --bi-bad: #a1272d;
+  --bi-space-1: 4px; --bi-space-2: 8px; --bi-space-3: 12px;
+  --bi-space-4: 16px; --bi-space-6: 24px; --bi-space-8: 32px;
+  --bi-grid-width: 0.6px; --bi-axis-width: 1.2px; --bi-series-width: 2.4px;
+  color: var(--bi-ink); background: var(--bi-page);
+  font-family: Arial, sans-serif; font-size: 14px; line-height: 1.45;
+  font-variant-numeric: tabular-nums; padding: var(--bi-space-6);
+}
+.relatorio-bi, .relatorio-bi * { box-sizing: border-box; }
+.relatorio-bi :is(button, [role="button"], input, select, textarea, .bi-panel, .bi-kpi, .bi-status) { border-radius: 0; }
+.relatorio-bi :is(button, [role="button"]) {
+  min-height: 44px; min-width: 44px; padding: 8px 16px;
+  border: 1px solid var(--bi-axis); background: var(--bi-real); color: #ffffff;
+  font: inherit; cursor: pointer;
+}
+.relatorio-bi :is(button, [role="button"]):disabled {
+  cursor: default; background: var(--bi-grid); color: var(--bi-muted);
+}
+.relatorio-bi :focus-visible { outline: 2px solid var(--bi-ink); outline-offset: 3px; }
+.relatorio-bi h1 { font-size: 26px; line-height: 1.2; margin: 0 0 8px; }
+.relatorio-bi h2 { font-size: 18px; line-height: 1.3; margin: 0 0 8px; }
+.relatorio-bi .bi-section { margin-block-start: var(--bi-space-8); }
+.relatorio-bi .bi-panel { padding: var(--bi-space-6); border: 1px solid var(--bi-grid); min-width: 0; }
+.relatorio-bi .bi-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 24px; }
+.relatorio-bi .bi-kpi-value { font-size: 32px; font-weight: 700; line-height: 1.15; }
+.relatorio-bi .bi-muted { color: var(--bi-muted); }
+.relatorio-bi .bi-plot { background: var(--bi-plot); }
+/* Aplicar aos grupos SVG corretos; Canvas exige tokens no renderer. */
+.relatorio-bi .bi-gridline { stroke: var(--bi-grid); stroke-width: var(--bi-grid-width); }
+.relatorio-bi .bi-axis-line { stroke: var(--bi-axis); stroke-width: var(--bi-axis-width); }
+.relatorio-bi .bi-chart-label { font-size: 12px; fill: var(--bi-muted); }
+.relatorio-bi .bi-table-wrap { max-width: 100%; overflow-x: auto; }
+.relatorio-bi table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.relatorio-bi :is(th, td) { padding: 10px 12px; border-bottom: 1px solid var(--bi-grid); text-align: left; vertical-align: top; }
+.relatorio-bi th { font-weight: 700; }
+.relatorio-bi .bi-number { text-align: right; white-space: nowrap; }
+.relatorio-bi .bi-id { white-space: nowrap; }
+@media (max-width: 600px) {
+  .relatorio-bi { padding: 16px; }
+  .relatorio-bi .bi-kpis { grid-template-columns: 1fr; gap: 16px; }
+  .relatorio-bi .bi-panel { padding: 16px; }
+}
+@media print {
+  .relatorio-bi { padding: 0; font-size: 10pt; }
+  .relatorio-bi .bi-section { break-inside: avoid; }
+  .relatorio-bi [data-print="hide"] { display: none; }
+  .relatorio-bi .bi-table-wrap { overflow: visible; }
+  .relatorio-bi table { font-size: 10pt; }
+  .relatorio-bi thead { display: table-header-group; }
+  .relatorio-bi tr { break-inside: avoid; }
+}

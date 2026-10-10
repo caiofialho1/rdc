@@ -1,6 +1,7 @@
 # RDC Mobile — Relatório Diário de Campo
 
 App web em um único arquivo (`index.html`) para o pessoal de campo lançar o RDC diário pelo celular, **sem login**.
+O app incorpora a fonte Inter no próprio HTML para manter a tipografia disponível sem sinal. O painel carrega a mesma fonte de `assets/fonts/Inter-latin.woff2`; publique essa pasta junto com `painel.html` e `painel.css`. A licença da fonte está em `assets/fonts/OFL.txt`.
 Os dados vão para um banco Supabase (Postgres + fotos), que o Planejamento consulta pelo painel ou pelo Power BI.
 
 ```
@@ -138,7 +139,7 @@ Toda edição fica na tabela `rdc_edicoes` (quem, quando, motivo, valor antes e 
 `painel.html`, publicado junto com o app (ex.: `https://<seu-site>/painel.html`). Use o mesmo nome e senha de administrador do app; sem eles, nenhum dado é carregado. O painel tem:
 - filtros de período, área, responsável, disciplina, situação e busca;
 - indicadores (HH trabalhado, RDC, HH e horas de impacto, espera média da PTS, bloqueios);
-- gráficos: HH por dia ou mês, por disciplina e impacto por responsável;
+- seção de gráficos limpa, reservada para a nova análise visual;
 - emissão por responsável × dia, resumo por responsável e lista de impactos;
 - tabela de RDC com detalhe, fotos, localização e validação (validar, liberar revisão, cancelar);
 - **Exportar Excel** com 4 abas (RDC, Atividades, Impactos, Fotos com link do mapa). Se a biblioteca do Excel não carregar, baixa CSV.

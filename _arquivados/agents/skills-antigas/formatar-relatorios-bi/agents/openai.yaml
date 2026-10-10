@@ -1,0 +1,14 @@
+interface:
+  display_name: Relatórios Profissionais e BI
+  short_description: KPIs, gráficos, storytelling e revisão visual de relatórios
+  default_prompt: Use $formatar-relatorios-bi para definir os KPIs, escolher os gráficos
+    e organizar este relatório com storytelling e visual profissional.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
