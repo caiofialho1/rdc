@@ -789,3 +789,16 @@ body:not(.workspace-ready) main{min-height:calc(100vh - 72px);min-height:calc(10
 @media(max-width:1100px){
   .resp-layout{grid-template-columns:minmax(0,1fr)}
 }
+
+/* Carga da produção (botão Atualizar carga produção) */
+.carga-status{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:16px;margin:0 0 16px}
+.carga-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.carga-head h2{font-size:16px;margin:0;color:var(--ink)}
+.carga-passo{font-size:13px;color:var(--ink-2);margin:8px 0}
+.carga-status progress{width:100%;height:6px;accent-color:var(--navy);display:block;margin:0 0 10px}
+.carga-log{list-style:none;margin:0;padding:0;max-height:240px;overflow:auto;font-size:12px;color:var(--muted)}
+.carga-log li{padding:5px 0 5px 22px;border-top:1px solid var(--line);position:relative;overflow-wrap:anywhere}
+.carga-log li::before{content:"\2022";position:absolute;left:6px;color:var(--muted-2)}
+.carga-log li.ok{color:var(--good)}.carga-log li.ok::before{content:"\2713";color:var(--good)}
+.carga-log li.aviso{color:var(--warn-ink)}.carga-log li.aviso::before{content:"!";color:var(--warn-ink);font-weight:700}
+.carga-log li.erro{color:var(--crit)}.carga-log li.erro::before{content:"\2715";color:var(--crit);font-weight:700}

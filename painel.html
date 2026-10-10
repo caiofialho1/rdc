@@ -55,9 +55,18 @@
       </div>
       <div class="heading-actions">
         <span class="update-label" id="updLabel" aria-live="polite"></span>
+        <button class="button" id="btnCarga" data-ic="upload" title="Escolha a pasta das memórias de cálculo; só o que mudou é enviado ao banco">Atualizar carga produção</button>
+        <input type="file" id="cargaPasta" webkitdirectory multiple hidden aria-hidden="true" tabindex="-1">
         <button class="button" id="btnExcel" data-ic="download" disabled>Exportar Excel</button>
       </div>
     </div>
+
+    <section class="carga-status hidden" id="cargaStatus" aria-labelledby="cargaTitulo">
+      <div class="carga-head"><h2 id="cargaTitulo">Carga da produção</h2><button class="text-button" id="cargaFechar" type="button">Fechar</button></div>
+      <p class="carga-passo" id="cargaPasso" role="status" aria-live="polite"></p>
+      <progress id="cargaBarra" value="0" max="1" class="hidden"></progress>
+      <ul class="carga-log" id="cargaLog"></ul>
+    </section>
 
     <section class="filter-panel" aria-labelledby="tFiltros">
       <div class="filter-top">
@@ -209,6 +218,8 @@
 <script src="assets/vendor/react-dom-18.3.1.min.js"></script>
 <script src="assets/vendor/echarts-5.6.0.min.js"></script>
 <script src="painel-charts.js"></script>
+<script src="assets/vendor/xlsx-0.20.3.full.min.js"></script>
+<script src="painel-carga.js"></script>
 <script>
 /* Mesmo projeto Supabase do app (index.html → CONFIG). Os dados só saem com nome e senha de administrador. */
 const SB_URL = 'https://ltuzzgdapgfbtxaxigek.supabase.co';
@@ -234,6 +245,7 @@ const $ = id => document.getElementById(id);
 const ICONES = {
   chart: '<path d="M3 3v18h18M7 14v3M12 9v8M17 5v12"/>',
   users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/>',
   download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
   filter: '<path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>',
   reset: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
@@ -818,6 +830,73 @@ function tabelaProducaoResp() {
     { t: 'R$/HH', num: 1, v: a => a.hh ? a.valor / a.hh : 0, h: a => a.hh ? brl.format(a.valor / a.hh) : '—' }
   ], linhas, null, grupoDe('gProdResp'));
 }
+/* ---------- botão "Atualizar carga produção": lê a pasta das memórias no navegador e grava só o que mudou ---------- */
+let cargaOcupada = false;
+async function atualizarCargaProducao(files) {
+  if (cargaOcupada || !admin) return;
+  cargaOcupada = true;
+  const btn = $('btnCarga'), rotulo = btn.innerHTML, painel = $('cargaStatus'), log = $('cargaLog'), barra = $('cargaBarra');
+  const passo = t => { $('cargaPasso').textContent = t; };
+  const linha = (t, cls = '') => { const li = document.createElement('li'); if (cls) li.className = cls; li.textContent = t; log.appendChild(li); };
+  btn.disabled = true; btn.textContent = 'Atualizando…';
+  painel.classList.remove('hidden'); log.innerHTML = ''; barra.classList.add('hidden');
+  const erros = [];
+  try {
+    passo('Consultando o que já está no banco…');
+    const st = await rpc('rdc_admin_mc_status', { p_nome: admin.nome, p_senha: admin.senha });
+    if (!st?.ok) { if (/Sessão/.test(st?.erro || '')) setAdmin(null); throw new Error(st?.erro || 'Falha ao consultar o banco.'); }
+    const noBanco = new Map(st.arquivos.map(a => [a.chave, a]));
+
+    barra.classList.remove('hidden'); barra.max = 1; barra.value = 0;
+    const lido = await PainelCarga.lerPasta(files, p => { passo(`Lendo planilhas ${p.i}/${p.n}: ${p.nome}`); barra.max = p.n; barra.value = p.i - 1; });
+    lido.erros.forEach(e => erros.push(`${e.arquivo}: ${e.erro}`));
+    if (!lido.lidos) throw new Error('Nenhuma planilha .xlsx/.xlsm encontrada na pasta escolhida. Escolha a pasta "1. MEMÓRIA DE CALCULO".');
+    if (!lido.folhas.length && !erros.length) throw new Error('Nenhuma aba MC_PAC/MC_REC com dados foi encontrada.');
+
+    const enviar = lido.folhas.filter(f => !f.sha1 || noBanco.get(f.chave)?.sha1 !== f.sha1);
+    const iguais = lido.folhas.length - enviar.length;
+    const remover = lido.ignoradas.filter(i => i.duplicada && noBanco.has(i.chave));
+    let gravadas = 0, itens = 0;
+    barra.max = Math.max(1, enviar.length + remover.length); barra.value = 0;
+    for (let i = 0; i < enviar.length; i++) {
+      const f = enviar[i];
+      passo(`Enviando ${i + 1}/${enviar.length}: ${f.chave}`);
+      try {
+        const r = await rpc('rdc_admin_mc_importar', { p_nome: admin.nome, p_senha: admin.senha, p_arquivo: f });
+        if (!r?.ok) throw new Error(r?.erro || 'recusado pelo banco');
+        gravadas++; itens += r.itens;
+        linha(`Gravada: ${f.chave} — ${nf0.format(r.itens)} itens, ${nf0.format(r.diario)} lançamentos diários`, 'ok');
+      } catch (e) { erros.push(`${f.chave}: ${e.message}`); }
+      barra.value = i + 1;
+    }
+    for (const r of remover) {
+      try {
+        await rpc('rdc_admin_mc_importar', { p_nome: admin.nome, p_senha: admin.senha, p_arquivo: { acao: 'remover', chave: r.chave } });
+        linha(`Removida do banco (conteúdo repetido): ${r.chave}`);
+      } catch (e) { erros.push(`${r.chave}: ${e.message}`); }
+    }
+    lido.folhas.forEach(f => f.avisos.forEach(a => linha(`Aviso — ${f.chave}: ${a}`, 'aviso')));
+    lido.ignoradas.filter(i => i.duplicada).forEach(i => linha(`Ignorada — ${i.chave}: ${i.motivo}`, 'aviso'));
+    const presentes = new Set([...lido.folhas.map(f => f.chave), ...lido.ignoradas.map(i => i.chave)]);
+    const foraDaPasta = [...noBanco.keys()].filter(k => !presentes.has(k));
+    if (foraDaPasta.length) linha(`No banco, mas não está mais nesta pasta (mantida): ${foraDaPasta.join('; ')}`, 'aviso');
+    if (lido.foraTelhado.length) linha(`${lido.foraTelhado.length} arquivo(s) da pasta TELHADO não foram lidos (layout diferente, ainda não suportado).`, 'aviso');
+    erros.forEach(e => linha(`Erro — ${e}`, 'erro'));
+
+    const resumo = `${nf0.format(gravadas)} planilha(s) gravada(s) (${nf0.format(itens)} itens), ${nf0.format(iguais)} sem alteração, ${nf0.format(lido.lidos)} arquivo(s) lido(s)`;
+    passo(erros.length ? `Carga concluída com ${erros.length} erro(s): ${resumo}.` : `Carga concluída: ${resumo}.`);
+    barra.value = barra.max;
+    if (!erros.length) $('updLabel').textContent = 'Carga produção atualizada em ' + new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+    if (gravadas || remover.length) { prod = null; prodR = null; carregarProducao(); carregarProducaoResp(); }
+    toast(erros.length ? 'Carga concluída com erros. Veja os detalhes.' : 'Carga da produção atualizada.', !!erros.length);
+  } catch (e) {
+    const m = e.status === 404 ? 'Banco sem a carga automática — rode supabase/migracao_v15_carga_producao.sql.' : e.message;
+    passo('Não foi possível atualizar a carga: ' + m); linha(m, 'erro'); toast(m, true);
+  } finally { btn.disabled = false; btn.innerHTML = rotulo; cargaOcupada = false; }
+}
+$('btnCarga').onclick = () => $('cargaPasta').click();
+$('cargaPasta').onchange = e => { const arquivos = [...e.target.files]; e.target.value = ''; if (arquivos.length) atualizarCargaProducao(arquivos); };
+$('cargaFechar').onclick = () => $('cargaStatus').classList.add('hidden');
 function tabelaImp(impactos) {
   const porRdc = new Map(dados.rdcs.map(r => [r.codigo, r]));
   ordem.imp ||= { c: 5, d: -1 };
