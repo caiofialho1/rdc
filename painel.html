@@ -177,7 +177,8 @@
       <details class="bloco" data-bloco="prod" id="sec-prod">
         <summary><span class="section-number" aria-hidden="true">07</span><div><h2>Produção × RDC</h2></div></summary>
         <div class="bloco-body">
-          <p class="nota" id="prodResumo" aria-live="polite">Produção das memórias de cálculo (previsto × % exec, na data da etapa) ligada aos RDC por data, TAG e OM. Usa o período De/Até; os demais filtros não se aplicam.</p>
+          <div class="bloco-tools"><label class="agr" for="escopoProd">Datas <select class="ctl" id="escopoProd" data-escopo><option value="todas">Todas as datas</option><option value="painel">Período do painel (De/Até)</option></select></label></div>
+          <p class="nota" id="prodResumo" aria-live="polite">Produção das memórias de cálculo (previsto × % exec, na data da etapa) ligada aos RDC por data, TAG e OM. Por padrão mostra todas as datas do banco; os demais filtros do painel não se aplicam.</p>
           <div class="tbl-wrap" id="tblProd" style="max-height:420px"></div>
         </div>
       </details>
@@ -186,6 +187,7 @@
         <summary><span class="section-number" aria-hidden="true">08</span><div><h2>Produção por responsável</h2></div></summary>
         <div class="bloco-body">
           <div class="bloco-tools">
+            <label class="agr" for="escopoResp">Datas <select class="ctl" id="escopoResp" data-escopo><option value="todas">Todas as datas</option><option value="painel">Período do painel (De/Até)</option></select></label>
             <label class="agr" for="gProdResp">Agrupar por <select class="ctl" id="gProdResp"><option value="responsavel">Responsável</option><option value="ativo">Ativo</option><option value="disciplina">Disciplina</option><option value="">Não agrupar</option></select></label></div>
           <p class="nota" id="prodRespResumo" aria-live="polite">Produção física (m² / kg) e financeira (R$) por responsável, ativo e disciplina. O responsável vem do RDC da disciplina; com mais de um, a produção é dividida pelo HH. Preços: tabela mc_precos.</p>
           <div class="tbl-wrap" id="tblProdResp" style="max-height:460px"></div>
@@ -727,14 +729,19 @@ function tabelaResp(rdcs, atividades) {
 /* ---------- produção (memória de cálculo) x RDC: carrega só com a seção aberta ---------- */
 const nf2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 let prod = null; // { chave, linhas } | { chave, erro }
+// Produção: por padrão TODAS as datas do banco; "painel" segue o De/Até do painel
+const TODAS_AS_DATAS = { ini: '2020-01-01', fim: '2049-12-31' };
+let escopoProducao = 'todas';
+try { escopoProducao = localStorage.getItem('rdc-painel-escopo-producao') === 'painel' ? 'painel' : 'todas'; } catch { }
+const periodoProducao = () => escopoProducao === 'painel' ? { ini: dados.ini, fim: dados.fim } : TODAS_AS_DATAS;
 async function carregarProducao() {
   if (!$('sec-prod').open || !dados || !admin) return;
-  const chave = `${dados.ini}|${dados.fim}`;
+  const per = periodoProducao(), chave = `${per.ini}|${per.fim}`;
   if (prod?.chave === chave) return tabelaProducao();
   const s = seq;
   prod = { chave, carregando: true }; tabelaProducao();
   try {
-    const r = await rpc('rdc_admin_producao', { p_nome: admin.nome, p_senha: admin.senha, p_ini: dados.ini, p_fim: dados.fim });
+    const r = await rpc('rdc_admin_producao', { p_nome: admin.nome, p_senha: admin.senha, p_ini: per.ini, p_fim: per.fim });
     if (s !== seq) return;
     prod = r?.ok ? { chave, linhas: r.linhas } : { chave, erro: r?.erro || 'Falha ao consultar a produção.' };
   } catch (e) {
@@ -765,12 +772,12 @@ const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' 
 let prodR = null; // { chave, linhas, precos } | { chave, erro } | { chave, carregando }
 async function carregarProducaoResp() {
   if (!$('sec-presp').open || !dados || !admin) return;
-  const chave = `${dados.ini}|${dados.fim}`;
+  const per = periodoProducao(), chave = `${per.ini}|${per.fim}`;
   if (prodR?.chave === chave) return tabelaProducaoResp();
   const s = seq;
   prodR = { chave, carregando: true }; tabelaProducaoResp();
   try {
-    const r = await rpc('rdc_admin_producao_resp', { p_nome: admin.nome, p_senha: admin.senha, p_ini: dados.ini, p_fim: dados.fim });
+    const r = await rpc('rdc_admin_producao_resp', { p_nome: admin.nome, p_senha: admin.senha, p_ini: per.ini, p_fim: per.fim });
     if (s !== seq) return;
     prodR = r?.ok ? { chave, linhas: r.linhas, precos: r.precos } : { chave, erro: r?.erro || 'Falha ao consultar a produção.' };
   } catch (e) {
@@ -1118,6 +1125,15 @@ let bt; $('fBusca').oninput = () => { clearTimeout(bt); bt = setTimeout(() => da
   $(id).onchange = () => { try { localStorage.setItem('rdc-painel-' + id, $(id).value); } catch { } dados && render(); };
 });
 
+document.querySelectorAll('[data-escopo]').forEach(sel => {
+  sel.value = escopoProducao;
+  sel.onchange = () => {
+    escopoProducao = sel.value === 'painel' ? 'painel' : 'todas';
+    try { localStorage.setItem('rdc-painel-escopo-producao', escopoProducao); } catch { }
+    document.querySelectorAll('[data-escopo]').forEach(o => { o.value = escopoProducao; });
+    carregarProducao(); carregarProducaoResp();
+  };
+});
 try { $('gProdResp').value = localStorage.getItem('rdc-painel-gProdResp') ?? 'responsavel'; } catch { }
 if ($('gProdResp').selectedIndex < 0) $('gProdResp').value = 'responsavel';
 $('gProdResp').onchange = () => { try { localStorage.setItem('rdc-painel-gProdResp', $('gProdResp').value); } catch { } tabelaProducaoResp(); };
