@@ -1200,7 +1200,8 @@ $('btnPendencias').onclick = () => {
 ['fContrato', 'fArea', 'fResp', 'fDisc', 'fStatus'].forEach(id => $(id).onchange = () => dados && render());
 let bt; $('fBusca').oninput = () => { clearTimeout(bt); bt = setTimeout(() => dados && render(), 250); };
 ['gImp', 'gRdc'].forEach(id => {
-  try { $(id).value = localStorage.getItem('rdc-painel-' + id) || ''; } catch { }
+  try { $(id).value = localStorage.getItem('rdc-painel-' + id) ?? 'responsavel'; } catch { $(id).value = 'responsavel'; }
+  if ($(id).selectedIndex < 0) $(id).value = 'responsavel';
   $(id).onchange = () => { try { localStorage.setItem('rdc-painel-' + id, $(id).value); } catch { } dados && render(); };
 });
 

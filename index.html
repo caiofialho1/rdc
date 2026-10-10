@@ -1478,7 +1478,7 @@ const fmtGps = g => `${g.lat.toFixed(6)}, ${g.lng.toFixed(6)}${g.acc ? ` (±${g.
 const mapaUrl = g => `https://www.google.com/maps?q=${g.lat},${g.lng}`;
 function gpsHTML(g, nFotos) {
   if (g) return `<div class="gps ok">${ico('pin')}<span style="flex:1">${fmtGps(g)}${g.fonte === 'foto' ? ' · da foto' : ''}</span><a href="${mapaUrl(g)}" target="_blank" rel="noopener">Mapa</a></div>`;
-  return `<div class="gps">${ico('pin')}<span>${nFotos ? 'Fotos sem localização. Ligue o GPS e permita a localização para o app.' : 'Será preenchida ao tirar a primeira foto.'}</span></div>`;
+  return `<div class="gps">${ico('pin')}<span>${nFotos ? 'Fotos sem localização. Ligue o GPS, permita a localização para o app e tire a foto na hora (fotos antigas da galeria sem GPS não têm local).' : 'Será preenchida ao tirar a primeira foto.'}</span></div>`;
 }
 function impactHTML(x, i) {
   const dur = duration(x.horaInicio, x.horaFim);
@@ -1505,13 +1505,11 @@ function renderRevBanner() {
 }
 function openForm() {
   fillHeader(); renderRevBanner(); renderActivities(); renderImpacts(); go('scrRDC');
-  irPasso(draft.passo || 1); // rascunho continua na etapa em que parou
   gpsAparelho(); // pede a permissão de localização já ao abrir o formulário
+  irPasso(draft.passo || 1); // rascunho continua na etapa em que parou
 }
 
 /* ----- GPS: localização da foto ----- */
-// Prioridade: GPS gravado na própria foto (EXIF) > GPS do aparelho, só para foto recém-tirada
-// (foto antiga da galeria sem EXIF fica sem localização, para não registrar o lugar errado).
 let gpsUltimo = null, gpsPend = null, gpsAvisado = false;
 function gpsAparelho() {
   if (!navigator.geolocation) return Promise.resolve(null);
@@ -1550,11 +1548,14 @@ async function gpsExif(file) {
   } catch { }
   return null;
 }
+// Local onde a foto foi tirada: 1) GPS gravado na própria foto (EXIF); 2) se a câmera não gravou
+// (comum no navegador) e a foto foi tirada há instantes (arquivo com data de até 2 min), o GPS do
+// aparelho nesse momento. Foto da galeria/antiga sem EXIF fica sem localização: nunca usa o local do upload.
 async function gpsDaFoto(file) {
   const exif = await gpsExif(file);
   if (exif) return exif;
-  const recente = !file.lastModified || Date.now() - file.lastModified < 10 * 60000;
-  if (!recente) return null;
+  const recem = file.lastModified && Math.abs(Date.now() - file.lastModified) < 2 * 60000;
+  if (!recem) return null;
   const g = await Promise.race([gpsAparelho(), sleep(12000).then(() => null)]);
   return g && { lat: g.lat, lng: g.lng, acc: g.acc, fonte: 'aparelho' };
 }
@@ -1670,7 +1671,7 @@ function bindForm() {
     catch (err) { toast(err.message, true); }
     finally { busy(null); e.target.value = ''; }
     renderActivities(); saveDraft();
-    if (semGps && !gpsAvisado) { gpsAvisado = true; toast('Foto sem localização: ligue o GPS e permita a localização para o app.', true); }
+    if (semGps && !gpsAvisado) { gpsAvisado = true; toast('Foto sem localização: ligue o GPS, permita a localização e tire a foto na hora.', true); }
   });
   // começa a buscar o GPS quando a pessoa toca em "Adicionar" (a câmera leva alguns segundos)
   $('activities').addEventListener('pointerdown', e => { if (e.target.closest('.add-photo')) gpsAparelho(); });
@@ -2446,7 +2447,8 @@ async function boot() {
   $('rLista').addEventListener('keydown', verResp);
   $('qBusca').addEventListener('input', () => { clearTimeout(qTimer); qTimer = setTimeout(() => carregarConsulta(true), 400); });
   $('qStatus').onchange = () => carregarConsulta(true);
-  try { $('qAgrupar').value = localStorage.getItem('rdc-agrupar') || ''; } catch { }
+  try { $('qAgrupar').value = localStorage.getItem('rdc-agrupar') ?? 'responsavel'; } catch { $('qAgrupar').value = 'responsavel'; }
+  if ($('qAgrupar').selectedIndex < 0) $('qAgrupar').value = 'responsavel';
   $('qAgrupar').onchange = () => {
     try { localStorage.setItem('rdc-agrupar', $('qAgrupar').value); } catch { }
     // agrupar busca mais RDC de uma vez (grupos mais completos)
