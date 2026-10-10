@@ -2,3 +2,6 @@
 publicar/
 *.code-workspace
 .node_repl_cell_*
+
+# Planilhas de medição e cargas de produção (dados do contrato; repo é público)
+FormulariosMedicao/
