@@ -5,6 +5,7 @@ import { classificarDia, diasDoIntervalo, estenderFimMesSeAplicavel, type Classi
 import { fmtData } from '../domain/formatters'
 import Card from './ui/Card'
 import CardHeader from './ui/CardHeader'
+import Responsavel from './ui/Responsavel'
 
 const CORES: Record<ClassificacaoDia['tipo'], string> = {
   ok: 'bg-primary text-white font-semibold',
@@ -126,7 +127,7 @@ export default function Calendario({ rdcs, ini, fim }: { rdcs: RdcRow[]; ini: st
             {responsaveis.map((resp) => (
               <tr key={resp}>
                 <th scope="row" className="cal-resp font-medium text-text-primary" title={resp}>
-                  {resp}
+                  <Responsavel nome={resp} />
                 </th>
                 {dias.map((d, i) => {
                   const c = contagem.get(`${resp}|${d.iso}`) ?? 0

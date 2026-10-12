@@ -11,6 +11,7 @@ import Card from '../components/ui/Card'
 import CardHeader from '../components/ui/CardHeader'
 import EstadoTela from '../components/ui/EstadoTela'
 import Lightbox from '../components/ui/Lightbox'
+import Responsavel from '../components/ui/Responsavel'
 import { tomStatus } from '../domain/badges'
 import { filtrar } from '../domain/filtros'
 import { fmtData, fmtHoras, fmtInteiro } from '../domain/formatters'
@@ -149,7 +150,9 @@ function Detalhe({
           <Badge tom={tomStatus(rdc.status)}>{rdc.status}</Badge>
         </dd>
         <dt className="text-text-secondary">Responsável</dt>
-        <dd>{rdc.responsavel}</dd>
+        <dd>
+          <Responsavel nome={rdc.responsavel} tamanho="lg" comFuncao />
+        </dd>
         <dt className="text-text-secondary">Data</dt>
         <dd className="tabular">{fmtData(rdc.data_rdc)}</dd>
         <dt className="text-text-secondary">Ativo / OM</dt>
@@ -373,7 +376,9 @@ export default function Detalhamento() {
                     />
                   </td>
                   <td className="nowrap">{fmtData(r.data_rdc)}</td>
-                  <td>{r.responsavel}</td>
+                  <td>
+                    <Responsavel nome={r.responsavel} />
+                  </td>
                   <td>{r.ativo}</td>
                   <td className="nowrap">{r.om}</td>
                   <td>

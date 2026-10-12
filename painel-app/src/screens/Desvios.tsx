@@ -3,6 +3,7 @@ import { useExportar, useProducao } from '../api/queries'
 import { useUltimoSucesso } from '../api/useUltimoSucesso'
 import { useAuth } from '../auth/AuthProvider'
 import EChart from '../components/charts/EChart'
+import { useFotosRedondas } from '../components/charts/fotoRedonda'
 import Badge from '../components/ui/Badge'
 import Banner from '../components/ui/Banner'
 import Card from '../components/ui/Card'
@@ -13,6 +14,7 @@ import { tomSituacao } from '../domain/badges'
 import { filtrar } from '../domain/filtros'
 import { fmtData, fmtHoras, fmtInteiro } from '../domain/formatters'
 import { hhPorResponsavel } from '../domain/hh'
+import { fotoResponsavel, iniciais } from '../domain/responsaveis'
 import { useFilters } from '../filters/FilterContext'
 import { cssVar } from '../styles/cssVar'
 
@@ -27,6 +29,8 @@ export default function Desvios() {
   const { dados: dadosOk, semDados } = useUltimoSucesso(exportar)
   const recorte = useMemo(() => (dadosOk ? filtrar(dadosOk, secundarios) : null), [dadosOk, secundarios])
   const porResp = useMemo(() => (recorte ? hhPorResponsavel(recorte.rdcs, recorte.atividades) : []), [recorte])
+  const fotos = useMemo(() => porResp.map((r) => fotoResponsavel(r.responsavel)).filter((f): f is string => !!f), [porResp])
+  const redondas = useFotosRedondas(fotos)
   const porRdc = useMemo(() => new Map((recorte?.rdcs ?? []).map((r) => [r.codigo, r])), [recorte])
 
   const { dados: prodOk, carregando: prodCarregando, semDados: prodFalhou } = useUltimoSucesso(producao)
@@ -35,8 +39,23 @@ export default function Desvios() {
 
   // Mesma linguagem do app mobile (Modelo/DESIGN.md): HH trabalhado = --actual
   // (azul de produção) e HH de impacto = --impact (laranja, exclusivo de impacto).
-  const opcaoResponsavel = useMemo(
-    () => ({
+  // Foto (ou iniciais) ao lado do nome no eixo: um estilo rich por linha,
+  // porque a imagem de fundo é fixa em cada estilo.
+  const opcaoResponsavel = useMemo(() => {
+    const avatares = Object.fromEntries(
+      porResp.map((r, i) => {
+        const original = fotoResponsavel(r.responsavel)
+        const foto = original && (redondas[original] ?? original)
+        const base = { width: 22, height: 22, borderRadius: 11, align: 'center' as const }
+        return [
+          `f${i}`,
+          foto
+            ? { ...base, backgroundColor: { image: foto } }
+            : { ...base, backgroundColor: cssVar('--primary-light'), color: '#fff', fontSize: 10, fontWeight: 600 as const },
+        ]
+      }),
+    )
+    return {
       tooltip: {
         trigger: 'axis' as const,
         axisPointer: { type: 'shadow' as const },
@@ -51,7 +70,11 @@ export default function Desvios() {
         data: porResp.map((r) => r.responsavel),
         axisTick: { show: false },
         // Nomes longos são truncados no eixo; o nome completo aparece no tooltip.
-        axisLabel: { fontSize: 12, width: 140, overflow: 'truncate' as const },
+        axisLabel: {
+          formatter: (nome: string, i: number) =>
+            `{nome|${nome}}  {f${i}|${fotoResponsavel(nome) ? '' : iniciais(nome)}}`,
+          rich: { ...avatares, nome: { fontSize: 12, width: 140, overflow: 'truncate' as const, align: 'right' as const } },
+        },
       },
       series: [
         {
@@ -71,9 +94,8 @@ export default function Desvios() {
           itemStyle: { color: cssVar('--impact'), borderRadius: [0, 2, 2, 0] },
         },
       ],
-    }),
-    [porResp],
-  )
+    }
+  }, [porResp, redondas])
 
   if (!recorte) return <EstadoTela erro={semDados} />
 

@@ -3,6 +3,7 @@ import { useProducao, useProducaoResp } from '../api/queries'
 import { useUltimoSucesso } from '../api/useUltimoSucesso'
 import { useAuth } from '../auth/AuthProvider'
 import Badge from '../components/ui/Badge'
+import Responsavel from '../components/ui/Responsavel'
 import Banner from '../components/ui/Banner'
 import Card from '../components/ui/Card'
 import CardHeader from '../components/ui/CardHeader'
@@ -116,7 +117,9 @@ export default function Comparacao() {
                   {respOk.linhas.map((l, i) => (
                     <tr key={i}>
                       <td className="nowrap">{fmtData(l.data)}</td>
-                      <td>{l.responsavel}</td>
+                      <td>
+                        <Responsavel nome={l.responsavel} />
+                      </td>
                       <td>{l.tag}</td>
                       <td>{l.disciplina}</td>
                       <td>
