@@ -39,28 +39,29 @@ export default function Shell() {
   return (
     <FilterProvider>
       <div className="flex h-dvh flex-col bg-background">
-        {/* Barra superior clara com divisória de 1 px (Executive Industrial RDC / Stitch). */}
-        <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border bg-surface px-4 py-2 text-text-primary lg:px-6">
+        {/* Barra superior azul-marinho com logo em caixa branca, como no app mobile (.topbar/.top-logo). */}
+        <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 bg-primary px-4 py-2 text-white lg:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
               onClick={() => setMenuAberto(true)}
               aria-expanded={menuAberto}
               aria-controls="painel-lateral"
-              className="se-button se-button--outline se-button--sm lg:hidden"
+              className="se-button se-button--on-dark se-button--sm lg:hidden"
             >
               Menu e filtros
             </button>
-            <img src={logoPpl} alt="PPL" className="h-6 w-auto" />
-            <span className="hidden h-6 w-px bg-border sm:block" aria-hidden="true" />
+            <span className="flex shrink-0 items-center rounded-control bg-surface px-2 py-1">
+              <img src={logoPpl} alt="PPL" className="h-6 w-auto" />
+            </span>
             <h1 className="truncate text-base font-semibold tracking-tight sm:text-lg">Painel de Controle</h1>
           </div>
           <div className="flex items-center gap-3">
-            <button type="button" onClick={() => setCargaAberta(true)} className="se-button se-button--sm">
+            <button type="button" onClick={() => setCargaAberta(true)} className="se-button se-button--on-dark se-button--sm">
               Atualizar carga produção
             </button>
-            <span className="hidden text-sm text-text-secondary md:inline">{admin?.nome}</span>
-            <button type="button" onClick={sair} className="se-link">
+            <span className="hidden text-sm text-white/80 md:inline">{admin?.nome}</span>
+            <button type="button" onClick={sair} className="se-link text-white/85 hover:text-white">
               Sair
             </button>
           </div>

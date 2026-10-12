@@ -34,7 +34,7 @@ function reduzMovimento(): boolean {
 }
 
 /**
- * Aplica a identidade "Executive Industrial RDC" (design-tokens.css) a toda opção de
+ * Aplica a paleta do app mobile (design-tokens.css) a toda opção de
  * gráfico, sem sobrescrever o que a tela definiu explicitamente:
  * - fundo transparente (o ChartCard já pinta --chart-background);
  * - eixos --axis mais fortes que a grade --gridline; rótulos 11 px;

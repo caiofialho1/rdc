@@ -7,8 +7,8 @@ import Card from './ui/Card'
 import CardHeader from './ui/CardHeader'
 
 const CORES: Record<ClassificacaoDia['tipo'], string> = {
-  ok: 'bg-actual text-white font-semibold',
-  feriado: 'bg-accent/20',
+  ok: 'bg-primary text-white font-semibold',
+  feriado: 'bg-info-border',
   fds: 'bg-planned/15',
   futuro: 'text-text-secondary',
   no: 'bg-warning-bg text-warning-text font-semibold',
@@ -35,9 +35,9 @@ function gruposDeMes(dias: DiaCalendario[]): Array<{ chave: string; rotulo: stri
 
 function Legenda() {
   const itens: Array<[string, string, string]> = [
-    ['bg-actual text-white', '✓', 'RDC emitido (número = mais de um)'],
+    ['bg-primary text-white', '✓', 'RDC emitido (número = mais de um)'],
     ['bg-warning-bg text-warning-text', '✕', 'Dia útil sem RDC'],
-    ['bg-accent/20', '', 'Feriado'],
+    ['bg-info-border', '', 'Feriado'],
     ['bg-planned/15', '', 'Fim de semana'],
     ['text-text-secondary border border-border', '–', 'Data futura'],
   ]

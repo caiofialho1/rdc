@@ -9,7 +9,7 @@ const TONS: Record<Tom, string> = {
   neutro: 'border-border bg-surface-soft text-text-secondary',
 }
 
-/** Nunca só cor: rótulo textual sempre visível; contorno 1 px no tom do estado (padrão Stitch). */
+/** Nunca só cor: rótulo textual sempre visível; contorno 1 px no tom do estado. */
 export default function Badge({ tom, children }: { tom: Tom; children: ReactNode }) {
   return <span className={`se-chip border ${TONS[tom]}`}>{children}</span>
 }

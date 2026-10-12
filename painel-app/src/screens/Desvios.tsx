@@ -33,9 +33,8 @@ export default function Desvios() {
   const todosDesvios = useMemo(() => (prodOk ? prodOk.linhas.filter((l) => l.situacao !== 'Produção com RDC') : []), [prodOk])
   const desvios = todosDesvios.slice(0, LIMITE_DESVIOS)
 
-  // HH trabalhado = --actual (série "realizado"). HH de impacto não é "planejado"
-  // nem "meta" — é uma 2ª série medida, por isso usa --info, não o --accent
-  // (reservado a meta/destaque).
+  // Mesma linguagem do app mobile (Modelo/DESIGN.md): HH trabalhado = --actual
+  // (azul de produção) e HH de impacto = --impact (laranja, exclusivo de impacto).
   const opcaoResponsavel = useMemo(
     () => ({
       tooltip: {
@@ -69,7 +68,7 @@ export default function Desvios() {
           stack: 'hh',
           barMaxWidth: 22,
           data: porResp.map((r) => r.hhImpacto),
-          itemStyle: { color: cssVar('--info'), borderRadius: [0, 2, 2, 0] },
+          itemStyle: { color: cssVar('--impact'), borderRadius: [0, 2, 2, 0] },
         },
       ],
     }),

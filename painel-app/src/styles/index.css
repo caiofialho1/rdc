@@ -2,10 +2,11 @@
 @import "./design-tokens.css";
 
 /*
- * design-tokens.css é a fonte única de verdade da paleta "Executive
- * Industrial RDC" (Google Stitch, projeto "Painel Produção e Obras"). As
- * classes .se-page/.se-card/.se-chart/.se-button/.se-table/.se-kpi-value/
- * .se-muted de lá já estão disponíveis globalmente.
+ * design-tokens.css é a fonte única de verdade da paleta — a mesma do app
+ * mobile (index.html / Modelo/DESIGN.md): azul-marinho #102E49, azul de
+ * produção #2B78D8 e laranja #ED7938 só para impacto. As classes .se-page/
+ * .se-card/.se-chart/.se-button/.se-table/.se-kpi-value/.se-muted de lá já
+ * estão disponíveis globalmente.
  *
  * O bloco abaixo só ESPELHA os mesmos valores no namespace que o Tailwind
  * v4 exige para gerar utilitários (--color-*, --font-*, --radius-*) — são
@@ -17,49 +18,46 @@
   --font-sans: Inter, Arial, system-ui, sans-serif;
   --font-report: Arial, sans-serif;
 
-  --color-primary: #1e2229;
-  --color-primary-light: #43474f;
-  --color-secondary: #45474b;
-  --color-blue-soft: #76777c;
-  --color-slate: #8e9096;
-  --color-gray-cool: #c6c6cb;
-  --color-ice: #eeeeeb;
-  --color-accent: #a68a52;
-
-  --color-background: #f7f7f5;
+  --color-primary: #102e49;
+  --color-primary-light: #1b4467;
+  --color-secondary: #1b4467;
+  --color-blue-soft: #7a8fa3;
+  --color-slate: #9aa7b5;
+  --color-gray-cool: #bfd1df;
+  --color-ice: #edf0f3;
+  --color-accent: #ed7938;
+  --color-background: #f4f6f9;
   --color-surface: #ffffff;
-  --color-surface-soft: #f0f0ed;
-  --color-chart-background: #fafaf8;
-  --color-border: #e5e5e5;
-  --color-text-primary: #111111;
-  --color-text-secondary: #5f6166;
-  --color-gridline: #eeeeeb;
-  --color-axis: #8e9096;
-
-  --color-planned: #8e9096;
-  --color-actual: #1e2229;
-  --color-target: #a68a52;
-  --color-info: #2563eb;
-  --color-success: #059669;
-  --color-warning: #d97706;
-  --color-danger: #dc2626;
+  --color-surface-soft: #eef2f6;
+  --color-chart-background: #f8fafc;
+  --color-border: #d9e1e9;
+  --color-text-primary: #183752;
+  --color-text-secondary: #526b82;
+  --color-gridline: #d2dde8;
+  --color-axis: #597087;
+  --color-planned: #9aa7b5;
+  --color-actual: #2b78d8;
+  --color-impact: #ed7938;
+  --color-impact-text: #a74c20;
+  --color-target: #102e49;
+  --color-info: #2b78d8;
+  --color-success: #2e7d52;
+  --color-warning: #ed7938;
+  --color-danger: #c34d46;
   --color-series-purple: #796b98;
   --color-series-blue-muted: #8ba7b8;
-
-  --color-success-bg: #ecfdf5;
-  --color-warning-bg: #fffbeb;
-  --color-danger-bg: #fef2f2;
-  --color-info-bg: #eff6ff;
-
-  --color-success-border: #a7f3d0;
-  --color-warning-border: #fde68a;
-  --color-danger-border: #fecaca;
-  --color-info-border: #bfdbfe;
-
-  --color-success-text: #065f46;
-  --color-warning-text: #92400e;
-  --color-danger-text: #991b1b;
-  --color-info-text: #1e40af;
+  --color-success-bg: #eef7f2;
+  --color-warning-bg: #fff4e9;
+  --color-danger-bg: #fdf1ee;
+  --color-info-bg: #eef4fb;
+  --color-success-border: #c7e3d5;
+  --color-warning-border: #f0e1d5;
+  --color-danger-border: #e9b8aa;
+  --color-info-border: #c9dcf3;
+  --color-success-text: #2e7d52;
+  --color-warning-text: #9c5a1e;
+  --color-danger-text: #a63f39;
+  --color-info-text: #1f5faf;
 
   /* Mesmos valores literais de design-tokens.css — ver nota acima. */
   --radius-card: 6px;
@@ -77,7 +75,7 @@ body {
 
 /*
  * Foco visível único para todo controle interativo (WCAG 2.4.7/2.4.11).
- * --info (#2563EB) sobre branco = 5,2:1, acima do mínimo de 3:1 para indicadores.
+ * --info (#2B78D8) sobre branco = 4,4:1, acima do mínimo de 3:1 para indicadores.
  */
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--info);
@@ -96,9 +94,9 @@ body {
 
 /*
  * Variantes coloridas do .se-button para ações semânticas (validar/revisar/
- * cancelar). Fundo nas variantes -text: branco sobre --warning dá só 2,79:1 e
- * sobre --danger 4,05:1 (abaixo de 4,5:1 para texto de 13 px); sobre as
- * variantes -text fica entre 6,8:1 e 7,1:1.
+ * cancelar). Fundo nas variantes -text, que garantem ≥ 4,5:1 para o texto
+ * branco de 13 px: --success-text #2E7D52 = 5,0:1, --danger-text #A63F39 =
+ * 6,2:1, --warning-text #9C5A1E = 5,6:1.
  */
 .se-button--success {
   background: var(--success-text);
@@ -254,7 +252,7 @@ body {
   color: var(--text-secondary);
 }
 
-/* Chip de estado: par bg claro + texto -text + contorno 1 px (padrão Stitch), nunca cor isolada. */
+/* Chip de estado: par bg claro + texto -text + contorno 1 px, nunca cor isolada. */
 .se-chip {
   display: inline-flex;
   align-items: center;
