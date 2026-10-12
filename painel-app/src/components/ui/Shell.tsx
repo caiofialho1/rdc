@@ -3,10 +3,10 @@ import { useAuth } from '../../auth/AuthProvider'
 import { FilterProvider } from '../../filters/FilterContext'
 import CargaProducao from '../CargaProducao'
 import Comparacao from '../../screens/Comparacao'
-import Contexto from '../../screens/Contexto'
 import Desempenho from '../../screens/Desempenho'
 import Desvios from '../../screens/Desvios'
 import Detalhamento from '../../screens/Detalhamento'
+import Executivo from '../../screens/Executivo'
 import CabecalhoTela from './CabecalhoTela'
 import Sidebar from './Sidebar'
 import type { TelaChave } from './telas'
@@ -14,7 +14,8 @@ import { useDialogo } from './useDialogo'
 import logoPpl from '../../assets/ppl-logo.png'
 
 const TELAS = [
-  { chave: 'contexto', rotulo: 'Contexto', Componente: Contexto },
+  // Tela inicial: layout do protótipo Stitch "Painel Executivo" com dados reais (substituiu Contexto).
+  { chave: 'executivo', rotulo: 'Painel executivo', Componente: Executivo },
   { chave: 'desempenho', rotulo: 'Desempenho', Componente: Desempenho },
   { chave: 'comparacao', rotulo: 'Comparação', Componente: Comparacao },
   { chave: 'desvios', rotulo: 'Desvios', Componente: Desvios },
@@ -23,7 +24,7 @@ const TELAS = [
 
 export default function Shell() {
   const { admin, sair } = useAuth()
-  const [telaAtiva, setTelaAtiva] = useState<TelaChave>('contexto')
+  const [telaAtiva, setTelaAtiva] = useState<TelaChave>('executivo')
   const [cargaAberta, setCargaAberta] = useState(false)
   const [menuAberto, setMenuAberto] = useState(false)
   const fecharMenu = useCallback(() => setMenuAberto(false), [])

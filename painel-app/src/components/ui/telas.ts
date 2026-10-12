@@ -1,4 +1,4 @@
-export type TelaChave = 'contexto' | 'desempenho' | 'comparacao' | 'desvios' | 'detalhamento'
+export type TelaChave = 'executivo' | 'desempenho' | 'comparacao' | 'desvios' | 'detalhamento'
 
 /** Props comuns às telas: navegação programática (ex.: atalho de pendências → Detalhamento). */
 export interface TelaProps {

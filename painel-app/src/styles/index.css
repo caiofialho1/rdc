@@ -508,3 +508,169 @@ body {
 .cal-mes {
   border-left: 1px solid var(--blue-soft);
 }
+
+/* ---- Tela "Executivo (teste)": visual do protótipo Stitch, prefixo exec- ---- */
+.exec {
+  color: var(--exec-ink);
+}
+.exec-secao__titulo {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--exec-ink);
+}
+.exec-secao__sub {
+  font-size: 12px;
+  color: var(--exec-text-2);
+}
+.exec-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  border: 1px solid var(--exec-border);
+  border-radius: var(--radius-card);
+  background: #fff;
+  padding: 16px;
+}
+.exec-card--tabela {
+  overflow: hidden;
+  padding: 0;
+}
+.exec-card__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--exec-border);
+  padding-bottom: 12px;
+}
+.exec-card__titulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--exec-ink);
+}
+.exec-card__sub {
+  font-size: 12px;
+  color: var(--exec-text-2);
+}
+.exec-card__rodape {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  border-top: 1px solid var(--exec-border);
+  padding-top: 10px;
+  font-size: 12px;
+  color: var(--exec-text-2);
+}
+.exec-kpi__rotulo {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--exec-outline);
+}
+.exec-kpi__icone {
+  display: flex;
+  height: 28px;
+  width: 28px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-control);
+  background: var(--exec-surface-low);
+  color: var(--exec-ink);
+}
+.exec-kpi__valor {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--exec-ink);
+}
+.exec-kpi__unidade {
+  margin-left: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--exec-text-2);
+}
+.exec-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--exec-border);
+  border-radius: 3px;
+  background: var(--exec-surface-low);
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--exec-ink);
+  white-space: nowrap;
+}
+.exec-chip--prod { border-color: var(--exec-prod-border); background: var(--exec-prod-bg); color: var(--exec-prod); }
+.exec-chip--alert { border-color: var(--exec-alert-border); background: var(--exec-alert-bg); color: var(--exec-alert); }
+.exec-chip--info { border-color: var(--exec-info-border); background: var(--exec-info-bg); color: var(--exec-info); }
+.exec-chip--impact { border-color: var(--exec-impact-border); background: var(--exec-impact-bg); color: var(--exec-impact); }
+.exec-chip--gold { border-color: color-mix(in srgb, var(--exec-gold) 30%, transparent); background: var(--exec-gold-bg); color: var(--exec-gold); }
+.exec-barra {
+  height: 12px;
+  overflow: hidden;
+  border: 1px solid var(--exec-border);
+  border-radius: 3px;
+  background: var(--exec-surface-low);
+}
+.exec-barra > span {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+}
+.exec-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+.exec-tabela thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  border-bottom: 1px solid var(--exec-border);
+  background: var(--exec-surface-low);
+  padding: 12px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--exec-text-2);
+}
+.exec-tabela tbody th,
+.exec-tabela tbody td {
+  border-bottom: 1px solid var(--exec-border);
+  padding: 12px 16px;
+  font-weight: 400;
+  vertical-align: middle;
+}
+.exec-tabela tbody tr:hover {
+  background: color-mix(in srgb, var(--exec-surface-low) 60%, transparent);
+}
+.exec-tabela .num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* 1ª coluna fixa na rolagem horizontal, com sombra de elevação. */
+.exec-tabela .fixa {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: #fff;
+  box-shadow: 3px 0 6px -2px rgb(0 0 0 / 0.08);
+}
+.exec-tabela thead .fixa {
+  z-index: 3;
+  background: var(--exec-surface-low);
+}

@@ -92,3 +92,33 @@
   .se-button { display: none; }
   * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }
+
+/*
+ * Tela "Executivo (teste)": paleta do protótipo Stitch (preto/grafite +
+ * dourado, impacto em vermelho). Só essa tela usa os tokens --exec-*; as
+ * demais seguem a paleta do app mobile acima.
+ */
+:root {
+  --exec-ink: #111111;
+  --exec-ink-2: #1e2229;
+  --exec-graphite: #45474b;
+  --exec-outline: #76777c;
+  --exec-gold: #a68a52;
+  --exec-gold-bg: #fbf8f0;
+  --exec-impact: #c53030;
+  --exec-impact-bg: #fef2f2;
+  --exec-impact-border: #fecaca;
+  --exec-prod: #1b873f;
+  --exec-prod-bg: #ecfdf5;
+  --exec-prod-border: #a7f3d0;
+  --exec-alert: #b45309;
+  --exec-alert-bg: #fffbeb;
+  --exec-alert-border: #fde68a;
+  --exec-info: #1d4ed8;
+  --exec-info-bg: #eff6ff;
+  --exec-info-border: #bfdbfe;
+  --exec-surface: #faf9f6;
+  --exec-surface-low: #f4f4f1;
+  --exec-border: #e2e4e8;
+  --exec-text-2: #45474b;
+}

@@ -21,11 +21,13 @@ test('login recusa credenciais erradas e aceita as corretas', async ({ page }) =
   await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible()
 })
 
-test('Contexto mostra o resumo de pendências do recorte', async ({ page }) => {
+test('Painel executivo (tela inicial) mostra o resumo de pendências do recorte', async ({ page }) => {
   await logar(page)
+  await expect(page.getByRole('heading', { level: 2, name: 'Painel executivo', exact: true })).toBeVisible()
   // RDC_1 está 'Enviado' (aguardando validação), sem... tem contrato; RDC_2 tem PTS=false.
-  await expect(page.getByText('aguardando validação')).toBeVisible()
-  await expect(page.getByText('sem contrato')).toBeVisible()
+  const pendencias = page.getByRole('region', { name: 'Pendências do recorte' })
+  await expect(pendencias.getByText('aguardando validação')).toBeVisible()
+  await expect(pendencias.getByText('sem contrato')).toBeVisible()
 })
 
 test('Desempenho calcula HH trabalhado a partir das atividades do recorte', async ({ page }) => {
@@ -76,13 +78,14 @@ test('Falha na atualização mantém os dados anteriores com aviso, sem apagar n
     return route.fulfill({ status: 500, json: { message: 'erro interno' } })
   })
   await logar(page)
-  await expect(page.getByText('aguardando validação')).toBeVisible()
+  const pendencias = page.getByRole('region', { name: 'Pendências do recorte' })
+  await expect(pendencias.getByText('aguardando validação')).toBeVisible()
 
   // força um novo fetch mudando o período -> 2ª chamada falha
-  await page.getByLabel('De').fill('2026-01-01')
+  await page.getByLabel('De', { exact: true }).fill('2026-01-01')
   await expect(page.getByText('Não foi possível atualizar. Veja abaixo a última consulta que carregou com sucesso.')).toBeVisible()
   // o resumo de pendências antigo continua visível (dado não foi apagado)
-  await expect(page.getByText('aguardando validação')).toBeVisible()
+  await expect(pendencias.getByText('aguardando validação')).toBeVisible()
 })
 
 function planilhaTeste(): Buffer {
