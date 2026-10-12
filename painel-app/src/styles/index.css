@@ -215,6 +215,15 @@ body {
 .se-table td.nowrap {
   white-space: nowrap;
 }
+/* Cabeçalho de linha (scope="row"): semântica de th, aparência de célula. */
+.se-table tbody th[scope='row'] {
+  background: transparent;
+  color: var(--text-primary);
+  padding: 9px 12px;
+  font-size: 13px;
+  letter-spacing: normal;
+  text-transform: none;
+}
 .se-table th[aria-sort] {
   padding: 0;
 }

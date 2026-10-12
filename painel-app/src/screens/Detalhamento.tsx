@@ -13,6 +13,7 @@ import EstadoTela from '../components/ui/EstadoTela'
 import Lightbox from '../components/ui/Lightbox'
 import Responsavel from '../components/ui/Responsavel'
 import { tomStatus } from '../domain/badges'
+import { disciplinasPorRdc, fotosPorRdc } from '../domain/diagnostico'
 import { filtrar } from '../domain/filtros'
 import { fmtData, fmtHoras, fmtInteiro } from '../domain/formatters'
 import { useFilters } from '../filters/FilterContext'
@@ -27,6 +28,23 @@ const COLUNAS: Array<[Coluna, string]> = [
   ['status', 'Status'],
   ['contrato', 'Contrato'],
 ]
+
+/** PTS e bloqueio numa célula: ausência de declaração é "—", nunca "Não". */
+function PtsBloqueio({ rdc }: { rdc: RdcRow }) {
+  const pts =
+    rdc.pts == null
+      ? null
+      : rdc.pts
+        ? `PTS${rdc.espera_pts_min == null ? ' (sem horário)' : ` · ${fmtInteiro(rdc.espera_pts_min)} min`}`
+        : 'Sem PTS'
+  if (pts == null && rdc.bloqueio == null) return <>—</>
+  return (
+    <span className="flex flex-col gap-0.5 text-xs">
+      <span>{pts ?? 'PTS —'}</span>
+      {rdc.bloqueio === true && <span className="font-semibold text-text-primary">Bloqueio{rdc.bloqueio_ativo ? ` · ${rdc.bloqueio_ativo}` : ''}</span>}
+    </span>
+  )
+}
 
 function Miniatura({ foto, onClick }: { foto: FotoRow; onClick: () => void }) {
   const url = useFotoBlobUrl(foto.caminho)
@@ -122,9 +140,10 @@ function Detalhe({
   const idObs = useId()
   const ref = useRef<HTMLDivElement>(null)
 
-  // Em telas < 1024 px o detalhe fica abaixo da tabela: leva o usuário até ele.
+  // Abaixo de ~90rem de conteúdo o detalhe fica abaixo da tabela: leva o usuário até ele
+  // ('nearest' não mexe na rolagem quando ele já está visível ao lado da tabela).
   useEffect(() => {
-    if (!window.matchMedia('(min-width: 1024px)').matches) ref.current?.scrollIntoView({ block: 'start' })
+    ref.current?.scrollIntoView({ block: 'nearest' })
   }, [])
 
   async function decidir(decisao: 'Validado' | 'Em revisão' | 'Cancelado') {
@@ -135,7 +154,7 @@ function Detalhe({
   }
 
   return (
-    <Card ref={ref} className="flex scroll-mt-4 flex-col gap-3 lg:sticky lg:top-0" aria-labelledby={`detalhe-${rdc.codigo}`}>
+    <Card ref={ref} className="flex scroll-mt-4 flex-col gap-3 @[90rem]:sticky @[90rem]:top-0" aria-labelledby={`detalhe-${rdc.codigo}`}>
       <div className="flex items-start justify-between gap-2">
         <h3 id={`detalhe-${rdc.codigo}`} className="min-w-0 text-[15px] font-semibold break-all text-text-primary">
           {rdc.codigo}
@@ -261,6 +280,10 @@ export default function Detalhamento() {
   const { dados: dadosOk, semDados } = useUltimoSucesso(consulta)
   const recorte = useMemo(() => (dadosOk ? filtrar(dadosOk, secundarios) : null), [dadosOk, secundarios])
 
+  // Disciplinas de todas as atividades do RDC (não só as do filtro de disciplina).
+  const disciplinas = useMemo(() => disciplinasPorRdc(dadosOk?.atividades ?? []), [dadosOk])
+  const fotosRdc = useMemo(() => fotosPorRdc(recorte?.fotos ?? []), [recorte])
+
   const linhas = useMemo(() => {
     if (!recorte) return []
     const copia = [...recorte.rdcs]
@@ -305,7 +328,7 @@ export default function Detalhamento() {
   if (!recorte) return <EstadoTela erro={semDados} />
 
   return (
-    <div className="grid grid-cols-1 items-start gap-4 @[64rem]:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+    <div className="grid grid-cols-1 items-start gap-4 @[90rem]:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
       <Card className="min-w-0">
         <CardHeader
           titulo="Registros RDC"
@@ -330,7 +353,7 @@ export default function Detalhamento() {
         />
         {editar.isError && <Banner tipo="erro">Não foi possível aplicar o contrato aos selecionados.</Banner>}
         <div className="se-table-wrap max-h-[32rem]">
-          <table className="se-table min-w-[680px]">
+          <table className="se-table min-w-[980px]">
             <thead>
               <tr>
                 <th scope="col" className="w-10">
@@ -349,6 +372,11 @@ export default function Detalhamento() {
                     </th>
                   )
                 })}
+                <th scope="col">Disciplina</th>
+                <th scope="col" className="num">
+                  Fotos (GPS)
+                </th>
+                <th scope="col">PTS / Bloqueio</th>
               </tr>
             </thead>
             <tbody>
@@ -385,6 +413,25 @@ export default function Detalhamento() {
                     <Badge tom={tomStatus(r.status)}>{r.status}</Badge>
                   </td>
                   <td>{r.contrato_nome ?? '—'}</td>
+                  <td>
+                    <span className="flex flex-wrap gap-1">
+                      {(disciplinas.get(r.codigo) ?? []).map((d) => (
+                        <Badge key={d} tom="neutro">
+                          {d}
+                        </Badge>
+                      ))}
+                      {!disciplinas.has(r.codigo) && '—'}
+                    </span>
+                  </td>
+                  <td className="num">
+                    {(() => {
+                      const f = fotosRdc.get(r.codigo)
+                      return f ? `${fmtInteiro(f.total)} (${fmtInteiro(f.comGps)})` : '0'
+                    })()}
+                  </td>
+                  <td>
+                    <PtsBloqueio rdc={r} />
+                  </td>
                 </tr>
               ))}
             </tbody>

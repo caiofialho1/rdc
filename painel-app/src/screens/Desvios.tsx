@@ -10,9 +10,11 @@ import Card from '../components/ui/Card'
 import CardHeader from '../components/ui/CardHeader'
 import ChartCard from '../components/ui/ChartCard'
 import EstadoTela from '../components/ui/EstadoTela'
+import Responsavel from '../components/ui/Responsavel'
 import { tomSituacao } from '../domain/badges'
+import { rankingResponsaveis } from '../domain/diagnostico'
 import { filtrar } from '../domain/filtros'
-import { fmtData, fmtHoras, fmtInteiro } from '../domain/formatters'
+import { fmtData, fmtHoras, fmtInteiro, fmtNumero, fmtPercentual } from '../domain/formatters'
 import { hhPorResponsavel } from '../domain/hh'
 import { fotoResponsavel, iniciais } from '../domain/responsaveis'
 import { useFilters } from '../filters/FilterContext'
@@ -29,6 +31,7 @@ export default function Desvios() {
   const { dados: dadosOk, semDados } = useUltimoSucesso(exportar)
   const recorte = useMemo(() => (dadosOk ? filtrar(dadosOk, secundarios) : null), [dadosOk, secundarios])
   const porResp = useMemo(() => (recorte ? hhPorResponsavel(recorte.rdcs, recorte.atividades) : []), [recorte])
+  const ranking = useMemo(() => (recorte ? rankingResponsaveis(recorte.rdcs, recorte.atividades) : []), [recorte])
   const fotos = useMemo(() => porResp.map((r) => fotoResponsavel(r.responsavel)).filter((f): f is string => !!f), [porResp])
   const redondas = useFotosRedondas(fotos)
   const porRdc = useMemo(() => new Map((recorte?.rdcs ?? []).map((r) => [r.codigo, r])), [recorte])
@@ -116,6 +119,55 @@ export default function Desvios() {
             .join('; ')}.`}
         />
       </ChartCard>
+
+      <Card>
+        <CardHeader
+          titulo="Responsáveis de campo"
+          subtitulo="Ordenado pelo HH trabalhado. Efetivo médio = média do maior efetivo de cada RDC. Sem classificação de desempenho: não há meta cadastrada."
+        />
+        <div className="se-table-wrap max-h-[28rem]" tabIndex={0} role="region" aria-label="Tabela de responsáveis de campo (rolável)">
+          <table className="se-table min-w-[820px]">
+            <caption className="sr-only">Responsáveis de campo no recorte</caption>
+            <thead>
+              <tr>
+                <th scope="col">Responsável</th>
+                <th scope="col">Área principal</th>
+                <th scope="col" className="num">
+                  RDC
+                </th>
+                <th scope="col" className="num">
+                  Efetivo médio
+                </th>
+                <th scope="col" className="num">
+                  HH trabalhado
+                </th>
+                <th scope="col" className="num">
+                  HH de impacto
+                </th>
+                <th scope="col" className="num">
+                  Impacto ÷ trabalhado
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {ranking.map((l) => (
+                <tr key={l.responsavel}>
+                  <th scope="row" className="font-normal">
+                    <Responsavel nome={l.responsavel} tamanho="md" comFuncao />
+                  </th>
+                  <td>{l.areaPrincipal ?? '—'}</td>
+                  <td className="num">{fmtInteiro(l.rdcs)}</td>
+                  <td className="num">{fmtNumero(l.efetivoMedio)}</td>
+                  <td className="num">{fmtHoras(l.hhTrabalhado)}</td>
+                  <td className="num">{fmtHoras(l.hhImpacto)}</td>
+                  <td className="num">{l.hhTrabalhado > 0 ? fmtPercentual(l.hhImpacto / l.hhTrabalhado) : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {ranking.length === 0 && <p className="se-table-empty">Nenhum RDC no recorte.</p>}
+        </div>
+      </Card>
 
       <Card>
         <CardHeader

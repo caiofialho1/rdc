@@ -1,12 +1,12 @@
 import * as echarts from 'echarts/core'
 import { BarChart, LineChart, PieChart } from 'echarts/charts'
-import { GridComponent, LegendComponent, TitleComponent, TooltipComponent } from 'echarts/components'
+import { GridComponent, LegendComponent, MarkLineComponent, TitleComponent, TooltipComponent } from 'echarts/components'
 import { SVGRenderer } from 'echarts/renderers'
 import { useEffect, useRef } from 'react'
 import { fmtNumero } from '../../domain/formatters'
 import { cssVar } from '../../styles/cssVar'
 
-echarts.use([BarChart, LineChart, PieChart, GridComponent, LegendComponent, TitleComponent, TooltipComponent, SVGRenderer])
+echarts.use([BarChart, LineChart, PieChart, GridComponent, LegendComponent, MarkLineComponent, TitleComponent, TooltipComponent, SVGRenderer])
 
 interface EChartProps {
   option: echarts.EChartsCoreOption
@@ -102,8 +102,9 @@ function comIdentidadeVisual(option: echarts.EChartsCoreOption): echarts.ECharts
           },
         }
       : {}),
-    xAxis: estiloEixo(o.xAxis as EixoComEstilo),
-    yAxis: estiloEixo(o.yAxis as EixoComEstilo),
+    // Eixo duplo (ex.: Pareto) chega como array: cada eixo recebe o mesmo estilo.
+    xAxis: Array.isArray(o.xAxis) ? (o.xAxis as EixoComEstilo[]).map(estiloEixo) : estiloEixo(o.xAxis as EixoComEstilo),
+    yAxis: Array.isArray(o.yAxis) ? (o.yAxis as EixoComEstilo[]).map(estiloEixo) : estiloEixo(o.yAxis as EixoComEstilo),
   }
 }
 
