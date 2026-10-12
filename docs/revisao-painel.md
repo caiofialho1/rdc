@@ -1,5 +1,7 @@
 # Revisão do Painel de Controle — 10/10/2026
 
+> **Superseded em 11/10/2026**: o Painel de Controle foi reconstruído do zero em `painel-app/` (Vite + React + TypeScript + Tailwind). Este documento descreve a versão anterior (HTML/CSS/JS sem build) e fica só como histórico. Documentação atual: `DATABASE_AUDIT.md`, `BUSINESS_MODEL.md`, `KPI_CATALOG.md`, `INFORMATION_ARCHITECTURE.md`.
+
 Aplicação da skill `executive-dashboard-design`. Público considerado: Planejamento e administradores dos contratos. Decisões: identificar esforço registrado, investigar impactos, validar RDC e completar informações de contrato e PTS.
 
 ## Hierarquia e alterações

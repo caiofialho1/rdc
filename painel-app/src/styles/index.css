@@ -1,0 +1,503 @@
+@import "tailwindcss";
+@import "./design-tokens.css";
+
+/*
+ * design-tokens.css é a fonte única de verdade da paleta "Executive
+ * Industrial RDC" (Google Stitch, projeto "Painel Produção e Obras"). As
+ * classes .se-page/.se-card/.se-chart/.se-button/.se-table/.se-kpi-value/
+ * .se-muted de lá já estão disponíveis globalmente.
+ *
+ * O bloco abaixo só ESPELHA os mesmos valores no namespace que o Tailwind
+ * v4 exige para gerar utilitários (--color-*, --font-*, --radius-*) — são
+ * os mesmos nomes de variável do Tailwind (--radius-card etc.), por isso
+ * não podem só referenciar var(--...) do arquivo acima sem colidir.
+ * Qualquer mudança de cor/raio deve ser feita em design-tokens.css E aqui.
+ */
+@theme {
+  --font-sans: Inter, Arial, system-ui, sans-serif;
+  --font-report: Arial, sans-serif;
+
+  --color-primary: #1e2229;
+  --color-primary-light: #43474f;
+  --color-secondary: #45474b;
+  --color-blue-soft: #76777c;
+  --color-slate: #8e9096;
+  --color-gray-cool: #c6c6cb;
+  --color-ice: #eeeeeb;
+  --color-accent: #a68a52;
+
+  --color-background: #f7f7f5;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f0f0ed;
+  --color-chart-background: #fafaf8;
+  --color-border: #e5e5e5;
+  --color-text-primary: #111111;
+  --color-text-secondary: #5f6166;
+  --color-gridline: #eeeeeb;
+  --color-axis: #8e9096;
+
+  --color-planned: #8e9096;
+  --color-actual: #1e2229;
+  --color-target: #a68a52;
+  --color-info: #2563eb;
+  --color-success: #059669;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-series-purple: #796b98;
+  --color-series-blue-muted: #8ba7b8;
+
+  --color-success-bg: #ecfdf5;
+  --color-warning-bg: #fffbeb;
+  --color-danger-bg: #fef2f2;
+  --color-info-bg: #eff6ff;
+
+  --color-success-border: #a7f3d0;
+  --color-warning-border: #fde68a;
+  --color-danger-border: #fecaca;
+  --color-info-border: #bfdbfe;
+
+  --color-success-text: #065f46;
+  --color-warning-text: #92400e;
+  --color-danger-text: #991b1b;
+  --color-info-text: #1e40af;
+
+  /* Mesmos valores literais de design-tokens.css — ver nota acima. */
+  --radius-card: 6px;
+  --radius-control: 4px;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * Foco visível único para todo controle interativo (WCAG 2.4.7/2.4.11).
+ * --info (#2563EB) sobre branco = 5,2:1, acima do mínimo de 3:1 para indicadores.
+ */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
+}
+.se-table tbody tr[tabindex]:focus-visible {
+  outline-offset: -2px;
+}
+
+/* Números alinhados em todo o painel (tabelas, KPIs, rótulos). */
+.tabular,
+.se-table td,
+.se-kpi-value {
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Variantes coloridas do .se-button para ações semânticas (validar/revisar/
+ * cancelar). Fundo nas variantes -text: branco sobre --warning dá só 2,79:1 e
+ * sobre --danger 4,05:1 (abaixo de 4,5:1 para texto de 13 px); sobre as
+ * variantes -text fica entre 6,8:1 e 7,1:1.
+ */
+.se-button--success {
+  background: var(--success-text);
+  border-color: var(--success-text);
+}
+.se-button--success:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.se-button--warning {
+  background: var(--warning-text);
+  border-color: var(--warning-text);
+}
+.se-button--warning:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.se-button--danger {
+  background: var(--danger-text);
+  border-color: var(--danger-text);
+}
+.se-button--danger:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.se-button--sm {
+  padding: 5px 10px;
+  font-size: 12px;
+}
+.se-button--outline {
+  background: transparent;
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+.se-button--outline:hover {
+  background: var(--chart-background);
+}
+/* Para uso sobre o cabeçalho escuro --primary (nav secundária, ações do header). */
+.se-button--on-dark {
+  background: transparent;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+.se-button--on-dark:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.se-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/*
+ * Classes de componente em @layer components: utilitários Tailwind (w-44,
+ * px-3, text-white…) aplicados junto delas têm precedência, como esperado.
+ */
+@layer components {
+  /* Botão de texto (ações secundárias: Fechar, Limpar, Editar) — mesmo alvo de toque de 32 px. */
+  .se-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 4px;
+    border-radius: var(--radius-control);
+    font-size: 13px;
+    color: var(--secondary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+  .se-link:hover {
+    color: var(--text-primary);
+  }
+
+  /*
+   * Campos de formulário. Borda em --blue-soft (3,66:1 sobre branco): a borda
+   * --border (1,30:1) não atinge o mínimo de 3:1 para limites de componentes
+   * (WCAG 1.4.11).
+   */
+  .se-input {
+    min-height: 34px;
+    width: 100%;
+    border: 1px solid var(--blue-soft);
+    border-radius: var(--radius-control);
+    background: var(--surface);
+    padding: 6px 8px;
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+  .se-input:hover {
+    border-color: var(--secondary);
+  }
+  .se-input[aria-invalid='true'] {
+    border-color: var(--danger-text);
+  }
+  .se-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+}
+
+/* Tabelas: cabeçalho fixo dentro do contêiner rolável, sem quebra nos títulos. */
+.se-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  white-space: nowrap;
+}
+.se-table th.num,
+.se-table td.num {
+  text-align: right;
+  white-space: nowrap;
+}
+.se-table td.nowrap {
+  white-space: nowrap;
+}
+.se-table th[aria-sort] {
+  padding: 0;
+}
+.se-table__sort {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 12px;
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.se-table__sort:hover {
+  background: var(--ice);
+  color: var(--text-primary);
+}
+.se-table__sort:focus-visible {
+  outline-offset: -3px;
+}
+.se-table tbody tr[aria-selected='true'] {
+  background: var(--info-bg);
+}
+.se-table-wrap {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+}
+.se-table-empty {
+  padding: 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Chip de estado: par bg claro + texto -text + contorno 1 px (padrão Stitch), nunca cor isolada. */
+.se-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: var(--radius-control);
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ */
+/* Cartões de indicador com ilustração animada (components/ui/KpiCard) */
+/* ------------------------------------------------------------------ */
+.kpi-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 14px 16px;
+}
+.kpi-card__topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.kpi-card__icone {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-control);
+  background: var(--surface-soft);
+  color: var(--primary);
+}
+/* Rótulo em até 2 linhas, com altura reservada: valores ficam na mesma linha de base entre cards. */
+.kpi-card__rotulo {
+  min-height: calc(2 * 1.35em);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.kpi-card__valor {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+  line-height: 1.1;
+}
+.kpi-card__valor .se-kpi-value {
+  font-size: clamp(22px, 1.9vw, 28px);
+}
+.kpi-card__unidade {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+.kpi-card__contexto {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+/*
+ * Animações dos ícones: só durante hover/foco do card. Animação infinita que
+ * começa sozinha sem controle de pausa viola WCAG 2.2.2 e compete com o
+ * número, que é o protagonista.
+ */
+.kpi-card svg * {
+  animation-play-state: paused !important;
+}
+.kpi-card:hover svg *,
+.kpi-card:focus-within svg * {
+  animation-play-state: running !important;
+}
+
+/* Barras subindo — esforço se acumulando (HH trabalhado). */
+@keyframes kpi-rise {
+  0%,
+  100% {
+    transform: scaleY(0.4);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+.kpi-icone-barras rect {
+  transform-origin: bottom center;
+  animation: kpi-rise 2.4s ease-in-out infinite;
+}
+.kpi-icone-barras rect:nth-child(2) {
+  animation-delay: 0.25s;
+}
+.kpi-icone-barras rect:nth-child(3) {
+  animation-delay: 0.5s;
+}
+
+/* Anel com lacuna girando lentamente — impacto como interrupção no fluxo. */
+@keyframes kpi-arco {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.kpi-icone-impacto .kpi-icone-impacto__arco {
+  transform-origin: center;
+  animation: kpi-arco 6s linear infinite;
+}
+
+/* Ponteiro de relógio girando — tempo decorrido. */
+@keyframes kpi-ponteiro {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.kpi-icone-relogio .kpi-icone-relogio__ponteiro {
+  transform-origin: center;
+  animation: kpi-ponteiro 4s linear infinite;
+}
+
+/* Areia caindo — espera. */
+@keyframes kpi-areia {
+  0% {
+    transform: translateY(-3px);
+    opacity: 0.2;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(5px);
+    opacity: 0;
+  }
+}
+.kpi-icone-espera circle {
+  animation: kpi-areia 1.8s ease-in infinite;
+}
+.kpi-icone-espera circle:nth-child(2) {
+  animation-delay: 0.6s;
+}
+.kpi-icone-espera circle:nth-child(3) {
+  animation-delay: 1.2s;
+}
+
+/* Brilho pulsando no cadeado — atenção discreta, sem alarme. */
+@keyframes kpi-brilho {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.kpi-icone-bloqueio .kpi-icone-bloqueio__brilho {
+  animation: kpi-brilho 2.6s ease-in-out infinite;
+}
+
+/* Páginas se revelando em leque — registros se somando. */
+@keyframes kpi-leque {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(1.5px, -1.5px);
+  }
+}
+.kpi-icone-registros rect:first-child {
+  animation: kpi-leque 3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kpi-icone-barras rect,
+  .kpi-icone-impacto .kpi-icone-impacto__arco,
+  .kpi-icone-relogio .kpi-icone-relogio__ponteiro,
+  .kpi-icone-espera circle,
+  .kpi-icone-bloqueio .kpi-icone-bloqueio__brilho,
+  .kpi-icone-registros rect:first-child {
+    animation: none !important;
+  }
+}
+
+/* Calendário de emissão: grade compacta, colunas iguais, cabeçalho e 1ª coluna fixos. */
+.cal-tabela {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12px;
+}
+.cal-tabela th,
+.cal-tabela td {
+  border-bottom: 1px solid var(--border);
+}
+.cal-tabela thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.cal-tabela thead th {
+  background: var(--surface);
+}
+.cal-tabela .cal-resp {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 4px 10px 4px 8px;
+  text-align: left;
+}
+.cal-tabela thead .cal-resp {
+  z-index: 4;
+}
+@media (max-width: 639px) {
+  .cal-tabela .cal-resp {
+    max-width: 112px;
+  }
+}
+/* position: relative contém o texto sr-only de cada célula dentro do contêiner rolável. */
+.cal-dia {
+  position: relative;
+  min-width: 28px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  text-align: center;
+  vertical-align: middle;
+}
+.cal-dia--hoje {
+  box-shadow: inset 0 -2px 0 var(--info);
+}
+.cal-mes {
+  border-left: 1px solid var(--blue-soft);
+}
