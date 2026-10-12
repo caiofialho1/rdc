@@ -859,6 +859,24 @@ const DISCIPLINAS = {
     'MONTAGEM DE ANDAIME','DESMONTAGEM DE ANDAIME','MONTAGEM DE TUBO-VIDA','DESMONTAGEM DE TUBO-VIDA','OUTROS'] }
 };
 const TIPOS_ANDAIME = ['APOIADO','SUSPENSO','BALANÇO'];
+// Tipos de impacto: taxonomia de eventos do Planejamento (sem os que não são impacto:
+// Produção/Execução e Conclusão de Atividade). O tipo é gravado em TipoImpacto; em
+// OUTROS grava "OUTROS — texto digitado". RDC antigo (texto livre) reabre como OUTROS.
+const TIPOS_IMPACTO = ['PTS / LIBERAÇÃO','BLOQUEIO / INTERDIÇÃO','CONDIÇÕES CLIMÁTICAS','FALHA DE EQUIPAMENTO',
+  'FALTA DE MATERIAL','FISCALIZAÇÃO','INTERFERÊNCIA OPERACIONAL','INDISPONIBILIDADE DE ÁREA','SEGURANÇA',
+  'AGUARDO / ESPERA','RECURSO HUMANO','ATRASO OPERACIONAL','PARALISAÇÃO','ALTERAÇÃO DE PROGRAMAÇÃO',
+  'MOBILIZAÇÃO / DESMOBILIZAÇÃO','OUTROS'];
+const IMPACTO_OUTROS = 'OUTROS';
+const lerImpacto = txt => {
+  const t = String(txt || '').trim();
+  if (TIPOS_IMPACTO.includes(t)) return { tipo: t, outros: '' };
+  const m = t.match(/^OUTROS\s*[—–-]\s*([\s\S]*)$/);
+  if (m) return { tipo: IMPACTO_OUTROS, outros: m[1] };
+  return t ? { tipo: IMPACTO_OUTROS, outros: t } : { tipo: '', outros: '' };
+};
+// rascunho salvo antes da lista (só "descricao") é convertido ao abrir
+const normImpacto = x => { if (x.tipo === undefined) Object.assign(x, lerImpacto(x.descricao)); delete x.descricao; return x; };
+const textoImpacto = x => x.tipo === IMPACTO_OUTROS ? `${IMPACTO_OUTROS} — ${x.outros.trim()}` : x.tipo;
 const SERVICOS_COM_TIPO = ['MONTAGEM DE ANDAIME','DESMONTAGEM DE ANDAIME'];
 
 // Líderes autorizados a preencher o RDC (lista de validação do campo Responsável): [nome, função, matrícula]
@@ -1148,7 +1166,7 @@ function buildRecord(d) {
     };
   });
   const impactos = d.impactos.map((x, i) => ({
-    Title: `${code}-I${pad(i + 1)}`, RDC_ID: code, Ordem: i + 1, TipoImpacto: x.descricao.trim(),
+    Title: `${code}-I${pad(i + 1)}`, RDC_ID: code, Ordem: i + 1, TipoImpacto: textoImpacto(normImpacto(x)),
     InicioImpacto: toISO(d.data, x.horaInicio), FimImpacto: toISO(d.data, x.horaFim, toMin(x.horaFim) <= toMin(x.horaInicio)),
     DuracaoMin: duration(x.horaInicio, x.horaFim), ...base
   }));
@@ -1287,7 +1305,7 @@ async function addHistory(rec, status) {
 /* ===================== ESTADO DO RASCUNHO ===================== */
 let draft = null;
 const newActivity = () => ({ id: uid(), disciplina: '', servico: '', tipoAndaime: '', outros: '', observacao: '', horaInicio: '', horaFim: '', efetivo: {}, fotos: [] });
-const newImpact = () => ({ id: uid(), descricao: '', horaInicio: '', horaFim: '' });
+const newImpact = () => ({ id: uid(), tipo: '', outros: '', horaInicio: '', horaFim: '' });
 function newDraft() {
   const last = localStorage.getItem('rdc-responsavel') || (account && account.name) || '';
   let contrato = ''; try { contrato = localStorage.getItem('rdc-contrato') || ''; } catch { }
@@ -1484,7 +1502,9 @@ function impactHTML(x, i) {
   const dur = duration(x.horaInicio, x.horaFim);
   return `<div class="card impact" data-imp="${x.id}">
     <div class="card-head"><span class="badge">Impacto ${pad(i + 1)}</span><button class="link-danger" data-act="del-imp">Excluir</button></div>
-    <div class="field"><label class="lbl">Tipo / descrição do impacto *</label><textarea class="control" data-f="descricao" placeholder="Ex.: Aguardando liberação operacional">${esc(x.descricao)}</textarea></div>
+    <div class="field"><label class="lbl">Tipo de impacto *</label>
+      <select class="control" data-f="tipo"><option value="">Selecione o tipo…</option>${TIPOS_IMPACTO.map(t => `<option ${x.tipo === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
+    ${x.tipo === IMPACTO_OUTROS ? `<div class="field"><label class="lbl">Descreva o impacto *</label><textarea class="control" data-f="outros" placeholder="Descreva o que afetou a execução">${esc(x.outros)}</textarea></div>` : ''}
     <div class="row">
       <div class="field"><label class="lbl">Início *</label><input type="time" class="control" data-f="horaInicio" value="${esc(x.horaInicio)}"></div>
       <div class="field"><label class="lbl">Fim *</label><input type="time" class="control" data-f="horaFim" value="${esc(x.horaFim)}"></div>
@@ -1494,6 +1514,7 @@ function impactHTML(x, i) {
 }
 function renderActivities() { $('activities').innerHTML = draft.atividades.map(activityHTML).join(''); }
 function renderImpacts() {
+  draft.impactos.forEach(normImpacto);
   $('impacts').innerHTML = draft.impactos.length ? draft.impactos.map(impactHTML).join('')
     : '<div class="card empty"><b>Sem impactos registrados.</b><br>Use “Registrar impacto” somente quando alguma ocorrência afetou a execução.</div>';
 }
@@ -1633,6 +1654,7 @@ function bindForm() {
     const item = draft[list].find(x => x.id === card.getAttribute(attr));
     item[f] = e.target.value; saveDraft();
     if (f === 'servico') { if (!SERVICOS_COM_TIPO.includes(item.servico)) item.tipoAndaime = ''; rerender(); }
+    if (f === 'tipo' && list === 'impactos') { if (item.tipo !== IMPACTO_OUTROS) item.outros = ''; rerender(); }
     if (f === 'horaInicio' || f === 'horaFim') {
       const d = duration(item.horaInicio, item.horaFim);
       card.querySelector('[data-dur]').innerHTML = d != null ? `Duração: <b>${fmtDur(d)}</b>${list === 'atividades' && toMin(item.horaFim) <= toMin(item.horaInicio) ? ' (termina no dia seguinte)' : ''}` : '';
@@ -1698,7 +1720,8 @@ function bindForm() {
     renderActivities(); saveDraft();
   });
 
-  $('impacts').addEventListener('input', e => handleInput(e, 'impactos', 'data-imp', renderImpacts));
+  $('impacts').addEventListener('input', e => { if (e.target.tagName !== 'SELECT') handleInput(e, 'impactos', 'data-imp', renderImpacts); });
+  $('impacts').addEventListener('change', e => { if (e.target.tagName === 'SELECT') handleInput(e, 'impactos', 'data-imp', renderImpacts); });
   $('impacts').addEventListener('click', e => {
     const btn = e.target.closest('[data-act="del-imp"]'); if (!btn) return;
     if (!btn.classList.contains('armed')) { btn.classList.add('armed'); btn.textContent = 'Confirmar exclusão'; setTimeout(() => { btn.classList.remove('armed'); btn.textContent = 'Excluir'; }, 3000); return; }
@@ -1750,7 +1773,9 @@ function validate(so) {
   if (!so || so === 4) {
     for (const [i, x] of d.impactos.entries()) {
       const el = document.querySelector(`[data-imp="${x.id}"]`);
-      if (!x.descricao.trim() || !x.horaInicio || !x.horaFim) return e(4, `Complete descrição, início e fim do Impacto ${pad(i + 1)}.`, el);
+      normImpacto(x);
+      if (!x.tipo || !x.horaInicio || !x.horaFim) return e(4, `Complete tipo, início e fim do Impacto ${pad(i + 1)}.`, el);
+      if (x.tipo === IMPACTO_OUTROS && !x.outros.trim()) return e(4, `Descreva o impacto “OUTROS” do Impacto ${pad(i + 1)}.`, el);
     }
   }
   return null;
@@ -1826,7 +1851,7 @@ function review() {
       <div class="rv-thumbs">${a.fotos.map(f => `<img src="${f.dataUrl}" alt="" data-g="${galRev.findIndex(x => x.src === f.dataUrl)}">`).join('')}</div>
     </div>`).join('');
   $('rvImpacts').innerHTML = d.impactos.length ? d.impactos.map((x, i) => `<div class="rv-block">
-      <h4>IMPACTO ${pad(i + 1)}</h4><p>${esc(x.descricao)}</p>
+      <h4>IMPACTO ${pad(i + 1)}</h4><p>${esc(textoImpacto(normImpacto(x)))}</p>
       <p>${esc(x.horaInicio)} → ${esc(x.horaFim)} · <b>${fmtDur(duration(x.horaInicio, x.horaFim))}</b></p></div>`).join('')
     : '<div class="note">Nenhum impacto registrado neste RDC.</div>';
   $('chkConfirm').checked = false; $('btnEnviar').disabled = true;
@@ -2229,7 +2254,7 @@ async function iniciarRevisao(btn, adminEdit) {
       ativoOutro: d.AtivoDescricao === 'OUTRO (não listado)', om: d.OM, atividades,
       pts: sn(d.Pts), ptsSolicitacao: fmtHora(d.PtsSolicitacao), ptsAbertura: fmtHora(d.PtsAbertura),
       bloqueio: sn(d.Bloqueio), bloqueioAtivo: d.BloqueioAtivo || '', bloqueioHora: fmtHora(d.BloqueioHora),
-      impactos: d.impactos.map(x => ({ id: uid(), descricao: x.TipoImpacto, horaInicio: fmtHora(x.InicioImpacto), horaFim: fmtHora(x.FimImpacto) })),
+      impactos: d.impactos.map(x => ({ id: uid(), ...lerImpacto(x.TipoImpacto), horaInicio: fmtHora(x.InicioImpacto), horaFim: fmtHora(x.FimImpacto) })),
       revisaoDe: d.Title, revisaoMotivo: adminEdit ? '' : d.ObsValidacao || '', ...(adminEdit ? { adminEdit: true } : {})
     };
     await Store.set('draft', draft);

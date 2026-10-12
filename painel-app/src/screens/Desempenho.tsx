@@ -321,7 +321,7 @@ export default function Desempenho() {
             <CardHeader
               nivel="h3"
               titulo="Pareto dos impactos"
-              subtitulo="Tempo de impacto (h) por descrição informada no RDC, agrupada sem diferenciar maiúsculas e espaços. Linha: % acumulado; tracejado: 80%."
+              subtitulo="Tempo de impacto (h) por tipo informado no RDC (todo OUTROS numa barra; RDC antigo com texto livre agrupa pelo texto). Linha: % acumulado; tracejado: 80%."
             />
             <EChart
               option={opcaoPareto}

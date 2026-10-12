@@ -130,12 +130,20 @@ describe('paretoImpactos', () => {
     expect(itens.map((i) => i.acumulado)).toEqual([40, 80, 100])
   })
 
-  it('junta o excedente em "Outros" mantendo o total', () => {
+  it('junta todo "OUTROS — texto" do app numa barra só', () => {
+    const itens = paretoImpactos([impacto('OUTROS — poste caído', 30), impacto('OUTROS — falta de água', 30), impacto('CONDIÇÕES CLIMÁTICAS', 30)])
+    expect(itens.map((i) => [i.descricao, i.horas, i.ocorrencias])).toEqual([
+      ['OUTROS', 1, 2],
+      ['CONDIÇÕES CLIMÁTICAS', 0.5, 1],
+    ])
+  })
+
+  it('junta o excedente em "Demais causas" mantendo o total', () => {
     const itens = paretoImpactos([impacto('A', 50), impacto('B', 40), impacto('C', 30), impacto('D', 20)], 3)
     expect(itens.map((i) => [i.descricao, Math.round(i.horas * 60)])).toEqual([
       ['A', 50],
       ['B', 40],
-      ['Outros', 50],
+      ['Demais causas', 50],
     ])
     expect(itens[2].acumulado).toBe(100)
   })

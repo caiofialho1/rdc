@@ -54,14 +54,17 @@ export interface ItemPareto {
 }
 
 /**
- * Pareto do tempo de impacto pela descrição informada no RDC. A descrição é
- * texto livre no app mobile: agrupa ignorando maiúsculas e espaços extras e
- * exibe a grafia mais frequente. Acima de `limite` causas, o restante vira "Outros".
+ * Pareto do tempo de impacto pelo tipo informado no RDC. O app mobile grava o
+ * tipo da lista (TIPOS_IMPACTO) ou "OUTROS — texto livre"; todo OUTROS vira uma
+ * barra só. RDC anterior à lista tem texto livre: agrupa ignorando maiúsculas e
+ * espaços extras e exibe a grafia mais frequente. Acima de `limite` causas, o
+ * restante vira "Demais causas".
  */
 export function paretoImpactos(impactos: ImpactoRow[], limite = 8): ItemPareto[] {
   const grupos = new Map<string, { horas: number; ocorrencias: number; grafias: Map<string, number> }>()
   for (const i of impactos) {
-    const texto = i.descricao.trim().replace(/\s+/g, ' ') || 'Sem descrição'
+    const livre = i.descricao.trim().replace(/\s+/g, ' ') || 'Sem descrição'
+    const texto = /^OUTROS\s*[—–-]/.test(livre) ? 'OUTROS' : livre
     const chave = texto.toLocaleLowerCase('pt-BR')
     const g = grupos.get(chave) ?? { horas: 0, ocorrencias: 0, grafias: new Map() }
     g.horas += i.duracao_min / 60
@@ -81,7 +84,7 @@ export function paretoImpactos(impactos: ImpactoRow[], limite = 8): ItemPareto[]
     const resto = itens.slice(limite - 1)
     itens = [
       ...itens.slice(0, limite - 1),
-      { descricao: 'Outros', horas: resto.reduce((s, x) => s + x.horas, 0), ocorrencias: resto.reduce((s, x) => s + x.ocorrencias, 0) },
+      { descricao: 'Demais causas', horas: resto.reduce((s, x) => s + x.horas, 0), ocorrencias: resto.reduce((s, x) => s + x.ocorrencias, 0) },
     ]
   }
   const total = itens.reduce((s, x) => s + x.horas, 0)
