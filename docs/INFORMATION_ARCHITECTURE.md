@@ -1,6 +1,6 @@
 # Arquitetura de informação (Painel de Controle)
 
-Reorganiza as 8 seções do `painel.html` antigo em 4 telas de storytelling (Painel executivo → Produção → Desvios → Detalhamento; a tela Comparação passou a se chamar Produção em 2026-10-14; a tela Desempenho foi removida em 2026-10-14 e a emissão diária foi para o Painel executivo), sem perder capacidade de dado ou filtro. Implementação em `painel-app/src/screens/`.
+Reorganiza as 8 seções do `painel.html` antigo em telas de storytelling (Painel executivo → Produção → Desvios; o Detalhamento virou painel lateral do Painel executivo em 2026-10-14; a tela Comparação passou a se chamar Produção em 2026-10-14; a tela Desempenho foi removida em 2026-10-14 e a emissão diária foi para o Painel executivo), sem perder capacidade de dado ou filtro. Implementação em `painel-app/src/screens/`.
 
 | Seção antiga (painel.html) | Tela nova | O que é preservado | O que muda |
 |---|---|---|---|
@@ -40,3 +40,7 @@ Botão na lateral, abaixo de "Exportar Excel". Gera `Observacoes_RDO_<início>_a
 - A descrição junta PTS (horários), serviços, executante, efetivo por função (pico), bloqueio, observações das atividades e impactos. Texto acima de 125 caracteres continua na linha seguinte: a linha termina em "(cont.)", a próxima começa com "(cont.)" e repete só Data, Equipamento e OM.
 - Impacto PTS: espera acima da meta de 40 min conta como "IMPACTO PTS" com a espera inteira, a menos que o encarregado tenha registrado um impacto "LIBERAÇÃO DE PTS" (vale o registrado). Demais impactos entram pelo tipo, somando os minutos.
 - Número da PTS e refeição ainda não existem no banco; entram quando a migração correspondente for autorizada.
+
+## Tela Detalhamento removida (2026-10-14)
+
+O detalhe do RDC (identificação, mão de obra por função, turno, fotos, edição e validação) passou a abrir num painel lateral a partir da tabela "Detalhamento dos diários de campo (RDC)" do Painel executivo (`painel-app/src/components/DetalheRdc.tsx`). A tabela herdou da tela removida: filtro por status com contagem, ordenação por coluna (`aria-sort`), seleção com "Definir contrato" em lote e navegação por teclado (Enter abre, ↑ ↓ percorrem, Esc fecha). O atalho "Ver na tabela" das pendências aplica o filtro de status e rola até a tabela. O menu ficou com 3 telas: Painel executivo, Produção e Desvios.

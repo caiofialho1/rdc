@@ -88,20 +88,38 @@ test('Desvios lista os impactos do recorte', async ({ page }) => {
   await expect(page.getByText('Chuva')).toBeVisible()
 })
 
-test('Detalhamento: selecionar um RDC "Enviado" e validá-lo', async ({ page }) => {
+test('Detalhe do RDC abre da tabela do Painel executivo e permite validar', async ({ page }) => {
   await logar(page)
-  await page.getByRole('button', { name: 'Detalhamento', exact: true }).click()
-  await page.getByRole('cell', { name: 'Maria Souza' }).click()
-  await expect(page.getByRole('heading', { name: /RDC-/ })).toBeVisible()
+  const tabela = page.getByRole('region', { name: 'Tabela de RDC (rolável)' })
+  await tabela.getByRole('row', { name: /Maria Souza/ }).click()
+  const painel = page.getByRole('dialog', { name: /RDC-/ })
+  await expect(painel).toBeVisible()
   // mão de obra por função: 2 pintores × 4 h = 8,0 HH
   await expect(page.getByLabel('Efetivo por função').getByRole('listitem')).toHaveText(/Pintor\s*2/)
   await expect(page.getByRole('row', { name: 'Pintor 2 8,0 100,0%' })).toBeVisible()
   // descrição da atividade executada: serviço + observação do encarregado
   await expect(page.getByText('Pintura de fundo')).toBeVisible()
   await expect(page.getByRole('definition').filter({ hasText: 'Fundo aplicado na face norte da viga' })).toBeVisible()
-  await page.getByRole('button', { name: 'Validar' }).click()
+  await painel.getByRole('button', { name: 'Validar' }).click()
   // sem erro após a decisão (mock sempre retorna ok:true)
   await expect(page.getByText('Não foi possível registrar a decisão.')).not.toBeVisible()
+  // Esc fecha o painel e devolve o foco à tabela
+  await page.keyboard.press('Escape')
+  await expect(painel).toBeHidden()
+})
+
+test('Tabela do Painel executivo: Enter abre o RDC e a seleção define contrato em lote', async ({ page }) => {
+  await logar(page)
+  const tabela = page.getByRole('region', { name: 'Tabela de RDC (rolável)' })
+  await tabela.getByRole('row', { name: /João Lima/ }).focus()
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('dialog', { name: /RDC-/ })).toBeVisible()
+  await page.getByRole('button', { name: 'Fechar', exact: true }).click()
+  await tabela.getByRole('checkbox', { name: /Selecionar RDC-/ }).first().check()
+  const lote = page.getByRole('group', { name: 'Ação em lote' })
+  await lote.getByLabel('Número do contrato para os selecionados').fill('5900108690')
+  await lote.getByRole('button', { name: 'Definir contrato' }).click()
+  await expect(lote).toBeHidden()
 })
 
 test('Falha na atualização mantém os dados anteriores com aviso, sem apagar nada', async ({ page }) => {

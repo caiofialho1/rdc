@@ -6,7 +6,7 @@
 import { useMemo, useState } from 'react'
 import { Card } from './exec/ExecUi'
 import EChart from './charts/EChart'
-import { CORES_SERIES, EIXO_VALOR_SEM_ROTULO, MAX_SERIES, SEM_SOBREPOSICAO, gradeSuave } from './charts/padroes'
+import { CORES_SERIES, EIXO_VALOR_SEM_ROTULO, MAX_SERIES, SEM_SOBREPOSICAO, afastarRotulos, gradeSuave } from './charts/padroes'
 import { semanaIso } from '../domain/calendario'
 import { fmtData, fmtHoras, fmtIndice } from '../domain/formatters'
 import { ORDEM_ETAPA, ROTULO_UNIDADE, produtividadeDiaria, type Dimensao, type LinhaProducao, type Unidade } from '../domain/producaoAnalise'
@@ -20,8 +20,18 @@ const QUEBRAS: Array<[Quebra | null, string]> = [
   ['responsavel', 'Encarregado'],
   ['disciplina', 'Disciplina'],
 ]
+const ALTURA_GRAFICO = 300
+/** Altura da área de plotagem: gráfico − topo da grade (40) − eixo de dias e de semanas (~46). */
+const ALTURA_PLOT = ALTURA_GRAFICO - 40 - 46
+const ALTURA_ROTULO = 13
+
 /** Começa com poucas séries para o gráfico abrir legível; o usuário liga as demais. */
 const INICIAIS = 3
+/**
+ * Curva suavizada: passa exatamente pelos pontos medidos (os dias); o trecho entre dois dias é
+ * só desenho, não um valor. smoothMonotone em x evita laços e curvas voltando para trás.
+ */
+const CURVA = { smooth: 0.35, smoothMonotone: 'x' as const }
 const ddmm = (iso: string) => fmtData(iso).slice(0, 5)
 const curto = (s: string) => (s.length > 16 ? `${s.slice(0, 15)}…` : s)
 
@@ -70,6 +80,7 @@ export default function ProdutividadeDiaria({ linhas, unidade }: { linhas: Linha
       type: 'line' as const,
       data: total.map((p) => p.indice),
       connectNulls: false,
+      ...CURVA,
       color: comQuebra ? cssVar('--exec-outline') : cssVar('--exec-ink'),
       lineStyle: { width: comQuebra ? 1.5 : 2, type: comQuebra ? ('dashed' as const) : ('solid' as const) },
       symbol: 'circle',
@@ -83,17 +94,34 @@ export default function ProdutividadeDiaria({ linhas, unidade }: { linhas: Linha
             label: { show: true, position: 'top' as const, fontSize: 10, fontWeight: 700, color: cssVar('--exec-ink'), formatter: (p: { value: number }) => fmtIndice(p.value) },
           }),
     }
+    // Eixo com máximo fixo para converter valor em pixel e afastar os nomes no fim das linhas.
+    const todos = [...total, ...ativas.flatMap((e) => e.pontos)].map((p) => p.indice).filter((v): v is number => v != null)
+    const yMax = Math.max(0.1, ...todos) * 1.12
+    const pxPorUnidade = ALTURA_PLOT / yMax
+    const deslocamento = afastarRotulos(
+      ativas.map((e) => ({ chave: e.chave, valor: [...e.pontos].reverse().find((p) => p.indice != null)?.indice ?? null })),
+      ALTURA_ROTULO / pxPorUnidade,
+    )
     const series = ativas.map((e) => ({
       name: e.chave,
       type: 'line' as const,
       data: e.pontos.map((p) => p.indice),
       connectNulls: false,
+      ...CURVA,
       color: CORES_SERIES[slots.get(e.chave)!],
       lineStyle: { width: 2 },
       symbol: 'circle',
       symbolSize: 8,
       z: 2,
-      endLabel: { show: true, formatter: () => curto(e.chave), color: textoSec, fontSize: 10, fontWeight: 600, distance: 6 },
+      endLabel: {
+        show: true,
+        formatter: () => curto(e.chave),
+        color: textoSec,
+        fontSize: 10,
+        fontWeight: 600,
+        distance: 6,
+        offset: [0, (deslocamento.get(e.chave) ?? 0) * pxPorUnidade],
+      },
     }))
     return {
       tooltip: {
@@ -131,7 +159,7 @@ export default function ProdutividadeDiaria({ linhas, unidade }: { linhas: Linha
           },
         },
       ],
-      yAxis: { type: 'value' as const, min: 0, ...EIXO_VALOR_SEM_ROTULO },
+      yAxis: { type: 'value' as const, min: 0, max: yMax, ...EIXO_VALOR_SEM_ROTULO },
       series: [serieTotal, ...series],
     }
   }, [dados, ativas, slots, quebra, u])
@@ -193,7 +221,7 @@ export default function ProdutividadeDiaria({ linhas, unidade }: { linhas: Linha
           </div>
         )}
       </div>
-      <EChart option={opcao} vazio={dados.dias.length === 0} mensagemVazio={`Nenhuma produção em ${u} com HH no recorte.`} height={300} descricao={descricao} />
+      <EChart option={opcao} vazio={dados.dias.length === 0} mensagemVazio={`Nenhuma produção em ${u} com HH no recorte.`} height={ALTURA_GRAFICO} descricao={descricao} />
     </Card>
   )
 }

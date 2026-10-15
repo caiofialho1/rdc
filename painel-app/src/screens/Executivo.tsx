@@ -6,19 +6,22 @@
  * número de PTS/LOTO e classificações de desempenho (BUSINESS_MODEL.md).
  * As pendências vieram da antiga tela Contexto, que esta substituiu.
  */
-import { useMemo, useState, type ReactNode } from 'react'
+import { useId, useMemo, useState, type ComponentProps, type KeyboardEvent, type ReactNode } from 'react'
+import { useEditar } from '../api/mutations'
 import { useExportar } from '../api/queries'
 import { useUltimoSucesso } from '../api/useUltimoSucesso'
-import type { RdcRow } from '../api/schemas'
+import type { RdcRow, StatusRdc } from '../api/schemas'
 import { useAuth } from '../auth/AuthProvider'
 import Calendario from '../components/Calendario'
+import DetalheRdc from '../components/DetalheRdc'
+import Banner from '../components/ui/Banner'
+import { useDialogo } from '../components/ui/useDialogo'
 import EChart from '../components/charts/EChart'
 import { EIXO_VALOR_SEM_ROTULO, SEM_SOBREPOSICAO, gradeSuave } from '../components/charts/padroes'
 import EstadoTela from '../components/ui/EstadoTela'
 import { IconeBarras, IconeBloqueio, IconeEspera, IconeImpacto, IconeRegistros } from '../components/ui/icons/KpiIcons'
 import { Card, Kpi, Secao } from '../components/exec/ExecUi'
 import Responsavel from '../components/ui/Responsavel'
-import type { TelaProps } from '../components/ui/telas'
 import {
   disciplinasPorRdc,
   esperaPtsPorArea,
@@ -67,6 +70,8 @@ const ROTULO_STATUS: Record<RdcRow['status'], string> = {
   Cancelado: 'Cancelado',
 }
 const POR_PAGINA = [10, 25, 50, 100]
+type Coluna = 'codigo' | 'data_rdc' | 'contrato' | 'ativo' | 'responsavel' | 'status'
+const ORDEM_STATUS: StatusRdc[] = ['Enviado', 'Em revisão', 'Validado', 'Rascunho', 'Substituído', 'Cancelado']
 const ddmm = (iso: string) => fmtData(iso).slice(0, 5)
 
 /** Pendência: contagem + rótulo sempre visíveis; a borda colorida só reforça (zero = neutro). */
@@ -106,7 +111,7 @@ function PtsBloqueio({ rdc }: { rdc: RdcRow }) {
   return itens.length ? <span className="flex flex-col items-center gap-1">{itens}</span> : <>—</>
 }
 
-export default function Executivo({ irPara }: TelaProps) {
+export default function Executivo() {
   const { admin } = useAuth()
   const { ini, fim, secundarios, definirSecundario } = useFilters()
   const consulta = useExportar(admin, ini, fim)
@@ -114,6 +119,19 @@ export default function Executivo({ irPara }: TelaProps) {
   const recorte = useMemo(() => (dadosOk ? filtrar(dadosOk, secundarios) : null), [dadosOk, secundarios])
   const [porPagina, setPorPagina] = useState(25)
   const [pagina, setPagina] = useState(0)
+  const { tratarErroRpc } = useAuth()
+  const editar = useEditar(admin)
+  const [ordem, setOrdem] = useState<{ coluna: Coluna; dir: 1 | -1 }>({ coluna: 'data_rdc', dir: -1 })
+  const [aberto, setAberto] = useState<string | null>(null)
+  const [selecionados, setSelecionados] = useState<Set<string>>(new Set())
+  const [contratoLote, setContratoLote] = useState('')
+  // Contagem por status com todos os outros filtros aplicados, menos o próprio status.
+  const contagemStatus = useMemo(() => {
+    const mapa = new Map<StatusRdc, number>()
+    if (!dadosOk) return mapa
+    for (const r of filtrar(dadosOk, { ...secundarios, status: undefined }).rdcs) mapa.set(r.status, (mapa.get(r.status) ?? 0) + 1)
+    return mapa
+  }, [dadosOk, secundarios])
   // Data de hoje fixada na montagem (só estende o calendário até o fim do mês corrente).
   const [hoje] = useState(() => isoDia(new Date()))
 
@@ -129,10 +147,65 @@ export default function Executivo({ irPara }: TelaProps) {
   const ranking = useMemo(() => (recorte ? rankingResponsaveis(recorte.rdcs, recorte.atividades) : []), [recorte])
   const discRdc = useMemo(() => disciplinasPorRdc(dadosOk?.atividades ?? []), [dadosOk])
   const fotosRdc = useMemo(() => fotosPorRdc(recorte?.fotos ?? []), [recorte])
-  const linhas = useMemo(
-    () => (recorte ? [...recorte.rdcs].sort((a, b) => b.data_rdc.localeCompare(a.data_rdc) || b.codigo.localeCompare(a.codigo)) : []),
-    [recorte],
-  )
+  const linhas = useMemo(() => {
+    if (!recorte) return []
+    const valor = (r: RdcRow) => (ordem.coluna === 'contrato' ? (r.contrato ?? '') : r[ordem.coluna])
+    return [...recorte.rdcs].sort((a, b) => valor(a).localeCompare(valor(b), 'pt-BR') * ordem.dir || b.codigo.localeCompare(a.codigo))
+  }, [recorte, ordem])
+  const rdcAberto = linhas.find((r) => r.codigo === aberto) ?? null
+
+  function alternarOrdem(coluna: Coluna) {
+    setOrdem((o) => (o.coluna === coluna ? { coluna, dir: o.dir === 1 ? -1 : 1 } : { coluna, dir: 1 }))
+    setPagina(0)
+  }
+
+  function alternarSelecao(codigo: string) {
+    setSelecionados((atual) => {
+      const novo = new Set(atual)
+      if (novo.has(codigo)) novo.delete(codigo)
+      else novo.add(codigo)
+      return novo
+    })
+  }
+
+  async function aplicarContratoLote() {
+    if (!contratoLote || selecionados.size === 0) return
+    const resposta = await editar.mutateAsync({ codigos: [...selecionados], campos: { contrato: contratoLote }, motivo: 'Definição em lote pelo painel' })
+    if (!resposta.ok) tratarErroRpc(resposta.erro)
+    else {
+      setSelecionados(new Set())
+      setContratoLote('')
+    }
+  }
+
+  /** Enter/espaço abre o RDC; ↑ ↓ andam pelas linhas da tabela. */
+  function navegar(e: KeyboardEvent<HTMLTableRowElement>, codigo: string) {
+    if (e.target !== e.currentTarget) return
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      setAberto(codigo)
+      return
+    }
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+    const proxima = (e.key === 'ArrowDown' ? e.currentTarget.nextElementSibling : e.currentTarget.previousElementSibling) as HTMLTableRowElement | null
+    if (!proxima) return
+    e.preventDefault()
+    proxima.focus()
+  }
+
+  const cabOrdenavel = (coluna: Coluna, rotulo: string) => {
+    const ativa = ordem.coluna === coluna
+    return (
+      <th scope="col" aria-sort={ativa ? (ordem.dir === 1 ? 'ascending' : 'descending') : 'none'}>
+        <button type="button" onClick={() => alternarOrdem(coluna)} className="inline-flex items-center gap-1 uppercase hover:text-[var(--exec-ink)]">
+          {rotulo}
+          <span aria-hidden="true" className={ativa ? '' : 'opacity-40'}>
+            {ativa ? (ordem.dir === 1 ? '▲' : '▼') : '↕'}
+          </span>
+        </button>
+      </th>
+    )
+  }
 
   const opcaoDiaria = useMemo(() => {
     // Com muitos dias, o rótulo gira na vertical para caber sobre a barra.
@@ -281,6 +354,8 @@ export default function Executivo({ irPara }: TelaProps) {
   const escalaEspera = Math.max(15, Math.ceil(Math.max(META_ESPERA_PTS_MIN + 5, ...esperaArea.map((e) => e.mediaMin)) / 15) * 15)
   const totalPaginas = Math.max(1, Math.ceil(linhas.length / porPagina))
   const paginaAtual = Math.min(pagina, totalPaginas - 1)
+  const totalSemStatus = [...contagemStatus.values()].reduce((soma, n) => soma + n, 0)
+  const statusPresentes = ORDEM_STATUS.filter((st) => contagemStatus.has(st))
   const visiveis = linhas.slice(paginaAtual * porPagina, (paginaAtual + 1) * porPagina)
   const periodo = `${fmtData(ini)} a ${fmtData(fim)}`
   const fimCalendario = estenderFimMesSeAplicavel(fim, hoje)
@@ -384,25 +459,24 @@ export default function Executivo({ irPara }: TelaProps) {
             rotulo="aguardando validação"
             descricao="RDC com status Enviado, ainda sem decisão do administrador."
             acao={
-              irPara && (
-                <button
+              <button
                   type="button"
                   className="se-button se-button--outline se-button--sm"
                   onClick={() => {
                     definirSecundario('status', 'Enviado')
-                    irPara('detalhamento')
+                    setPagina(0)
+                    document.getElementById('exec-detalhe')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                   }}
                 >
-                  Ver no Detalhamento
+                  Ver na tabela
                 </button>
-              )
             }
           />
           <Pendencia
             qtd={resumo.semContrato.length}
             cor="--exec-alert"
             rotulo="sem contrato"
-            descricao="RDC sem número de contrato; podem ser corrigidos em lote no Detalhamento."
+            descricao="RDC sem número de contrato. Selecione-os na tabela abaixo e defina o contrato em lote."
           />
           <Pendencia
             qtd={resumo.ptsSemEspera.length}
@@ -606,30 +680,105 @@ export default function Executivo({ irPara }: TelaProps) {
       </Secao>
 
       {/* 5. Detalhamento */}
-      <Secao id="exec-detalhe" titulo="Detalhamento dos diários de campo (RDC)" sub="Registros do recorte, mais recentes primeiro. Validação e edição continuam na tela Detalhamento.">
+      <Secao
+        id="exec-detalhe"
+        titulo="Detalhamento dos diários de campo (RDC)"
+        sub="Clique numa linha (ou Enter) para abrir o RDC: atividades, equipe, fotos, edição e validação. ↑ ↓ percorrem as linhas."
+      >
         <div className="exec-card exec-card--tabela">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--exec-border)] px-4 py-3">
+            {statusPresentes.length > 1 ? (
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrar por status">
+                {[undefined, ...statusPresentes].map((st) => {
+                  const ativoFiltro = secundarios.status === st
+                  const n = st ? (contagemStatus.get(st) ?? 0) : totalSemStatus
+                  return (
+                    <button
+                      key={st ?? 'todos'}
+                      type="button"
+                      aria-pressed={ativoFiltro}
+                      onClick={() => {
+                        definirSecundario('status', st)
+                        setPagina(0)
+                      }}
+                      className={`flex min-h-8 items-center gap-1.5 rounded-control border px-2.5 text-xs font-semibold ${
+                        ativoFiltro ? 'border-[var(--exec-ink)] bg-[var(--exec-ink)] text-white' : 'border-[var(--exec-border)] bg-white text-[var(--exec-text-2)] hover:text-[var(--exec-ink)]'
+                      }`}
+                    >
+                      {st ? ROTULO_STATUS[st] : 'Todos'}
+                      <span className={`tabular ${ativoFiltro ? 'text-white' : 'text-[var(--exec-ink)]'}`}>{fmtInteiro(n)}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            ) : (
+              <span />
+            )}
+            {selecionados.size > 0 && (
+              <div className="flex flex-wrap items-center gap-2 text-sm" role="group" aria-label="Ação em lote">
+                <span className="text-[var(--exec-text-2)]">{fmtInteiro(selecionados.size)} selecionado(s)</span>
+                <input
+                  aria-label="Número do contrato para os selecionados"
+                  placeholder="Número do contrato"
+                  value={contratoLote}
+                  onChange={(e) => setContratoLote(e.target.value)}
+                  className="se-input w-44"
+                />
+                <button type="button" onClick={aplicarContratoLote} disabled={!contratoLote || editar.isPending} className="se-button se-button--sm">
+                  {editar.isPending ? 'Definindo…' : 'Definir contrato'}
+                </button>
+                <button type="button" onClick={() => setSelecionados(new Set())} className="se-link text-xs">
+                  Limpar seleção
+                </button>
+              </div>
+            )}
+          </div>
+          {editar.isError && (
+            <div className="px-4 pt-3">
+              <Banner tipo="erro">Não foi possível definir o contrato dos selecionados. Confira o número e tente de novo.</Banner>
+            </div>
+          )}
           <div className="max-h-[36rem] overflow-auto" role="region" aria-label="Tabela de RDC (rolável)" tabIndex={0}>
             <table className="exec-tabela min-w-[1100px]">
               <caption className="sr-only">RDC do recorte</caption>
               <thead>
                 <tr>
-                  <th scope="col" className="fixa">Código RDC</th>
-                  <th scope="col">Data</th>
-                  <th scope="col">Contrato</th>
-                  <th scope="col">Ativo / área</th>
-                  <th scope="col">Responsável</th>
+                  <th scope="col" className="fixa w-10">
+                    <span className="sr-only">Selecionar</span>
+                  </th>
+                  {cabOrdenavel('codigo', 'Código RDC')}
+                  {cabOrdenavel('data_rdc', 'Data')}
+                  {cabOrdenavel('contrato', 'Contrato')}
+                  {cabOrdenavel('ativo', 'Ativo / área')}
+                  {cabOrdenavel('responsavel', 'Responsável')}
                   <th scope="col">Disciplina</th>
                   <th scope="col" className="num">Fotos (GPS)</th>
                   <th scope="col">PTS / bloqueio</th>
-                  <th scope="col">Status</th>
+                  {cabOrdenavel('status', 'Status')}
                 </tr>
               </thead>
               <tbody>
                 {visiveis.map((r) => {
                   const f = fotosRdc.get(r.codigo)
                   return (
-                    <tr key={r.codigo}>
-                      <th scope="row" className="fixa font-bold whitespace-nowrap tabular">
+                    <tr
+                      key={r.codigo}
+                      data-codigo={r.codigo}
+                      tabIndex={0}
+                      aria-selected={aberto === r.codigo}
+                      onClick={() => setAberto(r.codigo)}
+                      onKeyDown={(e) => navegar(e, r.codigo)}
+                      className="cursor-pointer aria-selected:bg-[var(--exec-info-bg)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--exec-info)]"
+                    >
+                      <td className="fixa" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          aria-label={`Selecionar ${r.codigo}`}
+                          checked={selecionados.has(r.codigo)}
+                          onChange={() => alternarSelecao(r.codigo)}
+                        />
+                      </td>
+                      <th scope="row" className="font-bold whitespace-nowrap tabular">
                         {r.codigo}
                       </th>
                       <td className="font-bold whitespace-nowrap tabular">{fmtData(r.data_rdc)}</td>
@@ -714,6 +863,37 @@ export default function Executivo({ irPara }: TelaProps) {
           </div>
         </div>
       </Secao>
+
+      {rdcAberto && recorte && (
+        <PainelRdc
+          rdc={rdcAberto}
+          atividades={recorte.atividades.filter((a) => a.rdc === rdcAberto.codigo)}
+          impactos={recorte.impactos.filter((i) => i.rdc === rdcAberto.codigo)}
+          fotos={recorte.fotos.filter((f) => f.rdc === rdcAberto.codigo)}
+          onFechar={() => setAberto(null)}
+        />
+      )}
     </div>
+  )
+}
+
+/** Painel lateral com o detalhe do RDC: fecha com Esc, pelo botão Fechar ou clicando fora. */
+function PainelRdc({ onFechar, ...props }: Omit<ComponentProps<typeof DetalheRdc>, 'idTitulo'>) {
+  const idTitulo = useId()
+  const ref = useDialogo<HTMLDivElement>(true, onFechar)
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-[var(--exec-ink)]/40" aria-hidden="true" onClick={onFechar} />
+      <div
+        ref={ref}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={idTitulo}
+        tabIndex={-1}
+        className="fixed inset-y-0 right-0 z-40 flex w-[min(60rem,100vw)] flex-col shadow-2xl outline-none"
+      >
+        <DetalheRdc key={props.rdc.codigo} {...props} onFechar={onFechar} idTitulo={idTitulo} />
+      </div>
+    </>
   )
 }

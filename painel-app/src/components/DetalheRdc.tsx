@@ -1,52 +1,22 @@
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
-import { useExportar } from '../api/queries'
-import { useUltimoSucesso } from '../api/useUltimoSucesso'
+/**
+ * Detalhe de um RDC: identificação, mão de obra por função, turno (atividades, equipe e
+ * impactos), fotos, edição e validação. Abre no painel lateral a partir da tabela
+ * "Detalhamento dos diários de campo" do Painel executivo.
+ */
+import { useId, useMemo, useState, type ReactNode } from 'react'
 import { useEditar, useValidar } from '../api/mutations'
 import { useFotoBlobUrl } from '../api/fotos'
-import type { AtividadeRow, CamposEditaveis, FotoRow, ImpactoRow, RdcRow, StatusRdc } from '../api/schemas'
+import type { AtividadeRow, CamposEditaveis, FotoRow, ImpactoRow, RdcRow } from '../api/schemas'
 import { useAuth } from '../auth/AuthProvider'
-import Badge from '../components/ui/Badge'
-import Banner from '../components/ui/Banner'
-import Card from '../components/ui/Card'
-import CardHeader from '../components/ui/CardHeader'
-import EstadoTela from '../components/ui/EstadoTela'
-import Lightbox from '../components/ui/Lightbox'
-import { IconeFuncao } from '../components/ui/icons/FuncaoIcons'
-import Responsavel from '../components/ui/Responsavel'
+import Badge from './ui/Badge'
+import Banner from './ui/Banner'
+import Lightbox from './ui/Lightbox'
+import { IconeFuncao } from './ui/icons/FuncaoIcons'
+import Responsavel from './ui/Responsavel'
 import { descricaoAtividade, NOME_DISCIPLINA, type DescricaoAtividade } from '../domain/atividades'
 import { tomStatus } from '../domain/badges'
-import { disciplinasPorRdc, fotosPorRdc } from '../domain/diagnostico'
-import { filtrar } from '../domain/filtros'
 import { funcoesDaAtividade, maoDeObraPorFuncao, semFuncao } from '../domain/maoDeObra'
 import { fmtData, fmtDH, fmtHora, fmtHoras, fmtInteiro, fmtPercentual } from '../domain/formatters'
-import { useFilters } from '../filters/FilterContext'
-
-type Coluna = 'data_rdc' | 'responsavel' | 'ativo' | 'status' | 'contrato'
-
-const COLUNAS: Array<[Coluna, string]> = [
-  ['data_rdc', 'Data'],
-  ['responsavel', 'Responsável'],
-  ['ativo', 'Ativo / OM'],
-  ['status', 'Status'],
-  ['contrato', 'Contrato'],
-]
-
-/** PTS e bloqueio numa célula: ausência de declaração é "—", nunca "Não". */
-function PtsBloqueio({ rdc }: { rdc: RdcRow }) {
-  const pts =
-    rdc.pts == null
-      ? null
-      : rdc.pts
-        ? `PTS${rdc.espera_pts_min == null ? ' (sem horário)' : ` · ${fmtInteiro(rdc.espera_pts_min)} min`}`
-        : 'Sem PTS'
-  if (pts == null && rdc.bloqueio == null) return <>—</>
-  return (
-    <span className="flex flex-col gap-0.5 text-xs">
-      <span>{pts ?? 'PTS —'}</span>
-      {rdc.bloqueio === true && <span className="font-semibold text-text-primary">Bloqueio{rdc.bloqueio_ativo ? ` · ${rdc.bloqueio_ativo}` : ''}</span>}
-    </span>
-  )
-}
 
 function Miniatura({ foto, onClick }: { foto: FotoRow; onClick: () => void }) {
   const url = useFotoBlobUrl(foto.caminho)
@@ -494,18 +464,21 @@ function Turno({ atividades, impactos }: { atividades: AtividadeRow[]; impactos:
   )
 }
 
-function Detalhe({
+export default function DetalheRdc({
   rdc,
   atividades,
   impactos,
   fotos,
   onFechar,
+  idTitulo,
 }: {
   rdc: RdcRow
   atividades: AtividadeRow[]
   impactos: ImpactoRow[]
   fotos: FotoRow[]
   onFechar: () => void
+  /** id do título, para o painel lateral que envolve o detalhe usar como aria-labelledby. */
+  idTitulo: string
 }) {
   const { admin, tratarErroRpc } = useAuth()
   const validar = useValidar(admin)
@@ -515,13 +488,6 @@ function Detalhe({
   const [confirmarCancelamento, setConfirmarCancelamento] = useState(false)
   const [ultimaDecisao, setUltimaDecisao] = useState<string | null>(null)
   const idObs = useId()
-  const ref = useRef<HTMLDivElement>(null)
-
-  // Abaixo de ~72rem de conteúdo o detalhe fica abaixo da tabela: leva o usuário até ele
-  // ('nearest' não mexe na rolagem quando ele já está visível ao lado da tabela).
-  useEffect(() => {
-    ref.current?.scrollIntoView({ block: 'nearest' })
-  }, [])
 
   async function decidir(decisao: 'Validado' | 'Em revisão' | 'Cancelado') {
     setConfirmarCancelamento(false)
@@ -537,11 +503,7 @@ function Detalhe({
   const bloqueio = rdc.bloqueio == null ? '—' : rdc.bloqueio ? `Sim · ${rdc.bloqueio_ativo ?? 'ativo não informado'}` : 'Não'
 
   return (
-    <Card
-      ref={ref}
-      className="@container/detalhe flex scroll-mt-4 flex-col overflow-hidden p-0! @[72rem]:sticky @[72rem]:top-0 @[72rem]:max-h-[calc(100dvh-7.5rem)]"
-      aria-labelledby={`detalhe-${rdc.codigo}`}
-    >
+    <div className="@container/detalhe flex h-full min-h-0 flex-col overflow-hidden bg-surface">
       <header className="shrink-0 bg-primary px-4 py-3 text-white">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -549,9 +511,9 @@ function Detalhe({
               RDC · <span className="tabular">{fmtData(rdc.data_rdc)}</span> · {diaSemana(rdc.data_rdc)}
               {rdc.revisao > 0 && ` · revisão ${fmtInteiro(rdc.revisao)}`}
             </p>
-            <h3 id={`detalhe-${rdc.codigo}`} className="mt-0.5 text-[14px] leading-snug font-semibold break-all">
+            <h2 id={idTitulo} className="mt-0.5 text-[14px] leading-snug font-semibold break-all">
               {rdc.codigo}
-            </h3>
+            </h2>
           </div>
           <div className="flex shrink-0 items-center gap-3">
             <Badge tom={tomStatus(rdc.status)}>{rdc.status}</Badge>
@@ -666,254 +628,6 @@ function Detalhe({
       )}
 
       {lightbox !== null && <Lightbox fotos={fotos} indice={lightbox} onFechar={() => setLightbox(null)} onNavegar={setLightbox} />}
-    </Card>
-  )
-}
-
-const ORDEM_STATUS: StatusRdc[] = ['Enviado', 'Em revisão', 'Validado', 'Rascunho', 'Substituído', 'Cancelado']
-
-export default function Detalhamento() {
-  const { admin, tratarErroRpc } = useAuth()
-  const { ini, fim, secundarios, definirSecundario } = useFilters()
-  const consulta = useExportar(admin, ini, fim)
-  const editar = useEditar(admin)
-
-  const [ordem, setOrdem] = useState<{ coluna: Coluna; dir: 1 | -1 }>({ coluna: 'data_rdc', dir: -1 })
-  const [selecionados, setSelecionados] = useState<Set<string>>(new Set())
-  const [ativo, setAtivo] = useState<string | null>(null)
-  const [contratoLote, setContratoLote] = useState('')
-
-  const { dados: dadosOk, semDados } = useUltimoSucesso(consulta)
-  const recorte = useMemo(() => (dadosOk ? filtrar(dadosOk, secundarios) : null), [dadosOk, secundarios])
-  // Contagem por status com todos os outros filtros aplicados, menos o próprio status.
-  const contagemStatus = useMemo(() => {
-    const mapa = new Map<StatusRdc, number>()
-    if (!dadosOk) return mapa
-    for (const r of filtrar(dadosOk, { ...secundarios, status: undefined }).rdcs) mapa.set(r.status, (mapa.get(r.status) ?? 0) + 1)
-    return mapa
-  }, [dadosOk, secundarios])
-
-  // Disciplinas de todas as atividades do RDC (não só as do filtro de disciplina).
-  const disciplinas = useMemo(() => disciplinasPorRdc(dadosOk?.atividades ?? []), [dadosOk])
-  const fotosRdc = useMemo(() => fotosPorRdc(recorte?.fotos ?? []), [recorte])
-
-  const linhas = useMemo(() => {
-    if (!recorte) return []
-    const copia = [...recorte.rdcs]
-    copia.sort((a, b) => {
-      const va = a[ordem.coluna] ?? ''
-      const vb = b[ordem.coluna] ?? ''
-      return va < vb ? -ordem.dir : va > vb ? ordem.dir : 0
-    })
-    return copia
-  }, [recorte, ordem])
-
-  function alternarOrdem(coluna: Coluna) {
-    setOrdem((o) => (o.coluna === coluna ? { coluna, dir: o.dir === 1 ? -1 : 1 } : { coluna, dir: 1 }))
-  }
-
-  function alternarSelecao(codigo: string) {
-    setSelecionados((s) => {
-      const novo = new Set(s)
-      if (novo.has(codigo)) novo.delete(codigo)
-      else novo.add(codigo)
-      return novo
-    })
-  }
-
-  async function aplicarContratoLote() {
-    if (!contratoLote || selecionados.size === 0) return
-    const resposta = await editar.mutateAsync({ codigos: [...selecionados], campos: { contrato: contratoLote }, motivo: 'Definição em lote pelo painel' })
-    if (!resposta.ok) tratarErroRpc(resposta.erro)
-    else setSelecionados(new Set())
-  }
-
-  /** Setas ↑/↓ andam pelas linhas; com o detalhe aberto, ele acompanha a linha focada. */
-  function navegar(e: KeyboardEvent<HTMLTableRowElement>, codigo: string) {
-    if (e.target !== e.currentTarget) return
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      setAtivo(codigo)
-      return
-    }
-    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
-    const proxima = (e.key === 'ArrowDown' ? e.currentTarget.nextElementSibling : e.currentTarget.previousElementSibling) as HTMLTableRowElement | null
-    if (!proxima) return
-    e.preventDefault()
-    proxima.focus()
-    if (ativo && proxima.dataset.codigo) setAtivo(proxima.dataset.codigo)
-  }
-
-  const selecionado = linhas.find((r) => r.codigo === ativo) ?? null
-  const atividadesSelecionado = useMemo(
-    () => (selecionado ? (recorte?.atividades ?? []).filter((a) => a.rdc === selecionado.codigo) : []),
-    [recorte, selecionado],
-  )
-  const impactosSelecionado = useMemo(
-    () => (selecionado ? (recorte?.impactos ?? []).filter((i) => i.rdc === selecionado.codigo) : []),
-    [recorte, selecionado],
-  )
-  const fotosSelecionado = useMemo(
-    () => (selecionado ? (recorte?.fotos ?? []).filter((f) => f.rdc === selecionado.codigo) : []),
-    [recorte, selecionado],
-  )
-
-  if (!recorte) return <EstadoTela erro={semDados} />
-
-  const totalSemStatus = [...contagemStatus.values()].reduce((s, n) => s + n, 0)
-  const statusPresentes = ORDEM_STATUS.filter((s) => contagemStatus.has(s))
-  // Colunas secundárias só aparecem quando a tabela tem largura para elas.
-  const largo = 'hidden @[60rem]/tabela:table-cell'
-  const medio = 'hidden @[50rem]/tabela:table-cell'
-
-  return (
-    <div className={`grid grid-cols-1 items-start gap-4 ${selecionado ? '@[72rem]:grid-cols-[minmax(0,1fr)_minmax(27rem,0.85fr)]' : ''}`}>
-      <Card className="@container/tabela min-w-0">
-        <CardHeader
-          titulo="Registros RDC"
-          subtitulo={`${fmtInteiro(linhas.length)} no recorte · clique ou Enter abre o detalhe; ↑ ↓ percorrem as linhas`}
-          acoes={
-            selecionados.size > 0 && (
-              <div className="flex flex-wrap items-center gap-2 text-sm" role="group" aria-label="Ação em lote">
-                <span className="text-text-secondary">{fmtInteiro(selecionados.size)} selecionado(s)</span>
-                <input
-                  aria-label="Número do contrato para os selecionados"
-                  placeholder="Número do contrato"
-                  value={contratoLote}
-                  onChange={(e) => setContratoLote(e.target.value)}
-                  className="se-input w-44"
-                />
-                <button type="button" onClick={aplicarContratoLote} disabled={!contratoLote || editar.isPending} className="se-button se-button--sm">
-                  Definir contrato
-                </button>
-              </div>
-            )
-          }
-        />
-        {statusPresentes.length > 1 && (
-          <div className="mb-3 flex flex-wrap gap-1.5" role="group" aria-label="Filtrar por status">
-            {[undefined, ...statusPresentes].map((s) => {
-              const ativoFiltro = secundarios.status === s
-              const n = s ? (contagemStatus.get(s) ?? 0) : totalSemStatus
-              return (
-                <button
-                  key={s ?? 'todos'}
-                  type="button"
-                  aria-pressed={ativoFiltro}
-                  onClick={() => definirSecundario('status', s)}
-                  className={`flex min-h-7 items-center gap-1.5 rounded-control border px-2.5 py-1 text-xs ${
-                    ativoFiltro ? 'border-primary bg-primary text-white' : 'border-border bg-surface text-text-secondary hover:border-blue-soft hover:text-text-primary'
-                  }`}
-                >
-                  {s ?? 'Todos'}
-                  <span className={`tabular font-semibold ${ativoFiltro ? 'text-white' : 'text-text-primary'}`}>{fmtInteiro(n)}</span>
-                </button>
-              )
-            })}
-          </div>
-        )}
-        {editar.isError && <Banner tipo="erro">Não foi possível aplicar o contrato aos selecionados.</Banner>}
-        <div className={`se-table-wrap ${selecionado ? 'max-h-[32rem] @[72rem]:max-h-[calc(100dvh-17rem)]' : 'max-h-[calc(100dvh-17rem)] min-h-[20rem]'}`}>
-          <table className="se-table min-w-[620px]">
-            <thead>
-              <tr>
-                <th scope="col" className="w-10">
-                  <span className="sr-only">Selecionar</span>
-                </th>
-                {COLUNAS.map(([coluna, rotulo]) => {
-                  const ativa = ordem.coluna === coluna
-                  return (
-                    <th
-                      key={coluna}
-                      scope="col"
-                      aria-sort={ativa ? (ordem.dir === 1 ? 'ascending' : 'descending') : 'none'}
-                      className={coluna === 'contrato' ? largo : ''}
-                    >
-                      <button type="button" className="se-table__sort" onClick={() => alternarOrdem(coluna)}>
-                        {rotulo}
-                        <span aria-hidden="true" className={ativa ? '' : 'opacity-40'}>
-                          {ativa ? (ordem.dir === 1 ? '▲' : '▼') : '↕'}
-                        </span>
-                      </button>
-                    </th>
-                  )
-                })}
-                <th scope="col" className={medio}>
-                  Disciplina
-                </th>
-                <th scope="col" className={`num ${largo}`}>
-                  Fotos (GPS)
-                </th>
-                <th scope="col">PTS / Bloqueio</th>
-              </tr>
-            </thead>
-            <tbody>
-              {linhas.map((r) => (
-                <tr
-                  key={r.codigo}
-                  data-codigo={r.codigo}
-                  tabIndex={0}
-                  aria-selected={ativo === r.codigo}
-                  onKeyDown={(e) => navegar(e, r.codigo)}
-                  className="cursor-pointer hover:bg-background"
-                  onClick={() => setAtivo(r.codigo)}
-                >
-                  <td onClick={(e) => e.stopPropagation()}>
-                    <input
-                      type="checkbox"
-                      aria-label={`Selecionar ${r.codigo}`}
-                      checked={selecionados.has(r.codigo)}
-                      onChange={() => alternarSelecao(r.codigo)}
-                    />
-                  </td>
-                  <td className="nowrap">{fmtData(r.data_rdc)}</td>
-                  <td>
-                    <Responsavel nome={r.responsavel} />
-                  </td>
-                  <td>
-                    <span className="block font-medium whitespace-nowrap">{r.ativo}</span>
-                    <span className="block text-xs whitespace-nowrap text-text-secondary tabular">OM {r.om}</span>
-                  </td>
-                  <td>
-                    <Badge tom={tomStatus(r.status)}>{r.status}</Badge>
-                  </td>
-                  <td className={largo}>{r.contrato_nome ?? '—'}</td>
-                  <td className={medio}>
-                    <span className="flex flex-wrap gap-1">
-                      {(disciplinas.get(r.codigo) ?? []).map((d) => (
-                        <Badge key={d} tom="neutro">
-                          {d}
-                        </Badge>
-                      ))}
-                      {!disciplinas.has(r.codigo) && '—'}
-                    </span>
-                  </td>
-                  <td className={`num ${largo}`}>
-                    {(() => {
-                      const f = fotosRdc.get(r.codigo)
-                      return f ? `${fmtInteiro(f.total)} (${fmtInteiro(f.comGps)})` : <span className="text-text-secondary">0</span>
-                    })()}
-                  </td>
-                  <td>
-                    <PtsBloqueio rdc={r} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {linhas.length === 0 && <p className="se-table-empty">Nenhum RDC no recorte. Escolha outro mês de medição ou limpe os filtros.</p>}
-        </div>
-      </Card>
-      {selecionado && (
-        <Detalhe
-          key={selecionado.codigo}
-          rdc={selecionado}
-          atividades={atividadesSelecionado}
-          impactos={impactosSelecionado}
-          fotos={fotosSelecionado}
-          onFechar={() => setAtivo(null)}
-        />
-      )}
     </div>
   )
 }

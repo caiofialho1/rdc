@@ -4,7 +4,6 @@ import { FilterProvider } from '../../filters/FilterContext'
 import CargaProducao from '../CargaProducao'
 import Producao from '../../screens/Producao'
 import Desvios from '../../screens/Desvios'
-import Detalhamento from '../../screens/Detalhamento'
 import Executivo from '../../screens/Executivo'
 import CabecalhoTela from './CabecalhoTela'
 import Sidebar from './Sidebar'
@@ -17,7 +16,6 @@ const TELAS = [
   { chave: 'executivo', rotulo: 'Painel executivo', Componente: Executivo },
   { chave: 'producao', rotulo: 'Produção', Componente: Producao },
   { chave: 'desvios', rotulo: 'Desvios', Componente: Desvios },
-  { chave: 'detalhamento', rotulo: 'Detalhamento', Componente: Detalhamento },
 ] as const satisfies ReadonlyArray<{ chave: TelaChave; rotulo: string; Componente: unknown }>
 
 export default function Shell() {
@@ -80,7 +78,7 @@ export default function Shell() {
           <main className="tema-exec @container min-w-0 flex-1 overflow-y-auto p-4 lg:p-6">
             <div className="mx-auto flex max-w-[1600px] flex-col gap-4">
               <CabecalhoTela titulo={tela.rotulo} tela={telaAtiva} />
-              <Tela irPara={irPara} />
+              <Tela />
             </div>
           </main>
         </div>

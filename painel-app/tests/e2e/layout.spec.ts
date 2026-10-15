@@ -12,7 +12,7 @@ const VIEWPORTS = [
   { nome: 'celular', width: 390, height: 844 },
 ]
 
-const TELAS = ['Painel executivo', 'Produção', 'Desvios', 'Detalhamento']
+const TELAS = ['Painel executivo', 'Produção', 'Desvios']
 
 async function abrirTela(page: Page, tela: string) {
   const menu = page.getByRole('button', { name: 'Menu e filtros' })
@@ -59,21 +59,20 @@ test('celular: navegação e filtros ficam numa gaveta que fecha com Esc', async
   await expect(nav).toBeHidden()
 })
 
-test('atalho de pendências filtra "Enviado" e abre o Detalhamento com o filtro visível', async ({ page }) => {
+test('atalho de pendências filtra "Enviado" na tabela do Painel executivo, com o filtro visível', async ({ page }) => {
   await logar(page)
-  await page.getByRole('button', { name: 'Ver no Detalhamento' }).click()
-  await expect(page.getByRole('heading', { level: 2, name: 'Detalhamento', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Ver na tabela' }).click()
   await expect(page.getByRole('list', { name: 'Filtros ativos' })).toContainText('Status: Enviado')
-  await expect(page.getByRole('cell', { name: 'Maria Souza' })).toBeVisible()
-  await expect(page.getByRole('cell', { name: 'João Lima' })).toHaveCount(0)
+  const tabela = page.getByRole('region', { name: 'Tabela de RDC (rolável)' })
+  await expect(tabela.getByRole('row', { name: /Maria Souza/ })).toBeVisible()
+  await expect(tabela.getByRole('row', { name: /João Lima/ })).toHaveCount(0)
   await page.getByRole('button', { name: 'Remover filtro Status' }).click()
-  await expect(page.getByRole('cell', { name: 'João Lima' })).toBeVisible()
+  await expect(tabela.getByRole('row', { name: /João Lima/ })).toBeVisible()
 })
 
 test('ordenação da tabela é acessível por teclado e expõe aria-sort', async ({ page }) => {
   await logar(page)
-  await page.getByRole('button', { name: 'Detalhamento', exact: true }).click()
-  const th = page.getByRole('columnheader', { name: /Responsável/ })
+  const th = page.getByRole('region', { name: 'Tabela de RDC (rolável)' }).getByRole('columnheader', { name: /Responsável/ })
   await expect(th).toHaveAttribute('aria-sort', 'none')
   await th.getByRole('button').focus()
   await page.keyboard.press('Enter')

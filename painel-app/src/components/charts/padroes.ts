@@ -23,3 +23,19 @@ export const SEM_SOBREPOSICAO = { hideOverlap: true }
  */
 export const CORES_SERIES = ['#2a78d6', '#1baf7a', '#6250d6', '#e87ba4', '#008300', '#c98500'] as const
 export const MAX_SERIES = CORES_SERIES.length
+
+/**
+ * Afasta na vertical os nomes do fim das linhas que ficariam a menos de `minimo` (em valor do
+ * eixo) um do outro. Devolve o deslocamento de cada série em valor do eixo (positivo = para baixo).
+ */
+export function afastarRotulos(itens: Array<{ chave: string; valor: number | null }>, minimo: number): Map<string, number> {
+  const ordenados = itens.filter((i): i is { chave: string; valor: number } => i.valor != null).sort((a, b) => b.valor - a.valor)
+  const saida = new Map<string, number>()
+  let anterior = Infinity
+  for (const i of ordenados) {
+    const pos = Math.min(i.valor, anterior - minimo)
+    saida.set(i.chave, i.valor - pos)
+    anterior = pos
+  }
+  return saida
+}
