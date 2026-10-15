@@ -359,14 +359,11 @@ export function contagemSituacao(linhas: LinhaProducao[]): Record<Situacao, numb
 // Produtividade diária
 // ---------------------------------------------------------------------------
 export interface PontoDiario {
-  /**
-   * Produção ÷ HH do dia. Sem produção com HH vinculado: null, ou 0 quando o período é
-   * preenchido dia a dia (ver `vazio`).
-   */
+  /** Produção ÷ HH do dia; null quando o dia não tem produção com HH vinculado nessa série. */
   indice: number | null
   producao: number
   hh: number
-  /** Dia sem produção com HH nessa série: o 0 é preenchimento para a linha seguir contínua, não medição. */
+  /** Dia sem produção com HH nessa série (sem dado — nunca vira zero). */
   vazio: boolean
 }
 
@@ -378,9 +375,9 @@ export interface ProdutividadeDiaria {
   series: Array<{ chave: string; hh: number; pontos: PontoDiario[] }> | null
 }
 
-function ponto(t: Totais | null, u: Unidade, preencher: boolean): PontoDiario {
+function ponto(t: Totais | null, u: Unidade): PontoDiario {
   const indice = t ? produtividade(t, u) : null
-  if (!t || indice == null) return { indice: preencher ? 0 : null, producao: 0, hh: 0, vazio: true }
+  if (!t || indice == null) return { indice: null, producao: 0, hh: 0, vazio: true }
   return { indice, producao: u === 'm2' ? t.m2ComHh : t.kgComHh, hh: u === 'm2' ? t.hhM2 : t.hhKg, vazio: false }
 }
 
@@ -389,30 +386,21 @@ function ponto(t: Totais | null, u: Unidade, preencher: boolean): PontoDiario {
  * Mesmas regras do índice do período: só registros com produção e HH; por etapa, o HH do dia
  * se repete em cada etapa executada naquele dia.
  *
- * Com `periodo` (lista de dias), o eixo tem sempre todos esses dias, com ou sem dado — decisão
- * do usuário (2026-10-14): o eixo respeita o filtro. Dia até `limite` sem produção com HH entra
- * como 0 com `vazio: true` (a linha fica contínua; a tela marca o ponto de forma distinta); dia
- * depois de `limite` sem dado fica null (ainda não aconteceu). Sem `periodo`, só entram os dias
- * com dado.
+ * Com `periodo` (lista de dias), o eixo tem sempre todos esses dias, com ou sem dado (o eixo
+ * respeita o filtro). Dia sem produção com HH fica sem dado (null, `vazio: true`) — nunca zero,
+ * decisão do usuário (2026-10-15); a tela liga os pontos com dado por cima desses dias.
+ * Sem `periodo`, só entram os dias com dado.
  */
-export function produtividadeDiaria(
-  linhas: LinhaProducao[],
-  d: Dimensao | null,
-  u: Unidade,
-  periodo?: string[],
-  limite?: string,
-): ProdutividadeDiaria {
+export function produtividadeDiaria(linhas: LinhaProducao[], d: Dimensao | null, u: Unidade, periodo?: string[]): ProdutividadeDiaria {
   const daUnidade = linhas.filter((l) => l.unidade === u && l.data)
   const porDia = new Map<string, LinhaProducao[]>()
   for (const l of daUnidade) {
     const dia = l.data!.slice(0, 10)
     porDia.set(dia, [...(porDia.get(dia) ?? []), l])
   }
-  const preencher = periodo != null
   const comDado = [...porDia.keys()].filter((dia) => produtividade(totalizar(porDia.get(dia)!), u) != null)
-  const dias = preencher ? [...periodo].sort() : comDado.sort()
-  const preencherDia = (dia: string) => preencher && (limite == null || dia <= limite)
-  const total = dias.map((dia) => ponto(porDia.has(dia) ? totalizar(porDia.get(dia)!) : null, u, preencherDia(dia)))
+  const dias = periodo ? [...periodo].sort() : comDado.sort()
+  const total = dias.map((dia) => ponto(porDia.has(dia) ? totalizar(porDia.get(dia)!) : null, u))
   if (!d) return { dias, total, series: null }
 
   const series = agrupar(daUnidade, d)
@@ -424,7 +412,7 @@ export function produtividadeDiaria(
       hh,
       pontos: dias.map((dia) => {
         const g = porDia.has(dia) ? agrupar(porDia.get(dia)!, d).find((x) => x.chave === chave) : undefined
-        return ponto(g ? g.totais : null, u, preencherDia(dia))
+        return ponto(g ? g.totais : null, u)
       }),
     }))
   return { dias, total, series }

@@ -219,34 +219,28 @@ describe('produtividadeDiaria com o período dia a dia', () => {
     [],
     [],
   )
-  const periodo = ['2026-10-01', '2026-10-02', '2026-10-03']
+  const periodo = ['2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04']
 
-  it('todos os dias no eixo; dia sem produção com HH vira 0 marcado como vazio', () => {
+  it('eixo com todos os dias do período; dia sem produção com HH fica sem dado, nunca zero', () => {
     const r = produtividadeDiaria(linhas, null, 'm2', periodo)
     expect(r.dias).toEqual(periodo)
     expect(r.total.map((p) => [p.indice, p.vazio])).toEqual([
       [5, false],
-      [0, true],
+      [null, true],
       [1, false],
+      [null, true],
     ])
   })
 
-  it('cada série também é preenchida com 0 nos dias em que não aparece', () => {
+  it('cada série também fica sem dado nos dias em que não aparece', () => {
     const r = produtividadeDiaria(linhas, 'responsavel', 'm2', periodo)
     const bia = r.series!.find((s) => s.chave === 'Bia')!
-    expect(bia.pontos.map((p) => [p.indice, p.vazio])).toEqual([
-      [0, true],
-      [0, true],
-      [1, false],
-    ])
+    expect(bia.pontos.map((p) => p.indice)).toEqual([null, null, 1, null])
   })
-})
 
-describe('produtividadeDiaria: eixo sempre do período do filtro', () => {
-  it('sem nenhum dado, o eixo tem todos os dias; até o limite é 0, depois fica sem ponto', () => {
-    const r = produtividadeDiaria([], null, 'm2', ['2026-10-12', '2026-10-13', '2026-10-14', '2026-10-15'], '2026-10-13')
+  it('período sem nenhum dado: eixo completo, todos os pontos sem dado', () => {
+    const r = produtividadeDiaria([], null, 'm2', periodo)
     expect(r.dias).toHaveLength(4)
-    expect(r.total.map((p) => p.indice)).toEqual([0, 0, null, null])
-    expect(r.total.every((p) => p.vazio)).toBe(true)
+    expect(r.total.every((p) => p.indice == null && p.vazio)).toBe(true)
   })
 })
