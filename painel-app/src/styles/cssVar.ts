@@ -7,5 +7,8 @@
  * reescrita fora de design-tokens.css.
  */
 export function cssVar(nome: `--${string}`): string {
-  return getComputedStyle(document.documentElement).getPropertyValue(nome).trim()
+  // As telas ficam dentro de .tema-exec (Shell.tsx), que redefine os tokens com a
+  // paleta do Painel executivo; fora dele (login, testes) vale o :root.
+  const alvo = document.querySelector('.tema-exec') ?? document.documentElement
+  return getComputedStyle(alvo).getPropertyValue(nome).trim()
 }

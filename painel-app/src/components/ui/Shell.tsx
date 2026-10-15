@@ -3,7 +3,6 @@ import { useAuth } from '../../auth/AuthProvider'
 import { FilterProvider } from '../../filters/FilterContext'
 import CargaProducao from '../CargaProducao'
 import Comparacao from '../../screens/Comparacao'
-import Desempenho from '../../screens/Desempenho'
 import Desvios from '../../screens/Desvios'
 import Detalhamento from '../../screens/Detalhamento'
 import Executivo from '../../screens/Executivo'
@@ -16,7 +15,6 @@ import logoPpl from '../../assets/ppl-logo.png'
 const TELAS = [
   // Tela inicial: layout do protótipo Stitch "Painel Executivo" com dados reais (substituiu Contexto).
   { chave: 'executivo', rotulo: 'Painel executivo', Componente: Executivo },
-  { chave: 'desempenho', rotulo: 'Desempenho', Componente: Desempenho },
   { chave: 'comparacao', rotulo: 'Comparação', Componente: Comparacao },
   { chave: 'desvios', rotulo: 'Desvios', Componente: Desvios },
   { chave: 'detalhamento', rotulo: 'Detalhamento', Componente: Detalhamento },
@@ -79,7 +77,7 @@ export default function Shell() {
           >
             <Sidebar telas={TELAS} telaAtiva={telaAtiva} onSelecionar={(chave) => irPara(chave as TelaChave)} onFechar={menuAberto ? fecharMenu : undefined} />
           </div>
-          <main className="@container min-w-0 flex-1 overflow-y-auto p-4 lg:p-6">
+          <main className="tema-exec @container min-w-0 flex-1 overflow-y-auto p-4 lg:p-6">
             <div className="mx-auto flex max-w-[1600px] flex-col gap-4">
               <CabecalhoTela titulo={tela.rotulo} tela={telaAtiva} />
               <Tela irPara={irPara} />

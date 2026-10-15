@@ -98,6 +98,8 @@ export function paretoImpactos(impactos: ImpactoRow[], limite = 8): ItemPareto[]
 export interface EsperaArea {
   area: string
   mediaMin: number
+  /** Maior espera da área, em minutos (comparada à META_ESPERA_PTS_MIN). */
+  maxMin: number
   comEspera: number
 }
 
@@ -110,7 +112,12 @@ export function esperaPtsPorArea(rdcs: RdcRow[]): EsperaArea[] {
     mapa.set(area, [...(mapa.get(area) ?? []), r.espera_pts_min])
   }
   return [...mapa.entries()]
-    .map(([area, esperas]) => ({ area, mediaMin: esperas.reduce((a, b) => a + b, 0) / esperas.length, comEspera: esperas.length }))
+    .map(([area, esperas]) => ({
+      area,
+      mediaMin: esperas.reduce((a, b) => a + b, 0) / esperas.length,
+      maxMin: Math.max(...esperas),
+      comEspera: esperas.length,
+    }))
     .sort((a, b) => b.mediaMin - a.mediaMin)
 }
 

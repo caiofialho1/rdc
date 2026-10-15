@@ -163,8 +163,8 @@ describe('esperaPtsPorArea', () => {
       rdc({ area: null, pts: true, espera_pts_min: 50 }),
     ]
     expect(esperaPtsPorArea(rdcs)).toEqual([
-      { area: 'Sem área informada', mediaMin: 50, comEspera: 1 },
-      { area: 'Forno', mediaMin: 30, comEspera: 2 },
+      { area: 'Sem área informada', mediaMin: 50, maxMin: 50, comEspera: 1 },
+      { area: 'Forno', mediaMin: 30, maxMin: 40, comEspera: 2 },
     ])
   })
 })

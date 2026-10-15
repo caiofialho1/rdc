@@ -1,21 +1,22 @@
 # Arquitetura de informação (Painel de Controle)
 
-Reorganiza as 8 seções do `painel.html` antigo em 5 telas de storytelling (Painel executivo → Desempenho → Comparação → Desvios → Detalhamento), sem perder capacidade de dado ou filtro. Implementação em `painel-app/src/screens/`.
+Reorganiza as 8 seções do `painel.html` antigo em 4 telas de storytelling (Painel executivo → Comparação → Desvios → Detalhamento; a tela Desempenho foi removida em 2026-10-14 e a emissão diária foi para o Painel executivo), sem perder capacidade de dado ou filtro. Implementação em `painel-app/src/screens/`.
 
 | Seção antiga (painel.html) | Tela nova | O que é preservado | O que muda |
 |---|---|---|---|
-| Barra de filtros + "01 Balanço do período" | **Painel executivo** (tela inicial; substituiu a antiga Contexto em 2026-10-12) | Filtro global (período, área, responsável, disciplina, contrato, situação, busca) dispara `rdc_admin_exportar`; layout do protótipo Stitch "Painel Executivo": KPIs consolidados → resumo de pendências (aguardando validação / sem contrato / PTS sem espera, com atalho que filtra por `Enviado`) → diagnóstico (evolução diária, HH por disciplina, Pareto de impactos, espera de PTS por área) → responsáveis de campo → tabela de RDC paginada; banner de "dados desatualizados" em falha de atualização | Paleta própria do protótipo (tokens `--exec-*`); metas/SLA/classificações do protótipo ficam de fora (não existem no banco) |
-| "02 Gráficos" (donuts + série temporal) | **Desempenho** | KPIs de HH/impacto/PTS/bloqueios; série temporal diária/semanal/mensal pelo ciclo 21→20; filtros locais de disciplina/responsável/contrato no gráfico, sem afetar KPIs | Composição por disciplina passa de rosca para a forma mais adequada ao número de categorias (ver `KPI_CATALOG.md`); nenhum dado novo |
-| "03 Emissão diária" (calendário) | **Desempenho** (bloco de calendário) | Matriz responsável×dia, feriados/fins de semana, marcos do ciclo, "ver próximos dias" | Reestilizado |
-| "04 Responsáveis" | **Desempenho** (ou Desvios, conforme espaço) | Tabela + comparação de HH trabalhado vs. impacto por responsável | — |
+| Barra de filtros + "01 Balanço do período" | **Painel executivo** (tela inicial; substituiu a antiga Contexto em 2026-10-12) | Filtro global (período, área, responsável, disciplina, contrato, situação, busca) dispara `rdc_admin_exportar`; layout do protótipo Stitch "Painel Executivo": KPIs consolidados → resumo de pendências (aguardando validação / sem contrato / PTS sem espera, com atalho que filtra por `Enviado`) → diagnóstico (evolução diária, HH por disciplina, Pareto de impactos, espera de PTS por área) → responsáveis de campo → emissão diária (calendário responsável×dia) → tabela de RDC paginada; banner de "dados desatualizados" em falha de atualização | Paleta própria do protótipo (tokens `--exec-*`); metas/SLA/classificações do protótipo ficam de fora (não existem no banco) |
+| "02 Gráficos" (donuts + série temporal) | **Painel executivo** (diagnóstico; tela Desempenho removida em 2026-10-14) | KPIs de HH/impacto/PTS/bloqueios; série temporal diária/semanal/mensal pelo ciclo 21→20; filtros locais de disciplina/responsável/contrato no gráfico, sem afetar KPIs | Composição por disciplina passa de rosca para a forma mais adequada ao número de categorias (ver `KPI_CATALOG.md`); nenhum dado novo |
+| "03 Emissão diária" (calendário) | **Painel executivo** (seção "Emissão diária", entre Responsáveis de campo e Detalhamento) | Matriz responsável×dia, feriados/fins de semana, marcos do ciclo, "ver próximos dias" | Reestilizado |
+| "04 Responsáveis" | **Painel executivo** e Desvios | Tabela + comparação de HH trabalhado vs. impacto por responsável | — |
 | "05 Impactos" | **Desvios** | Tabela de impactos, agrupável, abre detalhe do RDC | — |
 | "07 Produção × RDC" | **Comparação** | Escopo de data **independente** do filtro global, lazy-load ao abrir, situação de reconciliação (`Produção com RDC`/`sem RDC`/`RDC sem produção`) | Passa a ser a tela central de "Comparação", não uma seção secundária |
 | "08 Produção por responsável" | **Comparação** | Escopo de data independente, participação %, `etapas_sem_preco` sempre visível | — |
-| "06 Registros RDC" + modal de detalhe | **Detalhamento** | Tabela agrupável, seleção em lote → `rdc_admin_editar`, modal com histórico/validação → `rdc_validar`, fotos com GPS/lightbox | — |
+| "06 Registros RDC" + modal de detalhe | **Detalhamento** | Tabela agrupável, seleção em lote → `rdc_admin_editar`, modal com histórico/validação → `rdc_validar`, fotos com GPS/lightbox, mão de obra por função (pico e HH por função, de `qtd_*` das atividades) | — |
 | Botão "Atualizar carga produção" | ação global (acessível de qualquer tela, não é uma tela de storytelling) | Fluxo idêntico: `rdc_admin_mc_status` (diff) → parse XLSX client-side → `rdc_admin_mc_importar` por planilha alterada | Reestilizado; lógica de parsing portada para `domain/xlsxCarga.ts` |
 
 ## Modelo de filtros (preservado)
 
+- Período = **medição** (ciclo 21→20), escolhido por **Ano** + **Mês medição** na barra lateral; o mês é o de fechamento (21/01 a 20/02 = fevereiro). Abre na medição em curso. Não há mais datas livres nem atalhos (Hoje/7 dias/30 dias…), desde 2026-10-14.
 - Filtros globais (barra lateral) recarregam `rdc_admin_exportar` quando o período muda; os demais filtram em memória sobre o resultado já carregado.
 - Comparação (Produção × RDC / por responsável) mantém escopo de data **próprio**, lembrado por navegador, independente do filtro global.
 - Falha de atualização nunca apaga dados bons: mantém o período e os dados anteriores, com aviso persistente; exportação fica desabilitada antes da primeira carga e durante atualização em curso.
@@ -23,4 +24,10 @@ Reorganiza as 8 seções do `painel.html` antigo em 5 telas de storytelling (Pai
 
 ## Navegação
 
-5 telas (Painel executivo, Desempenho, Comparação, Desvios, Detalhamento) + Login, sem biblioteca de rotas — estado interno simples (aba ativa), já que é um painel interno de uma única sessão, sem necessidade de URLs profundas por tela.
+4 telas (Painel executivo, Comparação, Desvios, Detalhamento) + Login, sem biblioteca de rotas — estado interno simples (aba ativa), já que é um painel interno de uma única sessão, sem necessidade de URLs profundas por tela.
+
+## Padrão visual (2026-10-14)
+
+Todas as telas seguem o visual do **Painel executivo**: a área de conteúdo (`main.tema-exec` em `Shell.tsx`) redefine os tokens de cor para a paleta `--exec-*` (grafite + dourado, vermelho só para impacto/desfavorável, verde para concluído) e aplica a estrutura de card, tabela e chip do Executivo. Gráficos leem as cores do mesmo contêiner (`styles/cssVar.ts`). Cabeçalho e lateral seguem a paleta do app mobile.
+
+O **Detalhamento** é mestre-detalhe: tabela à esquerda e detalhe do RDC fixo à direita a partir de ~72rem de área útil (abaixo da tabela em telas menores), com filtro rápido por status, faixa de identificação, régua de métricas, mão de obra por função (as 7 funções sempre listadas, barra = participação no HH), linha do tempo do turno (atividades em grafite, impactos em vermelho, na mesma régua de horas) e ações de validação fixas no rodapé do painel.

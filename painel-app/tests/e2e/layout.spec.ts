@@ -12,7 +12,7 @@ const VIEWPORTS = [
   { nome: 'celular', width: 390, height: 844 },
 ]
 
-const TELAS = ['Painel executivo', 'Desempenho', 'Comparação', 'Desvios', 'Detalhamento']
+const TELAS = ['Painel executivo', 'Comparação', 'Desvios', 'Detalhamento']
 
 async function abrirTela(page: Page, tela: string) {
   const menu = page.getByRole('button', { name: 'Menu e filtros' })
@@ -92,8 +92,7 @@ test('diálogo de carga fecha com Esc e devolve o foco', async ({ page }) => {
 
 test('gráficos têm descrição textual e números de eixo em pt-BR', async ({ page }) => {
   await logar(page)
-  await page.getByRole('button', { name: 'Desempenho' }).click()
-  await expect(page.getByRole('img', { name: /HH trabalhado por disciplina: PAC 8,0 HH/ })).toBeVisible()
+  await expect(page.getByRole('img', { name: /HH por dia: 01\/10\/2026 8,0 HH trabalhado/ })).toBeVisible()
   const erros: string[] = []
   page.on('console', (m) => m.type() === 'error' && erros.push(m.text()))
   await page.getByRole('button', { name: 'Desvios' }).click()

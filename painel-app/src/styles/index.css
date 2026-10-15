@@ -674,3 +674,150 @@ body {
   z-index: 3;
   background: var(--exec-surface-low);
 }
+
+/* ------------------------------------------------------------------ */
+/* Tema do Painel executivo em todas as telas (2026-10-14)            */
+/* ------------------------------------------------------------------ */
+/*
+ * A área de conteúdo (main.tema-exec, em Shell.tsx) redefine os tokens base
+ * e os do Tailwind para a paleta do Painel executivo: grafite + dourado,
+ * vermelho só para impacto/desfavorável, verde para concluído. Telas,
+ * componentes e gráficos (cssVar lê deste contêiner) mudam juntos, sem cor
+ * fixa nas telas. A moldura (cabeçalho e lateral) segue a paleta do app.
+ */
+.tema-exec {
+  --primary: var(--exec-ink-2);
+  --primary-light: var(--exec-graphite);
+  --secondary: var(--exec-text-2);
+  --blue-soft: var(--exec-outline);
+  --slate: #a9abb0;
+  --ice: var(--exec-surface-low);
+  --accent: var(--exec-gold);
+  --surface-soft: var(--exec-surface-low);
+  --chart-background: var(--exec-surface);
+  --border: var(--exec-border);
+  --text-primary: var(--exec-ink);
+  --text-secondary: var(--exec-text-2);
+  --gridline: var(--exec-border);
+  --axis: var(--exec-outline);
+  --planned: #a9abb0;
+  --actual: var(--exec-ink-2);
+  --impact: var(--exec-impact);
+  --impact-text: var(--exec-impact);
+  --target: var(--exec-gold);
+  --info: var(--exec-info);
+  --success: var(--exec-prod);
+  --warning: var(--exec-alert);
+  --danger: var(--exec-impact);
+  --series-purple: var(--exec-gold);
+  --series-blue-muted: var(--exec-outline);
+  --success-bg: var(--exec-prod-bg);
+  --warning-bg: var(--exec-alert-bg);
+  --danger-bg: var(--exec-impact-bg);
+  --info-bg: var(--exec-info-bg);
+  --success-border: var(--exec-prod-border);
+  --warning-border: var(--exec-alert-border);
+  --danger-border: var(--exec-impact-border);
+  --info-border: var(--exec-info-border);
+  --success-text: var(--exec-prod);
+  --warning-text: var(--exec-alert);
+  --danger-text: var(--exec-impact);
+  --info-text: var(--exec-info);
+
+  /* Mesmos papéis no namespace do Tailwind (utilitários bg-*, text-*, border-*). */
+  --color-primary: var(--exec-ink-2);
+  --color-primary-light: var(--exec-graphite);
+  --color-secondary: var(--exec-text-2);
+  --color-blue-soft: var(--exec-outline);
+  --color-slate: #a9abb0;
+  --color-ice: var(--exec-surface-low);
+  --color-accent: var(--exec-gold);
+  --color-surface-soft: var(--exec-surface-low);
+  --color-chart-background: var(--exec-surface);
+  --color-border: var(--exec-border);
+  --color-text-primary: var(--exec-ink);
+  --color-text-secondary: var(--exec-text-2);
+  --color-gridline: var(--exec-border);
+  --color-axis: var(--exec-outline);
+  --color-planned: #a9abb0;
+  --color-actual: var(--exec-ink-2);
+  --color-impact: var(--exec-impact);
+  --color-impact-text: var(--exec-impact);
+  --color-target: var(--exec-gold);
+  --color-info: var(--exec-info);
+  --color-success: var(--exec-prod);
+  --color-warning: var(--exec-alert);
+  --color-danger: var(--exec-impact);
+  --color-series-purple: var(--exec-gold);
+  --color-series-blue-muted: var(--exec-outline);
+  --color-success-bg: var(--exec-prod-bg);
+  --color-warning-bg: var(--exec-alert-bg);
+  --color-danger-bg: var(--exec-impact-bg);
+  --color-info-bg: var(--exec-info-bg);
+  --color-success-border: var(--exec-prod-border);
+  --color-warning-border: var(--exec-alert-border);
+  --color-danger-border: var(--exec-impact-border);
+  --color-info-border: var(--exec-info-border);
+  --color-success-text: var(--exec-prod);
+  --color-warning-text: var(--exec-alert);
+  --color-danger-text: var(--exec-impact);
+  --color-info-text: var(--exec-info);
+
+  color: var(--exec-ink);
+}
+
+/* Cards: mesma superfície do exec-card. */
+.tema-exec .se-card,
+.tema-exec .se-chart {
+  border-color: var(--exec-border);
+  background: #fff;
+}
+/* Cabeçalho de card: título 15 px/700 com divisória, como exec-card__topo. */
+.tema-exec .se-card-header {
+  border-bottom: 1px solid var(--exec-border);
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+}
+.tema-exec .se-card-header :is(h2, h3) {
+  font-weight: 700;
+  color: var(--exec-ink);
+}
+/* Tabelas: cabeçalho em caixa alta sobre --exec-surface-low, sem zebra (como exec-tabela). */
+.tema-exec .se-table th {
+  background: var(--exec-surface-low);
+  color: var(--exec-text-2);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.tema-exec .se-table td,
+.tema-exec .se-table tbody th[scope='row'] {
+  padding: 11px 14px;
+  border-bottom-color: var(--exec-border);
+}
+.tema-exec .se-table tbody tr:nth-child(even) {
+  background: transparent;
+}
+.tema-exec .se-table tbody tr:hover {
+  background: color-mix(in srgb, var(--exec-surface-low) 60%, transparent);
+}
+.tema-exec .se-table tbody tr[aria-selected='true'] {
+  background: var(--exec-gold-bg);
+  box-shadow: inset 3px 0 0 var(--exec-gold);
+}
+.tema-exec .se-table__sort {
+  padding: 10px 14px;
+}
+.tema-exec .se-table-wrap {
+  border-color: var(--exec-border);
+}
+/* Chips de estado: mesma forma do exec-chip. */
+.tema-exec .se-chip {
+  border-radius: 3px;
+  padding: 1px 8px;
+  font-size: 11px;
+}
+/* KpiCard (Desvios/Comparação) com a tipografia do KPI executivo. */
+.tema-exec .kpi-card {
+  border-color: var(--exec-border);
+  background: #fff;
+}

@@ -1,4 +1,4 @@
-import { useId, useMemo } from 'react'
+import { useMemo } from 'react'
 import * as XLSX from 'xlsx'
 import { useExportar } from '../../api/queries'
 import type { StatusRdc } from '../../api/schemas'
@@ -6,7 +6,9 @@ import { useUltimoSucesso } from '../../api/useUltimoSucesso'
 import { useAuth } from '../../auth/AuthProvider'
 import { planilhasExportacao } from '../../domain/exportacao'
 import { filtrar, valoresUnicos, type FiltrosSecundarios } from '../../domain/filtros'
-import { PRESETS, useFilters } from '../../filters/FilterContext'
+import { fmtData } from '../../domain/formatters'
+import { anosDisponiveis, medicaoAtual, medicaoDoMes } from '../../domain/ciclo'
+import { useFilters } from '../../filters/FilterContext'
 
 export interface ItemNav {
   chave: string
@@ -59,7 +61,6 @@ export default function Sidebar({ telas, telaAtiva, onSelecionar, onFechar }: Si
   const { ini, fim, definirPeriodo, secundarios, definirSecundario, limpar } = useFilters()
   const consulta = useExportar(admin, ini, fim)
   const { dados: dadosOk, carregando } = useUltimoSucesso(consulta)
-  const idErroPeriodo = useId()
 
   const recorte = useMemo(() => (dadosOk ? filtrar(dadosOk, secundarios) : null), [dadosOk, secundarios])
   const areas = dadosOk ? valoresUnicos(dadosOk.rdcs, (r) => r.area) : []
@@ -67,11 +68,12 @@ export default function Sidebar({ telas, telaAtiva, onSelecionar, onFechar }: Si
   const contratos = dadosOk ? valoresUnicos(dadosOk.rdcs, (r) => r.contrato) : []
   const status = dadosOk ? valoresUnicos(dadosOk.rdcs, (r) => r.status) : []
 
-  const periodoInvalido = !!ini && !!fim && ini > fim
-  const presetsAtivos = useMemo(() => new Set(PRESETS.filter((p) => {
-    const c = p.calcular()
-    return c.ini === ini && c.fim === fim
-  }).map((p) => p.rotulo)), [ini, fim])
+  const anos = useMemo(() => anosDisponiveis(), [])
+  const atual = useMemo(() => medicaoAtual(), [])
+  // O período sempre é uma medição inteira (21→20): ano e mês saem da data final.
+  const ano = Number(fim.slice(0, 4))
+  const mes = Number(fim.slice(5, 7))
+  const meses = Array.from({ length: 12 }, (_, i) => medicaoDoMes(ano, i + 1)).filter((m) => m.fim <= atual.fim)
   const qtdAtivos = (Object.keys(secundarios) as Array<keyof FiltrosSecundarios>).filter((k) => secundarios[k]).length
 
   function exportarExcel() {
@@ -116,58 +118,48 @@ export default function Sidebar({ telas, telaAtiva, onSelecionar, onFechar }: Si
       <div className="flex flex-col gap-4 border-t border-border pt-4">
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-2 text-xs font-semibold tracking-wide text-text-secondary uppercase">Período</legend>
-          <div className="flex flex-wrap gap-1.5">
-            {PRESETS.map((p) => {
-              const ativo = presetsAtivos.has(p.rotulo)
-              return (
-                <button
-                  key={p.rotulo}
-                  type="button"
-                  aria-pressed={ativo}
-                  onClick={() => {
-                    const { ini, fim } = p.calcular()
-                    definirPeriodo(ini, fim)
-                  }}
-                  className={`min-h-7 rounded-control border px-2 py-1 text-xs ${
-                    ativo
-                      ? 'border-primary bg-primary text-white'
-                      : 'border-blue-soft text-text-secondary hover:border-primary hover:text-text-primary'
-                  }`}
-                >
-                  {p.rotulo}
-                </button>
-              )
-            })}
-          </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-[5.5rem_1fr] gap-2">
             <label className="se-field">
-              De
-              <input
-                type="date"
-                value={ini}
-                onChange={(e) => definirPeriodo(e.target.value, fim)}
-                aria-invalid={periodoInvalido}
-                aria-describedby={periodoInvalido ? idErroPeriodo : undefined}
-                className="se-input px-1.5"
-              />
+              Ano
+              <select
+                value={ano}
+                onChange={(e) => {
+                  const novoAno = Number(e.target.value)
+                  // Mantém o mês; se ele ainda não começou no ano escolhido, vai para a medição atual.
+                  const m = medicaoDoMes(novoAno, mes)
+                  const alvo = m.fim <= atual.fim ? m : atual
+                  definirPeriodo(alvo.ini, alvo.fim)
+                }}
+                className="se-input"
+              >
+                {anos.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="se-field">
-              Até
-              <input
-                type="date"
-                value={fim}
-                onChange={(e) => definirPeriodo(ini, e.target.value)}
-                aria-invalid={periodoInvalido}
-                aria-describedby={periodoInvalido ? idErroPeriodo : undefined}
-                className="se-input px-1.5"
-              />
+              Mês medição
+              <select
+                value={mes}
+                onChange={(e) => {
+                  const m = medicaoDoMes(ano, Number(e.target.value))
+                  definirPeriodo(m.ini, m.fim)
+                }}
+                className="se-input"
+              >
+                {meses.map((m) => (
+                  <option key={m.chave} value={Number(m.chave.slice(5, 7))}>
+                    {m.rotulo.split('/')[0]}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
-          {periodoInvalido && (
-            <p id={idErroPeriodo} role="alert" className="text-xs text-danger-text">
-              A data inicial é posterior à final.
-            </p>
-          )}
+          <p className="text-xs text-text-secondary tabular">
+            {fmtData(ini)} a {fmtData(fim)}
+          </p>
         </fieldset>
 
         <fieldset className="flex flex-col gap-3">

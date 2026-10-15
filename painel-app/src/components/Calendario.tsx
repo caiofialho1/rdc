@@ -3,8 +3,6 @@ import type { RdcRow } from '../api/schemas'
 import { isoDia } from '../domain/ciclo'
 import { classificarDia, diasDoIntervalo, estenderFimMesSeAplicavel, type ClassificacaoDia, type DiaCalendario } from '../domain/calendario'
 import { fmtData } from '../domain/formatters'
-import Card from './ui/Card'
-import CardHeader from './ui/CardHeader'
 import Responsavel from './ui/Responsavel'
 
 const CORES: Record<ClassificacaoDia['tipo'], string> = {
@@ -60,6 +58,11 @@ function Legenda() {
   )
 }
 
+/**
+ * Matriz responsável × dia (emissão diária). Sem moldura nem título: quem usa
+ * (Painel executivo) fornece a seção; o fim do período estendido vem de
+ * estenderFimMesSeAplicavel, a mesma regra usada aqui.
+ */
 export default function Calendario({ rdcs, ini, fim }: { rdcs: RdcRow[]; ini: string; fim: string }) {
   const hoje = isoDia(new Date())
   const fimEstendido = estenderFimMesSeAplicavel(fim, hoje)
@@ -83,11 +86,7 @@ export default function Calendario({ rdcs, ini, fim }: { rdcs: RdcRow[]; ini: st
     `${d.dia === 1 && i > 0 ? 'cal-mes' : ''} ${d.iso === hoje ? 'cal-dia--hoje' : ''}`
 
   return (
-    <Card>
-      <CardHeader
-        titulo="Emissão diária"
-        subtitulo={`RDC por responsável e dia, ${fmtData(ini)} a ${fmtData(fimEstendido)}. Dia sem registro não comprova falta.`}
-      />
+    <>
       <div className="max-h-[28rem] overflow-auto rounded-card border border-border" tabIndex={0} role="region" aria-label="Calendário de emissão diária (rolável)">
         <table className="cal-tabela">
           <caption className="sr-only">Emissão diária de RDC por responsável</caption>
@@ -147,6 +146,6 @@ export default function Calendario({ rdcs, ini, fim }: { rdcs: RdcRow[]; ini: st
         </table>
       </div>
       <Legenda />
-    </Card>
+    </>
   )
 }

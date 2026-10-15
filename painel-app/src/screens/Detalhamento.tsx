@@ -1,9 +1,9 @@
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { useExportar } from '../api/queries'
 import { useUltimoSucesso } from '../api/useUltimoSucesso'
 import { useEditar, useValidar } from '../api/mutations'
 import { useFotoBlobUrl } from '../api/fotos'
-import type { AtividadeRow, CamposEditaveis, FotoRow, RdcRow } from '../api/schemas'
+import type { AtividadeRow, CamposEditaveis, FotoRow, ImpactoRow, RdcRow, StatusRdc } from '../api/schemas'
 import { useAuth } from '../auth/AuthProvider'
 import Badge from '../components/ui/Badge'
 import Banner from '../components/ui/Banner'
@@ -12,19 +12,20 @@ import CardHeader from '../components/ui/CardHeader'
 import EstadoTela from '../components/ui/EstadoTela'
 import Lightbox from '../components/ui/Lightbox'
 import Responsavel from '../components/ui/Responsavel'
+import { descricaoAtividade, NOME_DISCIPLINA, type DescricaoAtividade } from '../domain/atividades'
 import { tomStatus } from '../domain/badges'
 import { disciplinasPorRdc, fotosPorRdc } from '../domain/diagnostico'
 import { filtrar } from '../domain/filtros'
-import { fmtData, fmtHoras, fmtInteiro } from '../domain/formatters'
+import { funcoesDaAtividade, maoDeObraPorFuncao, semFuncao } from '../domain/maoDeObra'
+import { fmtData, fmtDH, fmtHora, fmtHoras, fmtInteiro, fmtPercentual } from '../domain/formatters'
 import { useFilters } from '../filters/FilterContext'
 
-type Coluna = 'data_rdc' | 'responsavel' | 'ativo' | 'om' | 'status' | 'contrato'
+type Coluna = 'data_rdc' | 'responsavel' | 'ativo' | 'status' | 'contrato'
 
 const COLUNAS: Array<[Coluna, string]> = [
   ['data_rdc', 'Data'],
   ['responsavel', 'Responsável'],
-  ['ativo', 'Ativo'],
-  ['om', 'OM'],
+  ['ativo', 'Ativo / OM'],
   ['status', 'Status'],
   ['contrato', 'Contrato'],
 ]
@@ -119,14 +120,312 @@ function Secao({ titulo, children }: { titulo: string; children: ReactNode }) {
   )
 }
 
+/** Barra horizontal do % do HH do RDC (0–100%); o valor exato segue em texto na mesma linha. */
+function BarraHh({ parte, cor }: { parte: number; cor: string }) {
+  return (
+    <span className="block h-2.5 rounded-[2px] bg-surface-soft" aria-hidden="true">
+      {parte > 0 && <span className={`block h-full rounded-[2px] ${cor}`} style={{ width: `${Math.max(parte * 100, 1.5)}%` }} />}
+    </span>
+  )
+}
+
+/**
+ * Quantitativo de mão de obra por função no RDC: as 7 funções do app sempre aparecem,
+ * zeradas quando não houve efetivo. "Pico" é a maior quantidade da função numa mesma
+ * atividade (a equipe se repete entre atividades, por isso não se soma); o HH, por ser
+ * pessoa × tempo, soma e fecha com o HH trabalhado — é ele que a barra compara.
+ */
+function MaoDeObra({ atividades }: { atividades: AtividadeRow[] }) {
+  const { linhas, hhSemFuncao, picoSemFuncao } = useMemo(() => maoDeObraPorFuncao(atividades), [atividades])
+  const hhTotal = linhas.reduce((s, l) => s + l.hh, 0) + hhSemFuncao
+  // Mesmo critério de efetivo_max (vw_rdc_metricas), sobre as atividades exibidas.
+  const efetivoMax = atividades.reduce((m, a) => Math.max(m, a.efetivo_total), 0)
+  const parte = (hh: number) => (hhTotal > 0 ? hh / hhTotal : 0)
+  const linhasTabela = [
+    ...linhas.map((l) => ({ ...l, semFuncao: false })),
+    ...(picoSemFuncao > 0 ? [{ funcao: 'Sem função informada', pico: picoSemFuncao, hh: hhSemFuncao, semFuncao: true }] : []),
+  ]
+
+  return (
+    <section aria-labelledby="mao-de-obra-titulo" className="flex min-w-0 flex-col gap-2.5 rounded-card border border-border bg-chart-background p-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h4 id="mao-de-obra-titulo" className="text-xs font-semibold tracking-wide text-text-secondary uppercase">
+          Mão de obra por função
+        </h4>
+        <p className="text-sm text-text-secondary">
+          <span className="tabular text-[17px] font-semibold text-text-primary">{fmtInteiro(efetivoMax)}</span> pessoas no pico ·{' '}
+          <span className="tabular text-[17px] font-semibold text-text-primary">{fmtHoras(hhTotal)}</span> HH
+        </p>
+      </div>
+      <table className="w-full table-fixed border-collapse text-sm">
+        <colgroup>
+          <col className="w-[32%]" />
+          <col />
+          <col className="w-11" />
+          <col className="w-13" />
+          <col className="w-[4.25rem]" />
+        </colgroup>
+        <thead>
+          <tr className="border-b border-border text-[11px] text-text-secondary">
+            <th scope="col" className="pb-1 text-left font-medium">
+              Função
+            </th>
+            <th scope="col" className="pb-1 text-left font-medium">
+              <span className="sr-only">Participação no HH (barra)</span>
+            </th>
+            <th scope="col" className="pb-1 text-right font-medium" title="Maior quantidade da função numa mesma atividade">
+              Pico
+            </th>
+            <th scope="col" className="pb-1 text-right font-medium">
+              HH
+            </th>
+            <th scope="col" className="pb-1 text-right font-medium">
+              % HH
+            </th>
+          </tr>
+        </thead>
+        <tbody className="tabular">
+          {linhasTabela.map((l) => {
+            const zerada = l.pico === 0
+            return (
+              <tr key={l.funcao} className="border-b border-border/70 last:border-0">
+                <th
+                  scope="row"
+                  className={`truncate py-1.5 pr-2 text-left font-normal ${l.semFuncao ? 'text-warning-text' : zerada ? 'text-text-secondary' : 'text-text-primary'}`}
+                  title={l.funcao}
+                >
+                  {l.funcao}
+                </th>
+                <td className="py-1.5 pr-2">
+                  <BarraHh parte={parte(l.hh)} cor={l.semFuncao ? 'bg-planned' : 'bg-actual'} />
+                </td>
+                <td className={`py-1.5 text-right ${zerada ? 'text-text-secondary' : 'font-semibold text-text-primary'}`}>{fmtInteiro(l.pico)}</td>
+                <td className={`py-1.5 text-right ${zerada ? 'text-text-secondary' : ''}`}>{fmtHoras(l.hh)}</td>
+                <td className="py-1.5 text-right text-text-secondary">{hhTotal > 0 ? fmtPercentual(parte(l.hh)) : '—'}</td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+      <p className="mt-auto text-[11px] leading-snug text-text-secondary">
+        Barra = participação da função no HH do RDC. Pico = maior quantidade numa mesma atividade (a equipe se repete entre atividades, por isso não se soma).
+      </p>
+    </section>
+  )
+}
+
+const HORA_MS = 3_600_000
+
+/** Dia da semana por extenso da data do RDC (a data é dia civil, sem fuso). */
+function diaSemana(iso: string): string {
+  return new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString('pt-BR', { weekday: 'long' })
+}
+
+/** Métrica do topo do detalhe: valor em destaque, rótulo curto embaixo. */
+function Metrica({ valor, unidade, rotulo }: { valor: string; unidade?: string; rotulo: string }) {
+  return (
+    <div className="min-w-0 px-3 py-2.5 first:pl-4">
+      <p className="tabular text-[18px] leading-tight font-semibold text-text-primary">
+        {valor}
+        {unidade && <span className="ml-0.5 text-xs font-medium text-text-secondary">{unidade}</span>}
+      </p>
+      <p className="mt-0.5 truncate text-[11px] text-text-secondary">{rotulo}</p>
+    </div>
+  )
+}
+
+interface Escala {
+  marcas: number[]
+  pos: (t: number) => number
+}
+
+/** Janela do turno em horas cheias, cobrindo todas as atividades e impactos do RDC. */
+function escalaDoTurno(intervalos: Array<{ inicio: string; fim: string }>): Escala | null {
+  const tempos = intervalos.flatMap((i) => [new Date(i.inicio).getTime(), new Date(i.fim).getTime()]).filter(Number.isFinite)
+  if (!tempos.length) return null
+  const ini = new Date(Math.min(...tempos))
+  ini.setMinutes(0, 0, 0)
+  const t0 = ini.getTime()
+  const t1 = t0 + Math.max(1, Math.ceil((Math.max(...tempos) - t0) / HORA_MS)) * HORA_MS
+  const passo = (t1 - t0) / HORA_MS > 8 ? 2 : 1
+  const marcas: number[] = []
+  for (let t = t0; t <= t1; t += passo * HORA_MS) marcas.push(t)
+  return { marcas, pos: (t) => ((t - t0) / (t1 - t0)) * 100 }
+}
+
+/** Trilho de tempo: linhas de hora ao fundo e uma barra no intervalo [ini, fim]. */
+function Trilho({ ini, fim, escala, cor }: { ini: string; fim: string; escala: Escala; cor: string }) {
+  const a = escala.pos(new Date(ini).getTime())
+  const b = escala.pos(new Date(fim).getTime())
+  return (
+    <span className="relative block h-2.5 rounded-[2px] bg-surface-soft" aria-hidden="true">
+      {escala.marcas.map((t) => (
+        <span key={t} className="absolute inset-y-0 w-px bg-border" style={{ left: `${escala.pos(t)}%` }} />
+      ))}
+      <span className={`absolute inset-y-0 rounded-[2px] ${cor}`} style={{ left: `${a}%`, width: `${Math.max(b - a, 0.8)}%` }} />
+    </span>
+  )
+}
+
+/**
+ * O que o encarregado escreveu sobre a atividade: a descrição livre do serviço OUTROS e a
+ * observação. O filete azul liga o texto à barra da atividade na régua. Sem texto no RDC,
+ * nada é exibido — exceto OUTROS sem descrição, que é pendência do registro.
+ */
+function Execucao({ d }: { d: DescricaoAtividade }) {
+  if (!d.descricao && !d.descricaoPendente && !d.observacao) return null
+  return (
+    <dl className="flex flex-col gap-1.5 rounded-[3px] border-l-2 border-actual bg-chart-background py-1.5 pr-3 pl-2.5">
+      {(d.descricao || d.descricaoPendente) && (
+        <div className="min-w-0">
+          <dt className="text-[11px] font-medium text-text-secondary">Serviço executado</dt>
+          <dd className={`text-sm leading-snug break-words whitespace-pre-line ${d.descricao ? 'text-text-primary' : 'text-warning-text'}`}>
+            {d.descricao ?? 'Serviço “OUTROS” registrado sem descrição.'}
+          </dd>
+        </div>
+      )}
+      {d.observacao && (
+        <div className="min-w-0">
+          <dt className="text-[11px] font-medium text-text-secondary">Observação</dt>
+          <dd className="text-sm leading-snug break-words whitespace-pre-line text-text-primary">{d.observacao}</dd>
+        </div>
+      )}
+    </dl>
+  )
+}
+
+/**
+ * Atividades e impactos do RDC numa mesma régua de horas: barra azul onde a equipe
+ * trabalhou, laranja onde parou. Horários, duração e efetivo seguem em texto ao lado;
+ * abaixo da barra, a descrição do serviço executado.
+ */
+function Turno({ atividades, impactos }: { atividades: AtividadeRow[]; impactos: ImpactoRow[] }) {
+  const ordenadas = useMemo(() => [...atividades].sort((a, b) => a.ordem - b.ordem), [atividades])
+  const paradas = useMemo(() => [...impactos].sort((a, b) => a.inicio.localeCompare(b.inicio)), [impactos])
+  const escala = useMemo(() => escalaDoTurno([...ordenadas, ...paradas]), [ordenadas, paradas])
+
+  if (!ordenadas.length && !paradas.length) {
+    return (
+      <Secao titulo="Turno">
+        <p className="text-sm text-text-secondary">RDC sem atividades nem impactos registrados.</p>
+      </Secao>
+    )
+  }
+
+  return (
+    <section aria-labelledby="turno-titulo" className="border-t border-border pt-3">
+      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h4 id="turno-titulo" className="text-xs font-semibold tracking-wide text-text-secondary uppercase">
+          Turno · {fmtInteiro(ordenadas.length)} atividade(s){paradas.length > 0 && ` · ${fmtInteiro(paradas.length)} impacto(s)`}
+        </h4>
+        <span className="flex items-center gap-3 text-[11px] text-text-secondary" aria-hidden="true">
+          <span className="flex items-center gap-1">
+            <span className="h-2 w-3 rounded-[2px] bg-actual" /> Atividade
+          </span>
+          {paradas.length > 0 && (
+            <span className="flex items-center gap-1">
+              <span className="h-2 w-3 rounded-[2px] bg-impact" /> Impacto
+            </span>
+          )}
+        </span>
+      </div>
+
+      {escala && (
+        <div className="grid grid-cols-[1.5rem_minmax(0,1fr)]" aria-hidden="true">
+          <span />
+          <span className="relative mb-1 block h-4 text-[10px] text-text-secondary tabular">
+            {escala.marcas.map((t, i) => (
+              <span
+                key={t}
+                className={`absolute top-0 ${i === 0 ? '' : i === escala.marcas.length - 1 ? '-translate-x-full' : '-translate-x-1/2'}`}
+                style={{ left: `${escala.pos(t)}%` }}
+              >
+                {fmtHora(new Date(t).toISOString()).slice(0, 2)}h
+              </span>
+            ))}
+          </span>
+        </div>
+      )}
+
+      <ol className="flex flex-col gap-3">
+        {ordenadas.map((a) => {
+          const funcoes = funcoesDaAtividade(a)
+          const naoDiscriminado = semFuncao(a)
+          const d = descricaoAtividade(a)
+          return (
+            <li key={a.codigo} className="grid grid-cols-[1.5rem_minmax(0,1fr)] gap-y-1">
+              <span className="pt-px text-xs font-semibold text-text-secondary tabular">{fmtInteiro(a.ordem)}</span>
+              <div className="flex min-w-0 flex-col gap-1.5">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-sm">
+                  <span className="min-w-0 break-words">
+                    <Badge tom="neutro">
+                      <abbr title={NOME_DISCIPLINA[a.disciplina]} className="no-underline">
+                        {a.disciplina}
+                      </abbr>
+                    </Badge>{' '}
+                    <span className="font-medium text-text-primary">{d.servico}</span>
+                    {d.tipoAndaime && <span className="whitespace-nowrap text-text-secondary"> · {d.tipoAndaime}</span>}
+                  </span>
+                  <span className="text-xs text-text-secondary tabular">
+                    {fmtHora(a.inicio)}–{fmtHora(a.fim)} · {fmtHoras(a.duracao_min / 60)} h · {fmtInteiro(a.efetivo_total)} pessoa(s)
+                  </span>
+                </div>
+                {escala && <Trilho ini={a.inicio} fim={a.fim} escala={escala} cor="bg-actual" />}
+                <Execucao d={d} />
+                {(funcoes.length > 0 || naoDiscriminado > 0) && (
+                  <span className="flex flex-wrap gap-1" aria-label="Efetivo por função">
+                    {funcoes.map((f) => (
+                      <Badge key={f.funcao} tom="neutro">
+                        <span className="tabular">
+                          {f.funcao} {fmtInteiro(f.qtd)}
+                        </span>
+                      </Badge>
+                    ))}
+                    {naoDiscriminado > 0 && (
+                      <Badge tom="warning">
+                        <span className="tabular">Sem função {fmtInteiro(naoDiscriminado)}</span>
+                      </Badge>
+                    )}
+                  </span>
+                )}
+              </div>
+            </li>
+          )
+        })}
+        {paradas.map((i) => (
+          <li key={i.codigo} className="grid grid-cols-[1.5rem_minmax(0,1fr)] gap-y-1">
+            <span className="pt-1.5" aria-hidden="true">
+              <span className="block h-2 w-2 rounded-full bg-impact" />
+            </span>
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-sm">
+                <span className="min-w-0 font-medium text-impact-text">
+                  <span className="sr-only">Impacto: </span>
+                  {i.descricao}
+                </span>
+                <span className="text-xs text-text-secondary tabular">
+                  {fmtHora(i.inicio)}–{fmtHora(i.fim)} · {fmtHoras(i.duracao_min / 60)} h
+                </span>
+              </div>
+              {escala && <Trilho ini={i.inicio} fim={i.fim} escala={escala} cor="bg-impact" />}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )
+}
+
 function Detalhe({
   rdc,
   atividades,
+  impactos,
   fotos,
   onFechar,
 }: {
   rdc: RdcRow
   atividades: AtividadeRow[]
+  impactos: ImpactoRow[]
   fotos: FotoRow[]
   onFechar: () => void
 }) {
@@ -140,7 +439,7 @@ function Detalhe({
   const idObs = useId()
   const ref = useRef<HTMLDivElement>(null)
 
-  // Abaixo de ~90rem de conteúdo o detalhe fica abaixo da tabela: leva o usuário até ele
+  // Abaixo de ~72rem de conteúdo o detalhe fica abaixo da tabela: leva o usuário até ele
   // ('nearest' não mexe na rolagem quando ele já está visível ao lado da tabela).
   useEffect(() => {
     ref.current?.scrollIntoView({ block: 'nearest' })
@@ -153,112 +452,141 @@ function Detalhe({
     else setUltimaDecisao(decisao)
   }
 
+  const minImpacto = impactos.reduce((s, i) => s + i.duracao_min, 0)
+  const decidivel = rdc.status === 'Enviado' || rdc.status === 'Em revisão'
+  const pts =
+    rdc.pts == null ? '—' : rdc.pts ? `Sim · espera ${rdc.espera_pts_min == null ? 'não informada' : `${fmtInteiro(rdc.espera_pts_min)} min`}` : 'Não'
+  const bloqueio = rdc.bloqueio == null ? '—' : rdc.bloqueio ? `Sim · ${rdc.bloqueio_ativo ?? 'ativo não informado'}` : 'Não'
+
   return (
-    <Card ref={ref} className="flex scroll-mt-4 flex-col gap-3 @[90rem]:sticky @[90rem]:top-0" aria-labelledby={`detalhe-${rdc.codigo}`}>
-      <div className="flex items-start justify-between gap-2">
-        <h3 id={`detalhe-${rdc.codigo}`} className="min-w-0 text-[15px] font-semibold break-all text-text-primary">
-          {rdc.codigo}
-        </h3>
-        <button type="button" onClick={onFechar} className="se-link shrink-0">
-          Fechar
-        </button>
-      </div>
-      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
-        <dt className="text-text-secondary">Status</dt>
-        <dd>
-          <Badge tom={tomStatus(rdc.status)}>{rdc.status}</Badge>
-        </dd>
-        <dt className="text-text-secondary">Responsável</dt>
-        <dd>
-          <Responsavel nome={rdc.responsavel} tamanho="lg" comFuncao />
-        </dd>
-        <dt className="text-text-secondary">Data</dt>
-        <dd className="tabular">{fmtData(rdc.data_rdc)}</dd>
-        <dt className="text-text-secondary">Ativo / OM</dt>
-        <dd className="break-words">
-          {rdc.ativo} / {rdc.om}
-        </dd>
-        <dt className="text-text-secondary">Contrato</dt>
-        <dd>{rdc.contrato_nome ?? '— sem contrato'}</dd>
-        <dt className="text-text-secondary">HH trabalhado</dt>
-        <dd className="tabular">{fmtHoras(rdc.hh_min / 60)} HH</dd>
-        <dt className="text-text-secondary">PTS</dt>
-        <dd>{rdc.pts == null ? '—' : rdc.pts ? `Sim (espera: ${rdc.espera_pts_min == null ? 'não informada' : fmtHoras(rdc.espera_pts_min / 60) + ' h'})` : 'Não'}</dd>
-        <dt className="text-text-secondary">Bloqueio</dt>
-        <dd>{rdc.bloqueio == null ? '—' : rdc.bloqueio ? `Sim (${rdc.bloqueio_ativo ?? '—'})` : 'Não'}</dd>
-        <dt className="text-text-secondary">Validado por</dt>
-        <dd>{rdc.validado_por ?? '—'}</dd>
-      </dl>
-
-      {atividades.length > 0 && (
-        <Secao titulo={`Atividades (${fmtInteiro(atividades.length)})`}>
-          <ul className="flex flex-col gap-1 text-sm">
-            {atividades.map((a) => (
-              <li key={a.codigo}>
-                <span className="font-medium">{a.disciplina}</span> — {a.servico}{' '}
-                <span className="tabular text-text-secondary">
-                  ({fmtHoras(a.duracao_min / 60)} h, efetivo {fmtInteiro(a.efetivo_total)})
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Secao>
-      )}
-
-      {fotos.length > 0 && (
-        <Secao titulo={`Fotos (${fmtInteiro(fotos.length)})`}>
-          <div className="flex flex-wrap gap-2">
-            {fotos.map((f, i) => (
-              <Miniatura key={f.codigo} foto={f} onClick={() => setLightbox(i)} />
-            ))}
+    <Card
+      ref={ref}
+      className="@container/detalhe flex scroll-mt-4 flex-col overflow-hidden p-0! @[72rem]:sticky @[72rem]:top-0 @[72rem]:max-h-[calc(100dvh-7.5rem)]"
+      aria-labelledby={`detalhe-${rdc.codigo}`}
+    >
+      <header className="shrink-0 bg-primary px-4 py-3 text-white">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[11px] tracking-wide text-white/75 uppercase">
+              RDC · <span className="tabular">{fmtData(rdc.data_rdc)}</span> · {diaSemana(rdc.data_rdc)}
+              {rdc.revisao > 0 && ` · revisão ${fmtInteiro(rdc.revisao)}`}
+            </p>
+            <h3 id={`detalhe-${rdc.codigo}`} className="mt-0.5 text-[15px] leading-snug font-semibold break-all">
+              {rdc.codigo}
+            </h3>
           </div>
-        </Secao>
-      )}
+          <div className="flex shrink-0 items-center gap-3">
+            <Badge tom={tomStatus(rdc.status)}>{rdc.status}</Badge>
+            <button type="button" onClick={onFechar} className="text-sm text-white underline underline-offset-2 hover:text-white/80">
+              Fechar
+            </button>
+          </div>
+        </div>
+      </header>
 
-      <div className="border-t border-border pt-2">
-        <button type="button" onClick={() => setEditando((e) => !e)} aria-expanded={editando} className="se-link">
-          {editando ? 'Fechar edição' : 'Editar dados'}
-        </button>
-        {editando && <FormularioEdicao rdc={rdc} onSalvo={() => setEditando(false)} />}
+      <div className="grid shrink-0 grid-cols-2 divide-x divide-border border-b border-border bg-chart-background @[30rem]/detalhe:grid-cols-4">
+        <Metrica valor={fmtHoras(rdc.hh_min / 60)} unidade="HH" rotulo="HH trabalhado" />
+        <Metrica valor={fmtInteiro(rdc.efetivo_max)} rotulo="Pessoas no pico" />
+        <Metrica valor={fmtInteiro(atividades.length)} rotulo="Atividades" />
+        <Metrica valor={fmtHoras(minImpacto / 60)} unidade="h" rotulo={impactos.length ? `Impacto · ${fmtInteiro(impactos.length)} registro(s)` : 'Sem impacto'} />
       </div>
 
-      {ultimaDecisao && (
-        <p role="status" className="rounded-control bg-success-bg px-3 py-2 text-sm text-success-text">
-          Decisão registrada: {ultimaDecisao}.
-        </p>
-      )}
-
-      {(rdc.status === 'Enviado' || rdc.status === 'Em revisão') && (
-        <div className="flex flex-col gap-2 border-t border-border pt-3">
-          <label htmlFor={idObs} className="se-field">
-            Motivo (obrigatório para revisão ou cancelamento)
-          </label>
-          <textarea id={idObs} value={obs} onChange={(e) => setObs(e.target.value)} rows={2} className="se-input" />
-          {confirmarCancelamento ? (
-            <div className="flex flex-wrap items-center gap-2 rounded-control bg-danger-bg p-2" role="group" aria-label="Confirmar cancelamento">
-              <span className="text-sm text-danger-text">Cancelar este RDC?</span>
-              <button type="button" onClick={() => decidir('Cancelado')} disabled={validar.isPending} className="se-button se-button--danger se-button--sm">
-                Confirmar cancelamento
-              </button>
-              <button type="button" onClick={() => setConfirmarCancelamento(false)} className="se-link">
-                Voltar
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => decidir('Validado')} disabled={validar.isPending} className="se-button se-button--success">
-                Validar
-              </button>
-              <button type="button" onClick={() => decidir('Em revisão')} disabled={validar.isPending} className="se-button se-button--warning">
-                Liberar revisão
-              </button>
-              <button type="button" onClick={() => setConfirmarCancelamento(true)} disabled={validar.isPending} className="se-button se-button--outline">
-                Cancelar RDC…
-              </button>
-            </div>
-          )}
-          {validar.isError && <Banner tipo="erro">Não foi possível registrar a decisão.</Banner>}
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
+        <div className="grid grid-cols-1 gap-4 @[44rem]/detalhe:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+          <div className="flex min-w-0 flex-col gap-3">
+            <Responsavel nome={rdc.responsavel} tamanho="lg" comFuncao />
+            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
+              <dt className="text-text-secondary">Ativo</dt>
+              <dd className="min-w-0 break-words">
+                {rdc.ativo}
+                {rdc.ativo_descricao && <span className="block text-xs text-text-secondary">{rdc.ativo_descricao}</span>}
+              </dd>
+              <dt className="text-text-secondary">OM</dt>
+              <dd className="tabular">{rdc.om}</dd>
+              <dt className="text-text-secondary">Contrato</dt>
+              <dd className={rdc.contrato_nome ? '' : 'text-warning-text'}>{rdc.contrato_nome ?? 'Sem contrato'}</dd>
+              <dt className="text-text-secondary">Área</dt>
+              <dd>{rdc.area ?? '—'}</dd>
+              <dt className="text-text-secondary">PTS</dt>
+              <dd>{pts}</dd>
+              <dt className="text-text-secondary">Bloqueio</dt>
+              <dd>{bloqueio}</dd>
+              <dt className="text-text-secondary">Validado por</dt>
+              <dd>
+                {rdc.validado_por ?? '—'}
+                {rdc.validado_em && <span className="ml-1 text-xs text-text-secondary">em {fmtDH(rdc.validado_em)}</span>}
+              </dd>
+              {rdc.obs_validacao && (
+                <>
+                  <dt className="text-text-secondary">Motivo</dt>
+                  <dd className="text-text-primary">{rdc.obs_validacao}</dd>
+                </>
+              )}
+            </dl>
+          </div>
+          <MaoDeObra atividades={atividades} />
         </div>
+
+        <Turno atividades={atividades} impactos={impactos} />
+
+        {fotos.length > 0 && (
+          <Secao titulo={`Fotos (${fmtInteiro(fotos.length)})`}>
+            <div className="flex flex-wrap gap-2">
+              {fotos.map((f, i) => (
+                <Miniatura key={f.codigo} foto={f} onClick={() => setLightbox(i)} />
+              ))}
+            </div>
+          </Secao>
+        )}
+
+        <div className="border-t border-border pt-2">
+          <button type="button" onClick={() => setEditando((e) => !e)} aria-expanded={editando} className="se-link">
+            {editando ? 'Fechar edição' : 'Editar dados'}
+          </button>
+          {editando && <FormularioEdicao rdc={rdc} onSalvo={() => setEditando(false)} />}
+        </div>
+      </div>
+
+      {(decidivel || ultimaDecisao) && (
+        <footer className="flex shrink-0 flex-col gap-2 border-t border-border bg-chart-background p-4">
+          {ultimaDecisao && (
+            <p role="status" className="rounded-control bg-success-bg px-3 py-2 text-sm text-success-text">
+              Decisão registrada: {ultimaDecisao}.
+            </p>
+          )}
+          {decidivel && (
+            <>
+              <label htmlFor={idObs} className="se-field">
+                Motivo (obrigatório para revisão ou cancelamento)
+              </label>
+              <textarea id={idObs} value={obs} onChange={(e) => setObs(e.target.value)} rows={2} className="se-input" />
+              {confirmarCancelamento ? (
+                <div className="flex flex-wrap items-center gap-2 rounded-control bg-danger-bg p-2" role="group" aria-label="Confirmar cancelamento">
+                  <span className="text-sm text-danger-text">Cancelar este RDC?</span>
+                  <button type="button" onClick={() => decidir('Cancelado')} disabled={validar.isPending} className="se-button se-button--danger se-button--sm">
+                    Confirmar cancelamento
+                  </button>
+                  <button type="button" onClick={() => setConfirmarCancelamento(false)} className="se-link">
+                    Voltar
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={() => decidir('Validado')} disabled={validar.isPending} className="se-button se-button--success">
+                    Validar
+                  </button>
+                  <button type="button" onClick={() => decidir('Em revisão')} disabled={validar.isPending} className="se-button se-button--warning">
+                    Liberar revisão
+                  </button>
+                  <button type="button" onClick={() => setConfirmarCancelamento(true)} disabled={validar.isPending} className="se-button se-button--outline">
+                    Cancelar RDC…
+                  </button>
+                </div>
+              )}
+              {validar.isError && <Banner tipo="erro">Não foi possível registrar a decisão.</Banner>}
+            </>
+          )}
+        </footer>
       )}
 
       {lightbox !== null && <Lightbox fotos={fotos} indice={lightbox} onFechar={() => setLightbox(null)} onNavegar={setLightbox} />}
@@ -266,9 +594,11 @@ function Detalhe({
   )
 }
 
+const ORDEM_STATUS: StatusRdc[] = ['Enviado', 'Em revisão', 'Validado', 'Rascunho', 'Substituído', 'Cancelado']
+
 export default function Detalhamento() {
   const { admin, tratarErroRpc } = useAuth()
-  const { ini, fim, secundarios } = useFilters()
+  const { ini, fim, secundarios, definirSecundario } = useFilters()
   const consulta = useExportar(admin, ini, fim)
   const editar = useEditar(admin)
 
@@ -279,6 +609,13 @@ export default function Detalhamento() {
 
   const { dados: dadosOk, semDados } = useUltimoSucesso(consulta)
   const recorte = useMemo(() => (dadosOk ? filtrar(dadosOk, secundarios) : null), [dadosOk, secundarios])
+  // Contagem por status com todos os outros filtros aplicados, menos o próprio status.
+  const contagemStatus = useMemo(() => {
+    const mapa = new Map<StatusRdc, number>()
+    if (!dadosOk) return mapa
+    for (const r of filtrar(dadosOk, { ...secundarios, status: undefined }).rdcs) mapa.set(r.status, (mapa.get(r.status) ?? 0) + 1)
+    return mapa
+  }, [dadosOk, secundarios])
 
   // Disciplinas de todas as atividades do RDC (não só as do filtro de disciplina).
   const disciplinas = useMemo(() => disciplinasPorRdc(dadosOk?.atividades ?? []), [dadosOk])
@@ -315,9 +652,29 @@ export default function Detalhamento() {
     else setSelecionados(new Set())
   }
 
+  /** Setas ↑/↓ andam pelas linhas; com o detalhe aberto, ele acompanha a linha focada. */
+  function navegar(e: KeyboardEvent<HTMLTableRowElement>, codigo: string) {
+    if (e.target !== e.currentTarget) return
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      setAtivo(codigo)
+      return
+    }
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+    const proxima = (e.key === 'ArrowDown' ? e.currentTarget.nextElementSibling : e.currentTarget.previousElementSibling) as HTMLTableRowElement | null
+    if (!proxima) return
+    e.preventDefault()
+    proxima.focus()
+    if (ativo && proxima.dataset.codigo) setAtivo(proxima.dataset.codigo)
+  }
+
   const selecionado = linhas.find((r) => r.codigo === ativo) ?? null
   const atividadesSelecionado = useMemo(
     () => (selecionado ? (recorte?.atividades ?? []).filter((a) => a.rdc === selecionado.codigo) : []),
+    [recorte, selecionado],
+  )
+  const impactosSelecionado = useMemo(
+    () => (selecionado ? (recorte?.impactos ?? []).filter((i) => i.rdc === selecionado.codigo) : []),
     [recorte, selecionado],
   )
   const fotosSelecionado = useMemo(
@@ -327,12 +684,18 @@ export default function Detalhamento() {
 
   if (!recorte) return <EstadoTela erro={semDados} />
 
+  const totalSemStatus = [...contagemStatus.values()].reduce((s, n) => s + n, 0)
+  const statusPresentes = ORDEM_STATUS.filter((s) => contagemStatus.has(s))
+  // Colunas secundárias só aparecem quando a tabela tem largura para elas.
+  const largo = 'hidden @[60rem]/tabela:table-cell'
+  const medio = 'hidden @[50rem]/tabela:table-cell'
+
   return (
-    <div className="grid grid-cols-1 items-start gap-4 @[90rem]:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-      <Card className="min-w-0">
+    <div className={`grid grid-cols-1 items-start gap-4 ${selecionado ? '@[72rem]:grid-cols-[minmax(0,1fr)_minmax(27rem,0.85fr)]' : ''}`}>
+      <Card className="@container/tabela min-w-0">
         <CardHeader
           titulo="Registros RDC"
-          subtitulo={`${fmtInteiro(linhas.length)} no recorte · clique ou Enter abre o detalhe`}
+          subtitulo={`${fmtInteiro(linhas.length)} no recorte · clique ou Enter abre o detalhe; ↑ ↓ percorrem as linhas`}
           acoes={
             selecionados.size > 0 && (
               <div className="flex flex-wrap items-center gap-2 text-sm" role="group" aria-label="Ação em lote">
@@ -351,9 +714,31 @@ export default function Detalhamento() {
             )
           }
         />
+        {statusPresentes.length > 1 && (
+          <div className="mb-3 flex flex-wrap gap-1.5" role="group" aria-label="Filtrar por status">
+            {[undefined, ...statusPresentes].map((s) => {
+              const ativoFiltro = secundarios.status === s
+              const n = s ? (contagemStatus.get(s) ?? 0) : totalSemStatus
+              return (
+                <button
+                  key={s ?? 'todos'}
+                  type="button"
+                  aria-pressed={ativoFiltro}
+                  onClick={() => definirSecundario('status', s)}
+                  className={`flex min-h-7 items-center gap-1.5 rounded-control border px-2.5 py-1 text-xs ${
+                    ativoFiltro ? 'border-primary bg-primary text-white' : 'border-border bg-surface text-text-secondary hover:border-blue-soft hover:text-text-primary'
+                  }`}
+                >
+                  {s ?? 'Todos'}
+                  <span className={`tabular font-semibold ${ativoFiltro ? 'text-white' : 'text-text-primary'}`}>{fmtInteiro(n)}</span>
+                </button>
+              )
+            })}
+          </div>
+        )}
         {editar.isError && <Banner tipo="erro">Não foi possível aplicar o contrato aos selecionados.</Banner>}
-        <div className="se-table-wrap max-h-[32rem]">
-          <table className="se-table min-w-[980px]">
+        <div className={`se-table-wrap ${selecionado ? 'max-h-[32rem] @[72rem]:max-h-[calc(100dvh-17rem)]' : 'max-h-[calc(100dvh-17rem)] min-h-[20rem]'}`}>
+          <table className="se-table min-w-[620px]">
             <thead>
               <tr>
                 <th scope="col" className="w-10">
@@ -362,7 +747,12 @@ export default function Detalhamento() {
                 {COLUNAS.map(([coluna, rotulo]) => {
                   const ativa = ordem.coluna === coluna
                   return (
-                    <th key={coluna} scope="col" aria-sort={ativa ? (ordem.dir === 1 ? 'ascending' : 'descending') : 'none'}>
+                    <th
+                      key={coluna}
+                      scope="col"
+                      aria-sort={ativa ? (ordem.dir === 1 ? 'ascending' : 'descending') : 'none'}
+                      className={coluna === 'contrato' ? largo : ''}
+                    >
                       <button type="button" className="se-table__sort" onClick={() => alternarOrdem(coluna)}>
                         {rotulo}
                         <span aria-hidden="true" className={ativa ? '' : 'opacity-40'}>
@@ -372,8 +762,10 @@ export default function Detalhamento() {
                     </th>
                   )
                 })}
-                <th scope="col">Disciplina</th>
-                <th scope="col" className="num">
+                <th scope="col" className={medio}>
+                  Disciplina
+                </th>
+                <th scope="col" className={`num ${largo}`}>
                   Fotos (GPS)
                 </th>
                 <th scope="col">PTS / Bloqueio</th>
@@ -383,15 +775,10 @@ export default function Detalhamento() {
               {linhas.map((r) => (
                 <tr
                   key={r.codigo}
+                  data-codigo={r.codigo}
                   tabIndex={0}
                   aria-selected={ativo === r.codigo}
-                  onKeyDown={(e) => {
-                    if (e.target !== e.currentTarget) return
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      setAtivo(r.codigo)
-                    }
-                  }}
+                  onKeyDown={(e) => navegar(e, r.codigo)}
                   className="cursor-pointer hover:bg-background"
                   onClick={() => setAtivo(r.codigo)}
                 >
@@ -407,13 +794,15 @@ export default function Detalhamento() {
                   <td>
                     <Responsavel nome={r.responsavel} />
                   </td>
-                  <td>{r.ativo}</td>
-                  <td className="nowrap">{r.om}</td>
+                  <td>
+                    <span className="block font-medium whitespace-nowrap">{r.ativo}</span>
+                    <span className="block text-xs whitespace-nowrap text-text-secondary tabular">OM {r.om}</span>
+                  </td>
                   <td>
                     <Badge tom={tomStatus(r.status)}>{r.status}</Badge>
                   </td>
-                  <td>{r.contrato_nome ?? '—'}</td>
-                  <td>
+                  <td className={largo}>{r.contrato_nome ?? '—'}</td>
+                  <td className={medio}>
                     <span className="flex flex-wrap gap-1">
                       {(disciplinas.get(r.codigo) ?? []).map((d) => (
                         <Badge key={d} tom="neutro">
@@ -423,10 +812,10 @@ export default function Detalhamento() {
                       {!disciplinas.has(r.codigo) && '—'}
                     </span>
                   </td>
-                  <td className="num">
+                  <td className={`num ${largo}`}>
                     {(() => {
                       const f = fotosRdc.get(r.codigo)
-                      return f ? `${fmtInteiro(f.total)} (${fmtInteiro(f.comGps)})` : '0'
+                      return f ? `${fmtInteiro(f.total)} (${fmtInteiro(f.comGps)})` : <span className="text-text-secondary">0</span>
                     })()}
                   </td>
                   <td>
@@ -436,19 +825,18 @@ export default function Detalhamento() {
               ))}
             </tbody>
           </table>
-          {linhas.length === 0 && <p className="se-table-empty">Nenhum RDC no recorte. Ajuste o período ou limpe os filtros.</p>}
+          {linhas.length === 0 && <p className="se-table-empty">Nenhum RDC no recorte. Escolha outro mês de medição ou limpe os filtros.</p>}
         </div>
       </Card>
-      {selecionado ? (
+      {selecionado && (
         <Detalhe
           key={selecionado.codigo}
           rdc={selecionado}
           atividades={atividadesSelecionado}
+          impactos={impactosSelecionado}
           fotos={fotosSelecionado}
           onFechar={() => setAtivo(null)}
         />
-      ) : (
-        <Card className="text-sm text-text-secondary">Selecione um registro para ver atividades, fotos e validar.</Card>
       )}
     </div>
   )

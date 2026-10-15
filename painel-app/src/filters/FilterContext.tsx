@@ -1,54 +1,6 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
-import { isoDia } from '../domain/ciclo'
+import { medicaoAtual } from '../domain/ciclo'
 import type { FiltrosSecundarios } from '../domain/filtros'
-
-export interface PeriodoPreset {
-  rotulo: string
-  calcular: () => { ini: string; fim: string }
-}
-
-function hoje(): Date {
-  return new Date()
-}
-
-export const PRESETS: PeriodoPreset[] = [
-  { rotulo: 'Hoje', calcular: () => ({ ini: isoDia(hoje()), fim: isoDia(hoje()) }) },
-  {
-    rotulo: '7 dias',
-    calcular: () => {
-      const f = hoje()
-      const i = new Date(f)
-      i.setDate(i.getDate() - 6)
-      return { ini: isoDia(i), fim: isoDia(f) }
-    },
-  },
-  {
-    rotulo: '30 dias',
-    calcular: () => {
-      const f = hoje()
-      const i = new Date(f)
-      i.setDate(i.getDate() - 29)
-      return { ini: isoDia(i), fim: isoDia(f) }
-    },
-  },
-  {
-    rotulo: 'Este mês',
-    calcular: () => {
-      const f = hoje()
-      return { ini: isoDia(new Date(f.getFullYear(), f.getMonth(), 1)), fim: isoDia(f) }
-    },
-  },
-  {
-    rotulo: 'Mês anterior',
-    calcular: () => {
-      const f = hoje()
-      return {
-        ini: isoDia(new Date(f.getFullYear(), f.getMonth() - 1, 1)),
-        fim: isoDia(new Date(f.getFullYear(), f.getMonth(), 0)),
-      }
-    },
-  },
-]
 
 interface FilterContextValue {
   ini: string
@@ -62,7 +14,8 @@ interface FilterContextValue {
 const FilterContext = createContext<FilterContextValue | null>(null)
 
 export function FilterProvider({ children }: { children: ReactNode }) {
-  const padrao = PRESETS[2].calcular() // 30 dias
+  // Abre na medição em curso (ex.: em 14/10, a de outubro: 21/09 a 20/10).
+  const [padrao] = useState(medicaoAtual)
   const [ini, setIni] = useState(padrao.ini)
   const [fim, setFim] = useState(padrao.fim)
   const [secundarios, setSecundarios] = useState<FiltrosSecundarios>({})

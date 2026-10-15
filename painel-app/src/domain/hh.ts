@@ -115,3 +115,25 @@ export function mediaEsperaPts(espera: EsperaPts): number | null {
   if (!espera.comEspera.length) return null
   return espera.comEspera.reduce((a, b) => a + b, 0) / espera.comEspera.length
 }
+
+/**
+ * Meta de espera de PTS definida pelo planejamento em 2026-10-14: espera acima de
+ * 40 min é desfavorável. Não vem do banco — é regra do painel (ver KPI_CATALOG.md).
+ */
+export const META_ESPERA_PTS_MIN = 40
+
+export interface EsperaMaxima {
+  /** Maior espera informada no recorte, em minutos. */
+  maxMin: number
+  /** RDC com espera acima da meta. */
+  acimaMeta: number
+  /** RDC com PTS e espera informada (base da comparação). */
+  comEspera: number
+}
+
+/** Espera máxima de PTS (mesma base de esperaPts: só RDC com PTS e os dois horários); null sem nenhuma espera informada. */
+export function esperaMaximaPts(rdcs: RdcRow[], meta = META_ESPERA_PTS_MIN): EsperaMaxima | null {
+  const esperas = rdcs.filter((r) => r.pts && r.espera_pts_min != null).map((r) => r.espera_pts_min as number)
+  if (!esperas.length) return null
+  return { maxMin: Math.max(...esperas), acimaMeta: esperas.filter((e) => e > meta).length, comEspera: esperas.length }
+}

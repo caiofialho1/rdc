@@ -11,6 +11,7 @@ import { useExportar } from '../api/queries'
 import { useUltimoSucesso } from '../api/useUltimoSucesso'
 import type { RdcRow } from '../api/schemas'
 import { useAuth } from '../auth/AuthProvider'
+import Calendario from '../components/Calendario'
 import EChart from '../components/charts/EChart'
 import EstadoTela from '../components/ui/EstadoTela'
 import { IconeBarras, IconeBloqueio, IconeEspera, IconeImpacto, IconeRegistros } from '../components/ui/icons/KpiIcons'
@@ -26,9 +27,11 @@ import {
   rankingResponsaveis,
   rdcsPorStatus,
 } from '../domain/diagnostico'
+import { estenderFimMesSeAplicavel } from '../domain/calendario'
+import { isoDia } from '../domain/ciclo'
 import { filtrar } from '../domain/filtros'
 import { fmtData, fmtHoras, fmtInteiro, fmtNumero, fmtPercentual } from '../domain/formatters'
-import { esperaPts, hhImpacto, hhTrabalhado, hhTrabalhadoPorDisciplina, mediaEsperaPts } from '../domain/hh'
+import { META_ESPERA_PTS_MIN, esperaMaximaPts, esperaPts, hhImpacto, hhTrabalhado, hhTrabalhadoPorDisciplina, mediaEsperaPts } from '../domain/hh'
 import { pendencias } from '../domain/pendencias'
 import { useFilters } from '../filters/FilterContext'
 import { cssVar } from '../styles/cssVar'
@@ -163,6 +166,8 @@ export default function Executivo({ irPara }: TelaProps) {
   const recorte = useMemo(() => (dadosOk ? filtrar(dadosOk, secundarios) : null), [dadosOk, secundarios])
   const [porPagina, setPorPagina] = useState(25)
   const [pagina, setPagina] = useState(0)
+  // Data de hoje fixada na montagem (só estende o calendário até o fim do mês corrente).
+  const [hoje] = useState(() => isoDia(new Date()))
 
   const dias = useMemo(() => (recorte ? hhPorDia(recorte.rdcs, recorte.atividades) : []), [recorte])
   const disciplinas = useMemo(
@@ -257,6 +262,8 @@ export default function Executivo({ irPara }: TelaProps) {
   const hhI = hhImpacto(recorte.rdcs)
   const espera = esperaPts(recorte.rdcs)
   const mediaEspera = mediaEsperaPts(espera)
+  const esperaMax = esperaMaximaPts(recorte.rdcs)
+  const esperaMaxAcima = esperaMax != null && esperaMax.maxMin > META_ESPERA_PTS_MIN
   const comBloqueio = recorte.rdcs.filter((r) => r.bloqueio === true).length
   const bloqueioDeclarado = recorte.rdcs.filter((r) => r.bloqueio != null).length
   const porStatus = new Map(rdcsPorStatus(recorte.rdcs))
@@ -264,11 +271,13 @@ export default function Executivo({ irPara }: TelaProps) {
   const totalRdc = recorte.rdcs.length
   const mediaDia = dias.length ? dias.reduce((s, d) => s + d.hhTrabalhado, 0) / dias.length : null
   const primeiroAcima80 = pareto.findIndex((p) => p.acumulado >= 80)
-  const escalaEspera = Math.max(15, Math.ceil(Math.max(0, ...esperaArea.map((e) => e.mediaMin)) / 15) * 15)
+  // A escala sempre inclui a meta, para a marca de 40 min caber no trilho.
+  const escalaEspera = Math.max(15, Math.ceil(Math.max(META_ESPERA_PTS_MIN + 5, ...esperaArea.map((e) => e.mediaMin)) / 15) * 15)
   const totalPaginas = Math.max(1, Math.ceil(linhas.length / porPagina))
   const paginaAtual = Math.min(pagina, totalPaginas - 1)
   const visiveis = linhas.slice(paginaAtual * porPagina, (paginaAtual + 1) * porPagina)
   const periodo = `${fmtData(ini)} a ${fmtData(fim)}`
+  const fimCalendario = estenderFimMesSeAplicavel(fim, hoje)
 
   return (
     <div className="exec flex flex-col gap-6">
@@ -276,10 +285,10 @@ export default function Executivo({ irPara }: TelaProps) {
       <Secao
         id="exec-kpis"
         titulo="Indicadores consolidados"
-        sub="Realizado no recorte. Metas e SLA não estão cadastrados no banco, por isso não há comparação com meta."
+        sub={`Realizado no recorte. Só a espera de PTS tem meta (máx. ${META_ESPERA_PTS_MIN} min, definida pelo planejamento); os demais indicadores não têm meta cadastrada.`}
         extra={<span className="exec-chip">Período {periodo}</span>}
       >
-        <div className="grid grid-cols-1 gap-3.5 @[36rem]:grid-cols-2 @[60rem]:grid-cols-5">
+        <div className="grid grid-cols-1 gap-3.5 @[36rem]:grid-cols-2 @[60rem]:grid-cols-3 @[96rem]:grid-cols-6">
           <Kpi
             rotulo="Total HH trabalhado"
             icone={<IconeBarras />}
@@ -328,7 +337,28 @@ export default function Executivo({ irPara }: TelaProps) {
             }
           />
           <Kpi
-            className="@[36rem]:col-span-2 @[60rem]:col-span-1"
+            rotulo="Espera máxima de PTS"
+            icone={<IconeEspera />}
+            valor={esperaMax == null ? '—' : fmtInteiro(esperaMax.maxMin)}
+            unidade={esperaMax == null ? undefined : 'min'}
+            linha={
+              esperaMax == null ? (
+                'Nenhuma espera informada'
+              ) : esperaMaxAcima ? (
+                <span className="font-semibold text-[var(--exec-impact)]">▲ Acima da meta de {META_ESPERA_PTS_MIN} min</span>
+              ) : (
+                <span className="font-semibold text-[var(--exec-prod)]">✓ Dentro da meta de {META_ESPERA_PTS_MIN} min</span>
+              )
+            }
+            rodape={
+              esperaMax != null && (
+                <span className={`exec-chip ${esperaMax.acimaMeta > 0 ? 'exec-chip--impact' : 'exec-chip--prod'}`}>
+                  {fmtInteiro(esperaMax.acimaMeta)} de {fmtInteiro(esperaMax.comEspera)} RDC acima de {META_ESPERA_PTS_MIN} min
+                </span>
+              )
+            }
+          />
+          <Kpi
             rotulo="Bloqueios registrados"
             icone={<IconeBloqueio />}
             valor={fmtInteiro(comBloqueio)}
@@ -467,8 +497,8 @@ export default function Executivo({ irPara }: TelaProps) {
 
           <Card
             titulo="Espera média de PTS por área"
-            sub={`Escala de 0 a ${fmtInteiro(escalaEspera)} min · só RDC com PTS e os dois horários`}
-            extra={<span className="exec-chip">Sem SLA cadastrado</span>}
+            sub={`Média por área · escala de 0 a ${fmtInteiro(escalaEspera)} min; traço dourado = meta de ${META_ESPERA_PTS_MIN} min · só RDC com PTS e os dois horários`}
+            extra={<span className="exec-chip">Meta: máx. {META_ESPERA_PTS_MIN} min</span>}
             rodape={
               <span>
                 RDC com PTS: <strong className="tabular text-[var(--exec-ink)]">{fmtInteiro(espera.comEspera.length + espera.ptsSemHorario)}</strong> ·{' '}
@@ -485,12 +515,28 @@ export default function Executivo({ irPara }: TelaProps) {
                     <div className="mb-1.5 flex flex-wrap items-center justify-between gap-x-3">
                       <span className="text-[13px] font-semibold">{e.area}</span>
                       <span className="flex items-center gap-2">
-                        <span className="tabular text-[15px] font-bold">{fmtInteiro(e.mediaMin)} min</span>
+                        <span className={`tabular text-[15px] font-bold ${e.mediaMin > META_ESPERA_PTS_MIN ? 'text-[var(--exec-impact)]' : ''}`}>
+                          {e.mediaMin > META_ESPERA_PTS_MIN && <span aria-hidden="true">▲ </span>}
+                          {fmtInteiro(e.mediaMin)} min
+                        </span>
+                        <span className={`exec-chip ${e.maxMin > META_ESPERA_PTS_MIN ? 'exec-chip--impact' : ''}`}>máx. {fmtInteiro(e.maxMin)} min</span>
                         <span className="exec-chip">{fmtInteiro(e.comEspera)} RDC</span>
                       </span>
                     </div>
-                    <div className="exec-barra" aria-hidden="true">
-                      <span style={{ width: `${(e.mediaMin / escalaEspera) * 100}%`, background: 'var(--exec-ink-2)' }} />
+                    <div className="relative" aria-hidden="true">
+                      <div className="exec-barra">
+                        <span
+                          style={{
+                            width: `${(e.mediaMin / escalaEspera) * 100}%`,
+                            background: e.mediaMin > META_ESPERA_PTS_MIN ? 'var(--exec-impact)' : 'var(--exec-ink-2)',
+                          }}
+                        />
+                      </div>
+                      {/* Marca da meta (40 min) sobre o trilho */}
+                      <span
+                        className="absolute -top-1 -bottom-1 w-0.5 rounded-full bg-[var(--exec-gold)]"
+                        style={{ left: `${(META_ESPERA_PTS_MIN / escalaEspera) * 100}%` }}
+                      />
                     </div>
                   </li>
                 ))}
@@ -538,7 +584,22 @@ export default function Executivo({ irPara }: TelaProps) {
         </div>
       </Secao>
 
-      {/* 4. Detalhamento */}
+      {/* 4. Emissão diária (veio da antiga tela Desempenho) */}
+      <Secao
+        id="exec-emissao"
+        titulo="Emissão diária"
+        sub={`RDC por responsável e dia, ${fmtData(ini)} a ${fmtData(fimCalendario)}. Dia sem registro não comprova falta.`}
+      >
+        <div className="exec-card">
+          {recorte.rdcs.length > 0 ? (
+            <Calendario rdcs={recorte.rdcs} ini={ini} fim={fim} />
+          ) : (
+            <p className="py-8 text-center text-sm text-[var(--exec-text-2)]">Nenhum RDC no recorte.</p>
+          )}
+        </div>
+      </Secao>
+
+      {/* 5. Detalhamento */}
       <Secao id="exec-detalhe" titulo="Detalhamento dos diários de campo (RDC)" sub="Registros do recorte, mais recentes primeiro. Validação e edição continuam na tela Detalhamento.">
         <div className="exec-card exec-card--tabela">
           <div className="max-h-[36rem] overflow-auto" role="region" aria-label="Tabela de RDC (rolável)" tabIndex={0}>

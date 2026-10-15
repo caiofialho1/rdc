@@ -45,5 +45,6 @@ Quando mais de um responsável tem RDC no mesmo TAG+OM+disciplina+data, a produ�
 
 ## O que não existe (não inventar)
 
+- **Exceção (definida pelo planejamento em 2026-10-14):** espera de PTS tem meta de **até 40 min**; acima disso é desfavorável. A regra vive no painel (`META_ESPERA_PTS_MIN` em `painel-app/src/domain/hh.ts`), não no banco.
 - Nenhuma meta, orçamento ou baseline de produtividade está no schema. Enquanto isso não mudar, nenhum KPI deste painel compara "realizado" contra "meta" — só mostra o realizado e, quando fizer sentido, o previsto da própria MC (que é "quanto essa planilha previu", não uma meta gerencial).
 - Nenhuma regra de dia útil/corrido ou prazo contratual está no schema — qualquer cálculo de prazo é hipótese e deve ser sinalizado como pendência, não calculado silenciosamente.

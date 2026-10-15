@@ -13,7 +13,7 @@ interface CardHeaderProps {
 /** Cabeçalho padrão de Card/ChartCard: título 15 px/600, subtítulo 12 px, ações à direita. */
 export default function CardHeader({ titulo, subtitulo, acoes, nivel: Nivel = 'h2', id }: CardHeaderProps) {
   return (
-    <div className="mb-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+    <div className="se-card-header mb-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
       <div className="min-w-0">
         <Nivel id={id} className="text-[15px] leading-snug font-semibold text-text-primary">
           {titulo}

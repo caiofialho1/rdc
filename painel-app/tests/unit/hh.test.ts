@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { AtividadeRow, ImpactoRow, RdcRow } from '../../src/api/schemas'
 import {
+  esperaMaximaPts,
   esperaPts,
   hhImpacto,
   hhImpactoRateadoPorDisciplina,
@@ -146,5 +147,22 @@ describe('esperaPts / mediaEsperaPts', () => {
 
   it('sem nenhum RDC com espera calculada, a média é null (não zero)', () => {
     expect(mediaEsperaPts(esperaPts([rdc({ pts: false })]))).toBeNull()
+  })
+})
+
+describe('esperaMaximaPts (meta 40 min)', () => {
+  it('pega a maior espera e conta quem passou de 40 min; 40 exatos estão dentro', () => {
+    const r = esperaMaximaPts([
+      rdc({ codigo: 'A', pts: true, espera_pts_min: 40 }),
+      rdc({ codigo: 'B', pts: true, espera_pts_min: 55 }),
+      rdc({ codigo: 'C', pts: true, espera_pts_min: 10 }),
+      rdc({ codigo: 'D', pts: false, espera_pts_min: 90 }),
+      rdc({ codigo: 'E', pts: true, espera_pts_min: null }),
+    ])
+    expect(r).toEqual({ maxMin: 55, acimaMeta: 1, comEspera: 3 })
+  })
+
+  it('sem espera informada não é zero: devolve null', () => {
+    expect(esperaMaximaPts([rdc({ pts: true, espera_pts_min: null })])).toBeNull()
   })
 })

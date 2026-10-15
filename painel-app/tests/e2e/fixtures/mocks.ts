@@ -68,7 +68,7 @@ const ATIVIDADE_1 = {
   servico: 'Pintura de fundo',
   tipo_andaime: null,
   descricao_outros: null,
-  observacao: null,
+  observacao: 'Fundo aplicado na face norte da viga',
   inicio: '2026-10-01T08:00:00Z',
   fim: '2026-10-01T12:00:00Z',
   duracao_min: 240,

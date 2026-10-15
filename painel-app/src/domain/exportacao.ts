@@ -1,16 +1,7 @@
 /** Porta planilhas()/exportação de painel.html: 4 abas, mesmas colunas. */
 import type { Recorte } from './filtros'
 import { fmtData, fmtDH, fmtHora } from './formatters'
-
-const FUNCOES: Array<[string, string]> = [
-  ['qtd_ajudante', 'Ajudante'],
-  ['qtd_pintor', 'Pintor'],
-  ['qtd_jatista', 'Jatista'],
-  ['qtd_mecanico', 'Mecânico'],
-  ['qtd_montador_andaime', 'Montador de Andaime'],
-  ['qtd_alpinista_n1', 'Alpinista N1'],
-  ['qtd_soldador', 'Soldador'],
-]
+import { FUNCOES } from './maoDeObra'
 
 function hr(min: number | null): number | null {
   return min == null ? null : Math.round((min / 60) * 100) / 100
@@ -68,7 +59,7 @@ export function planilhasExportacao(recorte: Recorte): Record<string, Record<str
     Inicio: fmtHora(a.inicio),
     Fim: fmtHora(a.fim),
     DuracaoMin: a.duracao_min,
-    ...Object.fromEntries(FUNCOES.map(([chave, titulo]) => [titulo, (a as unknown as Record<string, number>)[chave]])),
+    ...Object.fromEntries(FUNCOES.map(([chave, titulo]) => [titulo, a[chave]])),
     Efetivo: a.efetivo_total,
     HH: hr(a.efetivo_total * a.duracao_min),
     Observacao: a.observacao ?? '',

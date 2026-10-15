@@ -30,14 +30,15 @@ test('Painel executivo (tela inicial) mostra o resumo de pendências do recorte'
   await expect(pendencias.getByText('sem contrato')).toBeVisible()
 })
 
-test('Desempenho calcula HH trabalhado a partir das atividades do recorte', async ({ page }) => {
+test('Painel executivo calcula HH trabalhado e mostra a emissão diária do recorte', async ({ page }) => {
   await logar(page)
-  await page.getByRole('button', { name: 'Desempenho' }).click()
   // ATIVIDADE_1: efetivo 2 x 240min/60 = 8 HH
-  // Escopo no card do KPI: o gráfico por disciplina também rotula a barra com "8,0 HH".
-  const kpi = page.getByRole('group', { name: 'HH trabalhado', exact: true })
-  await expect(kpi).toBeVisible()
-  await expect(kpi.getByText('8,0', { exact: true })).toBeVisible()
+  const kpi = page.getByRole('group', { name: 'Total HH trabalhado', exact: true })
+  await expect(kpi.locator('.exec-kpi__valor')).toHaveText('8,0HH')
+  // Emissão diária (antes na tela Desempenho, removida)
+  await expect(page.getByRole('heading', { level: 2, name: 'Emissão diária', exact: true })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Calendário de emissão diária (rolável)' })).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'Telas do painel' }).getByRole('button', { name: 'Desempenho' })).toHaveCount(0)
 })
 
 test('Comparação mostra as 3 situações de reconciliação produção × RDC', async ({ page }) => {
@@ -65,6 +66,12 @@ test('Detalhamento: selecionar um RDC "Enviado" e validá-lo', async ({ page }) 
   await page.getByRole('button', { name: 'Detalhamento', exact: true }).click()
   await page.getByRole('cell', { name: 'Maria Souza' }).click()
   await expect(page.getByRole('heading', { name: /RDC-/ })).toBeVisible()
+  // mão de obra por função: 2 pintores × 4 h = 8,0 HH
+  await expect(page.getByLabel('Efetivo por função').getByText('Pintor 2')).toBeVisible()
+  await expect(page.getByRole('row', { name: 'Pintor 2 8,0 100,0%' })).toBeVisible()
+  // descrição da atividade executada: serviço + observação do encarregado
+  await expect(page.getByText('Pintura de fundo')).toBeVisible()
+  await expect(page.getByRole('definition').filter({ hasText: 'Fundo aplicado na face norte da viga' })).toBeVisible()
   await page.getByRole('button', { name: 'Validar' }).click()
   // sem erro após a decisão (mock sempre retorna ok:true)
   await expect(page.getByText('Não foi possível registrar a decisão.')).not.toBeVisible()
@@ -82,7 +89,7 @@ test('Falha na atualização mantém os dados anteriores com aviso, sem apagar n
   await expect(pendencias.getByText('aguardando validação')).toBeVisible()
 
   // força um novo fetch mudando o período -> 2ª chamada falha
-  await page.getByLabel('De', { exact: true }).fill('2026-01-01')
+  await page.getByLabel('Mês medição').selectOption({ label: 'Setembro' })
   await expect(page.getByText('Não foi possível atualizar. Veja abaixo a última consulta que carregou com sucesso.')).toBeVisible()
   // o resumo de pendências antigo continua visível (dado não foi apagado)
   await expect(pendencias.getByText('aguardando validação')).toBeVisible()
