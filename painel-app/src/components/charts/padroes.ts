@@ -39,3 +39,32 @@ export function afastarRotulos(itens: Array<{ chave: string; valor: number | nul
   }
   return saida
 }
+
+/**
+ * Posição do rótulo de cada ponto em gráficos de várias linhas: em cada categoria (dia), as
+ * séries de valor mais alto levam o rótulo acima do ponto e as de valor mais baixo, abaixo —
+ * assim os rótulos se afastam em vez de se empilhar. Se dois rótulos do mesmo lado ficariam a
+ * menos de `minimo` (em valor do eixo) um do outro, um deles é ocultado (null): sai primeiro o
+ * da série 0 (referência, ex.: total do dia); entre as demais, fica o de índice menor.
+ * `series[s][i]` = valor da série s no dia i.
+ */
+export function posicaoRotulos(series: Array<Array<number | null>>, minimo = 0): Array<Array<'top' | 'bottom' | null>> {
+  const saida = series.map((s) => s.map(() => null as 'top' | 'bottom' | null))
+  const n = Math.max(0, ...series.map((s) => s.length))
+  const prioridade = (k: number) => (k === 0 ? series.length : k) // menor = mais importante
+  for (let i = 0; i < n; i++) {
+    const presentes = series.map((s, k) => ({ k, v: s[i] })).filter((x): x is { k: number; v: number } => x.v != null)
+    presentes.sort((a, b) => b.v - a.v)
+    const metade = Math.ceil(presentes.length / 2)
+    for (const lado of ['top', 'bottom'] as const) {
+      const grupo = presentes.filter((_, ordem) => (lado === 'top' ? ordem < metade : ordem >= metade))
+      const mantidos: Array<{ k: number; v: number }> = []
+      for (const x of [...grupo].sort((a, b) => prioridade(a.k) - prioridade(b.k))) {
+        if (mantidos.some((m) => Math.abs(m.v - x.v) < minimo)) continue
+        mantidos.push(x)
+        saida[x.k][i] = lado
+      }
+    }
+  }
+  return saida
+}

@@ -123,6 +123,24 @@ Aplicar pesos tipográficos coerentes, sem excesso de negrito.
 
 Utilizar números tabulares nos indicadores e tabelas sempre que possível.
 
+#### Regra de hierarquia título × dado (obrigatória — definida pelo usuário em 2026-10-14)
+
+- **Títulos sempre em negrito** (título de painel, de seção, de card e rótulo de campo/coluna).
+- **Dados nunca maiores que os títulos e subtítulos** da mesma área. O dado se destaca por **peso** (negrito) e **cor** (azul `--info` onde há dado), nunca por tamanho maior que o título.
+- **Harmonia:** dados do mesmo bloco com o mesmo tamanho; nada de um número isolado "gritando" ao lado de um título pequeno.
+- Escala de referência (painel do RDC, `painel-app/src/components/DetalheRdc.tsx`):
+
+| Elemento | Tamanho | Peso |
+|---|---|---|
+| Título do painel (código do RDC) | 14 px | negrito |
+| Título de seção (ex.: IDENTIFICAÇÃO DO RDC, MÃO DE OBRA POR FUNÇÃO) | 13 px, maiúsculas | negrito |
+| Rótulo de campo e cabeçalho de coluna | 12 px | negrito |
+| Dado (valores, nomes, totais) | 12 px | normal; negrito/azul para destacar |
+| Notas e legendas | 10–11 px | normal |
+
+- Esta regra prevalece sobre a tabela de tamanhos acima em painéis de detalhe, tabelas e listas.
+- **Exceção confirmada pelo usuário (2026-10-14): cartões de KPI** (valor isolado em destaque, 26–36 px) **não seguem esta regra** — mantêm o valor grande. O título do cartão continua em negrito.
+
 ### 3.4 Bordas e superfícies
 
 - Utilizar cards retangulares com cantos suavemente arredondados.

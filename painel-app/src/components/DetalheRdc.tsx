@@ -85,7 +85,7 @@ function FormularioEdicao({ rdc, onSalvo }: { rdc: RdcRow; onSalvo: () => void }
 function Secao({ titulo, children }: { titulo: string; children: ReactNode }) {
   return (
     <div className="border-t border-border pt-3">
-      <h4 className="mb-1.5 text-xs font-semibold tracking-wide text-text-secondary uppercase">{titulo}</h4>
+      <h4 className="mb-1.5 text-[13px] font-bold tracking-wide text-text-primary uppercase">{titulo}</h4>
       {children}
     </div>
   )
@@ -146,15 +146,15 @@ function MaoDeObra({ atividades }: { atividades: AtividadeRow[] }) {
   return (
     <section aria-labelledby="mao-de-obra-titulo" className="flex min-w-0 flex-col gap-2.5 rounded-card border border-border bg-chart-background p-3">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h4 id="mao-de-obra-titulo" className="text-xs font-semibold tracking-wide text-text-secondary uppercase">
+        <h4 id="mao-de-obra-titulo" className="text-[13px] font-bold tracking-wide text-text-primary uppercase">
           Mão de obra por função
         </h4>
-        <p className="text-sm text-text-secondary">
-          <span className="tabular text-[16px] font-semibold text-info">{fmtInteiro(efetivoMax)}</span> pessoas no pico ·{' '}
-          <span className="tabular text-[16px] font-semibold text-info">{fmtHoras(hhTotal)}</span> HH
+        <p className="text-[12px] text-text-secondary">
+          <span className="tabular font-bold text-info">{fmtInteiro(efetivoMax)}</span> pessoas no pico ·{' '}
+          <span className="tabular font-bold text-info">{fmtHoras(hhTotal)}</span> HH
         </p>
       </div>
-      <table className="w-full table-fixed border-collapse text-sm">
+      <table className="w-full table-fixed border-collapse text-[12px]">
         <colgroup>
           <col className="w-[38%]" />
           <col />
@@ -163,7 +163,7 @@ function MaoDeObra({ atividades }: { atividades: AtividadeRow[] }) {
           <col className="w-[5.5rem]" />
         </colgroup>
         <thead>
-          <tr className="border-b border-border text-[10px] text-text-secondary">
+          <tr className="border-b border-border text-[12px] font-bold text-text-primary">
             <th scope="col" className="pb-1 text-left font-medium">
               Função
             </th>
@@ -248,11 +248,11 @@ function diaSemana(iso: string): string {
 function Metrica({ valor, unidade, rotulo }: { valor: string; unidade?: string; rotulo: string }) {
   return (
     <div className="min-w-0 px-3 py-2.5 first:pl-4">
-      <p className="tabular text-[17px] leading-tight font-semibold text-text-primary">
+      <p className="tabular text-[12px] leading-tight font-bold text-text-primary">
         {valor}
         {unidade && <span className="ml-0.5 text-xs font-medium text-text-secondary">{unidade}</span>}
       </p>
-      <p className="mt-0.5 truncate text-[10px] text-text-secondary">{rotulo}</p>
+      <p className="mt-0.5 truncate text-[12px] text-text-secondary">{rotulo}</p>
     </div>
   )
 }
@@ -327,16 +327,16 @@ function Execucao({ d }: { d: DescricaoAtividade }) {
     <dl className="flex flex-col gap-1.5 rounded-[3px] border-l-2 border-actual bg-chart-background py-1.5 pr-3 pl-2.5">
       {(d.descricao || d.descricaoPendente) && (
         <div className="min-w-0">
-          <dt className="text-[10px] font-medium text-text-secondary">Serviço executado</dt>
-          <dd className={`text-sm leading-snug break-words whitespace-pre-line ${d.descricao ? 'text-text-primary' : 'text-warning-text'}`}>
+          <dt className="text-[12px] font-bold text-text-primary">Serviço executado</dt>
+          <dd className={`text-[12px] leading-snug break-words whitespace-pre-line ${d.descricao ? 'text-text-primary' : 'text-warning-text'}`}>
             {d.descricao ?? 'Serviço “OUTROS” registrado sem descrição.'}
           </dd>
         </div>
       )}
       {d.observacao && (
         <div className="min-w-0">
-          <dt className="text-[10px] font-medium text-text-secondary">Observação</dt>
-          <dd className="text-sm leading-snug break-words whitespace-pre-line text-text-primary">{d.observacao}</dd>
+          <dt className="text-[12px] font-bold text-text-primary">Observação</dt>
+          <dd className="text-[12px] leading-snug break-words whitespace-pre-line text-text-primary">{d.observacao}</dd>
         </div>
       )}
     </dl>
@@ -356,7 +356,7 @@ function Turno({ atividades, impactos }: { atividades: AtividadeRow[]; impactos:
   if (!ordenadas.length && !paradas.length) {
     return (
       <Secao titulo="Turno">
-        <p className="text-sm text-text-secondary">RDC sem atividades nem impactos registrados.</p>
+        <p className="text-[12px] text-text-secondary">RDC sem atividades nem impactos registrados.</p>
       </Secao>
     )
   }
@@ -367,7 +367,7 @@ function Turno({ atividades, impactos }: { atividades: AtividadeRow[]; impactos:
       className="border-t border-border pt-3 [--equipe:7.75rem] @[34rem]/detalhe:[--equipe:10rem]"
     >
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h4 id="turno-titulo" className="text-xs font-semibold tracking-wide text-text-secondary uppercase">
+        <h4 id="turno-titulo" className="text-[13px] font-bold tracking-wide text-text-primary uppercase">
           Turno · {fmtInteiro(ordenadas.length)} atividade(s){paradas.length > 0 && ` · ${fmtInteiro(paradas.length)} impacto(s)`}
         </h4>
         <span className="flex items-center gap-3 text-[10px] text-text-secondary" aria-hidden="true">
@@ -412,7 +412,7 @@ function Turno({ atividades, impactos }: { atividades: AtividadeRow[]; impactos:
             <li key={a.codigo} className="grid grid-cols-[1.5rem_minmax(0,1fr)] gap-y-1">
               <span className="pt-px text-xs font-semibold text-text-secondary tabular">{fmtInteiro(a.ordem)}</span>
               <div className="flex min-w-0 flex-col gap-1.5">
-                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-sm">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-[12px]">
                   <span className="min-w-0 break-words">
                     <Badge tom="neutro">
                       <abbr title={NOME_DISCIPLINA[a.disciplina]} className="no-underline">
@@ -441,7 +441,7 @@ function Turno({ atividades, impactos }: { atividades: AtividadeRow[]; impactos:
               <span className="block h-2 w-2 rounded-full bg-impact" />
             </span>
             <div className="flex min-w-0 flex-col gap-1.5">
-              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-sm">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-[12px]">
                 <span className="min-w-0 font-medium text-impact-text">
                   <span className="sr-only">Impacto: </span>
                   {i.descricao}
@@ -511,7 +511,7 @@ export default function DetalheRdc({
               RDC · <span className="tabular">{fmtData(rdc.data_rdc)}</span> · {diaSemana(rdc.data_rdc)}
               {rdc.revisao > 0 && ` · revisão ${fmtInteiro(rdc.revisao)}`}
             </p>
-            <h2 id={idTitulo} className="mt-0.5 text-[14px] leading-snug font-semibold break-all">
+            <h2 id={idTitulo} className="mt-0.5 text-[14px] leading-snug font-bold break-all">
               {rdc.codigo}
             </h2>
           </div>
@@ -535,13 +535,13 @@ export default function DetalheRdc({
         <div className="grid grid-cols-1 gap-4 @[44rem]/detalhe:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
           <section
             aria-labelledby="identificacao-titulo"
-            className="flex min-w-0 flex-col gap-2.5 rounded-card border border-border bg-chart-background p-3"
+            className="flex min-w-0 flex-col gap-2.5 rounded-card border border-border bg-chart-background p-3 text-[12px]"
           >
-            <h4 id="identificacao-titulo" className="text-xs font-semibold tracking-wide text-text-secondary uppercase">
+            <h4 id="identificacao-titulo" className="text-[13px] font-bold tracking-wide text-text-primary uppercase">
               Identificação do RDC
             </h4>
             <Responsavel nome={rdc.responsavel} tamanho="lg" comFuncao />
-            <dl className="grid grid-cols-[auto_minmax(0,1fr)] border-t border-border text-sm [&>*:nth-last-child(-n+2)]:border-b-0">
+            <dl className="grid grid-cols-[auto_minmax(0,1fr)] border-t border-border text-[12px] [&>*:nth-last-child(-n+2)]:border-b-0">
               <Campo rotulo="Ativo">
                 {rdc.ativo}
                 {rdc.ativo_descricao && <span className="block text-xs">{rdc.ativo_descricao}</span>}

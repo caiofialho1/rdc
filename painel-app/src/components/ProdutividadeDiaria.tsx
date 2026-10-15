@@ -6,7 +6,7 @@
 import { useMemo, useState } from 'react'
 import { Card } from './exec/ExecUi'
 import EChart from './charts/EChart'
-import { CORES_SERIES, EIXO_VALOR_SEM_ROTULO, MAX_SERIES, SEM_SOBREPOSICAO, afastarRotulos, gradeSuave } from './charts/padroes'
+import { CORES_SERIES, EIXO_VALOR_SEM_ROTULO, MAX_SERIES, SEM_SOBREPOSICAO, afastarRotulos, gradeSuave, posicaoRotulos } from './charts/padroes'
 import { semanaIso } from '../domain/calendario'
 import { fmtData, fmtHoras, fmtIndice } from '../domain/formatters'
 import { ORDEM_ETAPA, ROTULO_UNIDADE, produtividadeDiaria, type Dimensao, type LinhaProducao, type Unidade } from '../domain/producaoAnalise'
@@ -20,10 +20,13 @@ const QUEBRAS: Array<[Quebra | null, string]> = [
   ['responsavel', 'Encarregado'],
   ['disciplina', 'Disciplina'],
 ]
-const ALTURA_GRAFICO = 300
+/** Mais alto com várias séries, para os rótulos de dado terem espaço acima e abaixo das linhas. */
+const ALTURA = { total: 300, quebra: 380 }
 /** Altura da área de plotagem: gráfico − topo da grade (40) − eixo de dias e de semanas (~46). */
-const ALTURA_PLOT = ALTURA_GRAFICO - 40 - 46
+const alturaPlot = (altura: number) => altura - 40 - 46
 const ALTURA_ROTULO = 13
+/** Altura da etiqueta do rótulo de dado (texto 10 px + borda e respiro). */
+const ALTURA_ETIQUETA = 17
 
 /** Começa com poucas séries para o gráfico abrir legível; o usuário liga as demais. */
 const INICIAIS = 3
@@ -75,37 +78,56 @@ export default function ProdutividadeDiaria({ linhas, unidade }: { linhas: Linha
     const { dias, total } = dados
     const textoSec = cssVar('--exec-text-2')
     const comQuebra = quebra != null
+    // Rótulo de dado em todas as séries: etiqueta branca com borda na cor da série (identifica a
+    // linha) e texto na cor de texto (legível sobre qualquer linha). O que colidiria é ocultado;
+    // o valor segue no tooltip.
+    const rotuloDado = (borda: string) => ({
+      show: true,
+      position: 'top' as const,
+      distance: 6,
+      fontSize: 10,
+      fontWeight: 700,
+      color: cssVar('--exec-ink'),
+      backgroundColor: '#fff',
+      borderColor: borda,
+      borderWidth: 1,
+      borderRadius: 3,
+      padding: [1, 4],
+      formatter: (p: { value: number | null }) => (p.value == null ? '' : fmtIndice(p.value)),
+    })
+    const corTotal = comQuebra ? cssVar('--exec-outline') : cssVar('--exec-ink')
+    const todosValores = [...total, ...ativas.flatMap((e) => e.pontos)].map((p) => p.indice).filter((v): v is number => v != null)
+    const yMaxRot = Math.max(0.1, ...todosValores) * 1.12
+    const pxRot = alturaPlot(comQuebra ? ALTURA.quebra : ALTURA.total) / yMaxRot
+    const pos = posicaoRotulos([total.map((p) => p.indice), ...ativas.map((e) => e.pontos.map((p) => p.indice))], ALTURA_ETIQUETA / pxRot)
+    const comPosicao = (valores: Array<number | null>, s: number) =>
+      valores.map((v, i) => ({ value: v, label: pos[s][i] ? { position: pos[s][i] } : { show: false } }))
     const serieTotal = {
       name: comQuebra ? 'Total do dia' : `${u}/HH do dia`,
       type: 'line' as const,
-      data: total.map((p) => p.indice),
+      data: comPosicao(total.map((p) => p.indice), 0),
       connectNulls: false,
       ...CURVA,
-      color: comQuebra ? cssVar('--exec-outline') : cssVar('--exec-ink'),
+      color: corTotal,
       lineStyle: { width: comQuebra ? 1.5 : 2, type: comQuebra ? ('dashed' as const) : ('solid' as const) },
       symbol: 'circle',
-      symbolSize: comQuebra ? 0 : 7,
-      showSymbol: !comQuebra,
+      symbolSize: comQuebra ? 4 : 7,
       z: 1,
-      ...(comQuebra
-        ? {}
-        : {
-            labelLayout: SEM_SOBREPOSICAO,
-            label: { show: true, position: 'top' as const, fontSize: 10, fontWeight: 700, color: cssVar('--exec-ink'), formatter: (p: { value: number }) => fmtIndice(p.value) },
-          }),
+      labelLayout: SEM_SOBREPOSICAO,
+      label: rotuloDado(corTotal),
     }
     // Eixo com máximo fixo para converter valor em pixel e afastar os nomes no fim das linhas.
     const todos = [...total, ...ativas.flatMap((e) => e.pontos)].map((p) => p.indice).filter((v): v is number => v != null)
     const yMax = Math.max(0.1, ...todos) * 1.12
-    const pxPorUnidade = ALTURA_PLOT / yMax
+    const pxPorUnidade = alturaPlot(comQuebra ? ALTURA.quebra : ALTURA.total) / yMax
     const deslocamento = afastarRotulos(
       ativas.map((e) => ({ chave: e.chave, valor: [...e.pontos].reverse().find((p) => p.indice != null)?.indice ?? null })),
       ALTURA_ROTULO / pxPorUnidade,
     )
-    const series = ativas.map((e) => ({
+    const series = ativas.map((e, s) => ({
       name: e.chave,
       type: 'line' as const,
-      data: e.pontos.map((p) => p.indice),
+      data: comPosicao(e.pontos.map((p) => p.indice), s + 1),
       connectNulls: false,
       ...CURVA,
       color: CORES_SERIES[slots.get(e.chave)!],
@@ -113,6 +135,8 @@ export default function ProdutividadeDiaria({ linhas, unidade }: { linhas: Linha
       symbol: 'circle',
       symbolSize: 8,
       z: 2,
+      labelLayout: SEM_SOBREPOSICAO,
+      label: rotuloDado(CORES_SERIES[slots.get(e.chave)!]),
       endLabel: {
         show: true,
         formatter: () => curto(e.chave),
@@ -221,7 +245,7 @@ export default function ProdutividadeDiaria({ linhas, unidade }: { linhas: Linha
           </div>
         )}
       </div>
-      <EChart option={opcao} vazio={dados.dias.length === 0} mensagemVazio={`Nenhuma produção em ${u} com HH no recorte.`} height={ALTURA_GRAFICO} descricao={descricao} />
+      <EChart option={opcao} vazio={dados.dias.length === 0} mensagemVazio={`Nenhuma produção em ${u} com HH no recorte.`} height={quebra ? ALTURA.quebra : ALTURA.total} descricao={descricao} />
     </Card>
   )
 }
