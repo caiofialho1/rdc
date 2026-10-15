@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { afastarRotulos, posicaoRotulos } from '../../src/components/charts/padroes'
 
 describe('afastarRotulos', () => {
-  it('afasta para baixo só o que ficaria colado no vizinho de cima', () => {
+  it('o de menor valor fica no lugar e os colados sobem', () => {
     const d = afastarRotulos(
       [
         { chave: 'A', valor: 3.0 },
@@ -12,10 +12,20 @@ describe('afastarRotulos', () => {
       ],
       0.2,
     )
-    expect(d.get('A')).toBe(0)
-    expect(d.get('B')).toBeCloseTo(0.15)
     expect(d.get('C')).toBe(0)
+    expect(d.get('B')).toBe(0)
+    expect(d.get('A')).toBeCloseTo(0.15) // sobe para 3,15
     expect(d.has('D')).toBe(false)
+  })
+  it('séries que terminam todas em zero sobem em escada, sem descer abaixo do eixo', () => {
+    const d = afastarRotulos(
+      [
+        { chave: 'A', valor: 0 },
+        { chave: 'B', valor: 0 },
+      ],
+      0.2,
+    )
+    expect([d.get('A'), d.get('B')].sort()).toEqual([0, 0.2])
   })
 })
 

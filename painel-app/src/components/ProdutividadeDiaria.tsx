@@ -7,9 +7,11 @@ import { useMemo, useState } from 'react'
 import { Card } from './exec/ExecUi'
 import EChart from './charts/EChart'
 import { CORES_SERIES, EIXO_VALOR_SEM_ROTULO, MAX_SERIES, SEM_SOBREPOSICAO, afastarRotulos, gradeSuave, posicaoRotulos } from './charts/padroes'
-import { semanaIso } from '../domain/calendario'
+import { diasDoIntervalo, semanaIso } from '../domain/calendario'
+import { isoDia } from '../domain/ciclo'
+import { useFilters } from '../filters/FilterContext'
 import { fmtData, fmtHoras, fmtIndice } from '../domain/formatters'
-import { ORDEM_ETAPA, ROTULO_UNIDADE, produtividadeDiaria, type Dimensao, type LinhaProducao, type Unidade } from '../domain/producaoAnalise'
+import { ORDEM_ETAPA, ROTULO_UNIDADE, produtividadeDiaria, type Dimensao, type LinhaProducao, type PontoDiario, type Unidade } from '../domain/producaoAnalise'
 import { cssVar } from '../styles/cssVar'
 
 type Quebra = Extract<Dimensao, 'etapa' | 'responsavel' | 'disciplina'>
@@ -44,7 +46,15 @@ export default function ProdutividadeDiaria({ linhas, unidade }: { linhas: Linha
   const [slots, setSlots] = useState<Map<string, number>>(new Map())
   const u = ROTULO_UNIDADE[unidade]
 
-  const dados = useMemo(() => produtividadeDiaria(linhas, quebra, unidade), [linhas, quebra, unidade])
+  // Eixo dia a dia: todos os dias do período, até hoje (dia futuro não entra como zero).
+  const { ini, fim } = useFilters()
+  const [hoje] = useState(() => isoDia(new Date()))
+  // Hoje sem produção não vira zero: o dia ainda não terminou e um zero ali derrubaria as linhas.
+  const temHoje = useMemo(() => linhas.some((l) => l.data?.slice(0, 10) === hoje), [linhas, hoje])
+  // O eixo é sempre o período do filtro, com ou sem dado. Zero só até o último dia já fechado.
+  const periodo = useMemo(() => (ini <= fim ? diasDoIntervalo(ini, fim).map((d) => d.iso) : []), [ini, fim])
+  const limite = useMemo(() => (temHoje ? hoje : isoDia(new Date(new Date(`${hoje}T12:00:00`).getTime() - 86_400_000))), [hoje, temHoje])
+  const dados = useMemo(() => produtividadeDiaria(linhas, quebra, unidade, periodo, limite), [linhas, quebra, unidade, periodo, limite])
   const entidades = useMemo(() => {
     const s = dados.series ?? []
     return quebra === 'etapa' ? [...s].sort((a, b) => (ORDEM_ETAPA.get(a.chave) ?? 99) - (ORDEM_ETAPA.get(b.chave) ?? 99)) : s
@@ -99,14 +109,20 @@ export default function ProdutividadeDiaria({ linhas, unidade }: { linhas: Linha
     const todosValores = [...total, ...ativas.flatMap((e) => e.pontos)].map((p) => p.indice).filter((v): v is number => v != null)
     const yMaxRot = Math.max(0.1, ...todosValores) * 1.12
     const pxRot = alturaPlot(comQuebra ? ALTURA.quebra : ALTURA.total) / yMaxRot
-    const pos = posicaoRotulos([total.map((p) => p.indice), ...ativas.map((e) => e.pontos.map((p) => p.indice))], ALTURA_ETIQUETA / pxRot)
-    const comPosicao = (valores: Array<number | null>, s: number) =>
-      valores.map((v, i) => ({ value: v, label: pos[s][i] ? { position: pos[s][i] } : { show: false } }))
+    // Zero de preenchimento (dia sem produção com HH) não ganha rótulo: só o marcador vazado.
+    const medidos = (pontos: PontoDiario[]) => pontos.map((p) => (p.vazio ? null : p.indice))
+    const pos = posicaoRotulos([medidos(total), ...ativas.map((e) => medidos(e.pontos))], ALTURA_ETIQUETA / pxRot)
+    const comPosicao = (pontos: PontoDiario[], s: number, cor: string) =>
+      pontos.map((p, i) =>
+        p.vazio
+          ? { value: p.indice, label: { show: false }, itemStyle: { color: '#fff', borderColor: cor, borderWidth: 1.5 } }
+          : { value: p.indice, label: pos[s][i] ? { position: pos[s][i] } : { show: false } },
+      )
     const serieTotal = {
       name: comQuebra ? 'Total do dia' : `${u}/HH do dia`,
       type: 'line' as const,
-      data: comPosicao(total.map((p) => p.indice), 0),
-      connectNulls: false,
+      data: comPosicao(total, 0, corTotal),
+      connectNulls: true,
       ...CURVA,
       color: corTotal,
       lineStyle: { width: comQuebra ? 1.5 : 2, type: comQuebra ? ('dashed' as const) : ('solid' as const) },
@@ -127,8 +143,8 @@ export default function ProdutividadeDiaria({ linhas, unidade }: { linhas: Linha
     const series = ativas.map((e, s) => ({
       name: e.chave,
       type: 'line' as const,
-      data: comPosicao(e.pontos.map((p) => p.indice), s + 1),
-      connectNulls: false,
+      data: comPosicao(e.pontos, s + 1, CORES_SERIES[slots.get(e.chave)!]),
+      connectNulls: true,
       ...CURVA,
       color: CORES_SERIES[slots.get(e.chave)!],
       lineStyle: { width: 2 },
@@ -144,7 +160,7 @@ export default function ProdutividadeDiaria({ linhas, unidade }: { linhas: Linha
         fontSize: 10,
         fontWeight: 600,
         distance: 6,
-        offset: [0, (deslocamento.get(e.chave) ?? 0) * pxPorUnidade],
+        offset: [0, -(deslocamento.get(e.chave) ?? 0) * pxPorUnidade],
       },
     }))
     return {
@@ -156,7 +172,11 @@ export default function ProdutividadeDiaria({ linhas, unidade }: { linhas: Linha
             .filter((p) => p.value != null)
             .map((p) => {
               const fonte = p.seriesName === serieTotal.name ? total[i] : ativas.find((e) => e.chave === p.seriesName)?.pontos[i]
-              const conta = fonte ? ` <span style="color:${textoSec}">(${fmtHoras(fonte.producao)} ${u} ÷ ${fmtHoras(fonte.hh)} HH)</span>` : ''
+              const conta = !fonte
+                ? ''
+                : fonte.vazio
+                  ? ` <span style="color:${textoSec}">(sem produção com HH no dia — considerado 0)</span>`
+                  : ` <span style="color:${textoSec}">(${fmtHoras(fonte.producao)} ${u} ÷ ${fmtHoras(fonte.hh)} HH)</span>`
               return `${p.marker}${p.seriesName.replace(/</g, '&lt;')}: <strong>${fmtIndice(p.value!)} ${u}/HH</strong>${conta}`
             })
           return `<strong>${fmtData(dias[i])}</strong> · semana ${semanaIso(dias[i])}<br/>${linhasTip.join('<br/>')}`
@@ -195,7 +215,7 @@ export default function ProdutividadeDiaria({ linhas, unidade }: { linhas: Linha
   return (
     <Card
       titulo={`${u}/HH por dia`}
-      sub="Análise diária: produção ÷ HH dos registros com os dois. Ponto ausente = série sem produção com HH naquele dia (não é zero)."
+      sub="Análise diária com todos os dias do período filtrado: produção ÷ HH dos registros com os dois. Dia já fechado sem produção com HH entra como 0 (marcador vazado, sem rótulo) para a linha seguir contínua; dias seguintes ficam sem ponto."
     >
       <div className="mb-3 flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-2">

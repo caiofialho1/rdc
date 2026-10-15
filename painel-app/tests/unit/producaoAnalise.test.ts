@@ -205,10 +205,48 @@ describe('produtividadeDiaria', () => {
   it('por etapa, o HH do dia se repete em cada etapa', () => {
     const r = produtividadeDiaria(linhas, 'etapa', 'm2')
     const st3 = r.series!.find((s) => s.chave === 'ST3')!
-    expect(st3.pontos[1]).toEqual({ indice: 1, producao: 6, hh: 6 })
+    expect(st3.pontos[1]).toEqual({ indice: 1, producao: 6, hh: 6, vazio: false })
   })
 
   it('kg não se mistura com m²', () => {
     expect(produtividadeDiaria(linhas, null, 'kg').total.map((p) => p.indice)).toEqual([25])
+  })
+})
+
+describe('produtividadeDiaria com o período dia a dia', () => {
+  const linhas = enriquecer(
+    [prod({ data: '2026-10-01', responsavel: 'Ana', lav: 40, homem_hora: 8 }), prod({ data: '2026-10-03', responsavel: 'Bia', st3: 10, homem_hora: 10 })],
+    [],
+    [],
+  )
+  const periodo = ['2026-10-01', '2026-10-02', '2026-10-03']
+
+  it('todos os dias no eixo; dia sem produção com HH vira 0 marcado como vazio', () => {
+    const r = produtividadeDiaria(linhas, null, 'm2', periodo)
+    expect(r.dias).toEqual(periodo)
+    expect(r.total.map((p) => [p.indice, p.vazio])).toEqual([
+      [5, false],
+      [0, true],
+      [1, false],
+    ])
+  })
+
+  it('cada série também é preenchida com 0 nos dias em que não aparece', () => {
+    const r = produtividadeDiaria(linhas, 'responsavel', 'm2', periodo)
+    const bia = r.series!.find((s) => s.chave === 'Bia')!
+    expect(bia.pontos.map((p) => [p.indice, p.vazio])).toEqual([
+      [0, true],
+      [0, true],
+      [1, false],
+    ])
+  })
+})
+
+describe('produtividadeDiaria: eixo sempre do período do filtro', () => {
+  it('sem nenhum dado, o eixo tem todos os dias; até o limite é 0, depois fica sem ponto', () => {
+    const r = produtividadeDiaria([], null, 'm2', ['2026-10-12', '2026-10-13', '2026-10-14', '2026-10-15'], '2026-10-13')
+    expect(r.dias).toHaveLength(4)
+    expect(r.total.map((p) => p.indice)).toEqual([0, 0, null, null])
+    expect(r.total.every((p) => p.vazio)).toBe(true)
   })
 })

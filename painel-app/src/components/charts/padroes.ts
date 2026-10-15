@@ -26,15 +26,17 @@ export const MAX_SERIES = CORES_SERIES.length
 
 /**
  * Afasta na vertical os nomes do fim das linhas que ficariam a menos de `minimo` (em valor do
- * eixo) um do outro. Devolve o deslocamento de cada série em valor do eixo (positivo = para baixo).
+ * eixo) um do outro. O de menor valor fica no lugar e os de cima sobem — assim nenhum nome
+ * desce para cima do eixo de datas. Devolve o deslocamento de cada série em valor do eixo
+ * (positivo = para cima).
  */
 export function afastarRotulos(itens: Array<{ chave: string; valor: number | null }>, minimo: number): Map<string, number> {
-  const ordenados = itens.filter((i): i is { chave: string; valor: number } => i.valor != null).sort((a, b) => b.valor - a.valor)
+  const ordenados = itens.filter((i): i is { chave: string; valor: number } => i.valor != null).sort((a, b) => a.valor - b.valor)
   const saida = new Map<string, number>()
-  let anterior = Infinity
+  let anterior = -Infinity
   for (const i of ordenados) {
-    const pos = Math.min(i.valor, anterior - minimo)
-    saida.set(i.chave, i.valor - pos)
+    const pos = Math.max(i.valor, anterior + minimo)
+    saida.set(i.chave, pos - i.valor)
     anterior = pos
   }
   return saida
