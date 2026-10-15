@@ -85,3 +85,44 @@ export function IconeRegistros(props: IconeProps) {
     </svg>
   )
 }
+
+/** Produção em área (m²): quadro com quadrícula — superfície tratada. Estático. */
+export function IconeArea(props: IconeProps) {
+  return (
+    <svg viewBox="0 0 40 40" width="24" height="24" fill="none" {...props}>
+      <rect x="8" y="8" width="24" height="24" rx="1.5" stroke="currentColor" strokeWidth="2" />
+      <path d="M16 8v24M24 8v24M8 16h24M8 24h24" stroke="currentColor" strokeWidth="1.2" strokeOpacity="0.45" />
+    </svg>
+  )
+}
+
+/** Produção em peso (kg): peso com alça. Estático. */
+export function IconePeso(props: IconeProps) {
+  return (
+    <svg viewBox="0 0 40 40" width="24" height="24" fill="none" {...props}>
+      <circle cx="20" cy="11" r="3.5" stroke="currentColor" strokeWidth="2" />
+      <path d="M12 16h16l4 16H8l4-16Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+/** Valor apurado (R$): cédula. Estático. */
+export function IconeValor(props: IconeProps) {
+  return (
+    <svg viewBox="0 0 40 40" width="24" height="24" fill="none" {...props}>
+      <rect x="6" y="12" width="28" height="16" rx="1.5" stroke="currentColor" strokeWidth="2" />
+      <circle cx="20" cy="20" r="3.5" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  )
+}
+
+/** Produtividade (produção ÷ HH): fração. Estático. */
+export function IconeRazao(props: IconeProps) {
+  return (
+    <svg viewBox="0 0 40 40" width="24" height="24" fill="none" {...props}>
+      <rect x="13" y="7" width="14" height="8" rx="1.5" fill="currentColor" />
+      <line x1="9" y1="20" x2="31" y2="20" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+      <rect x="13" y="25" width="14" height="8" rx="1.5" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  )
+}

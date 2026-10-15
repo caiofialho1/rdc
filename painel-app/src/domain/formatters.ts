@@ -49,3 +49,10 @@ export function fmtDH(iso: string | null): string {
   if (!iso) return ''
   return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 }
+
+const nf2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+/** Índice de produtividade (m²/HH, kg/HH): sempre 2 casas. */
+export function fmtIndice(v: number): string {
+  return nf2.format(v)
+}

@@ -1,6 +1,6 @@
 # Arquitetura de informação (Painel de Controle)
 
-Reorganiza as 8 seções do `painel.html` antigo em 4 telas de storytelling (Painel executivo → Comparação → Desvios → Detalhamento; a tela Desempenho foi removida em 2026-10-14 e a emissão diária foi para o Painel executivo), sem perder capacidade de dado ou filtro. Implementação em `painel-app/src/screens/`.
+Reorganiza as 8 seções do `painel.html` antigo em 4 telas de storytelling (Painel executivo → Produção → Desvios → Detalhamento; a tela Comparação passou a se chamar Produção em 2026-10-14; a tela Desempenho foi removida em 2026-10-14 e a emissão diária foi para o Painel executivo), sem perder capacidade de dado ou filtro. Implementação em `painel-app/src/screens/`.
 
 | Seção antiga (painel.html) | Tela nova | O que é preservado | O que muda |
 |---|---|---|---|
@@ -9,8 +9,8 @@ Reorganiza as 8 seções do `painel.html` antigo em 4 telas de storytelling (Pai
 | "03 Emissão diária" (calendário) | **Painel executivo** (seção "Emissão diária", entre Responsáveis de campo e Detalhamento) | Matriz responsável×dia, feriados/fins de semana, marcos do ciclo, "ver próximos dias" | Reestilizado |
 | "04 Responsáveis" | **Painel executivo** e Desvios | Tabela + comparação de HH trabalhado vs. impacto por responsável | — |
 | "05 Impactos" | **Desvios** | Tabela de impactos, agrupável, abre detalhe do RDC | — |
-| "07 Produção × RDC" | **Comparação** | Escopo de data **independente** do filtro global, lazy-load ao abrir, situação de reconciliação (`Produção com RDC`/`sem RDC`/`RDC sem produção`) | Passa a ser a tela central de "Comparação", não uma seção secundária |
-| "08 Produção por responsável" | **Comparação** | Escopo de data independente, participação %, `etapas_sem_preco` sempre visível | — |
+| "07 Produção × RDC" | **Produção** | Situação de reconciliação (`Produção com RDC`/`sem RDC`/`RDC sem produção`) como filtro com contagem na tabela de produção | Contagem por TAG×OM×disciplina×data, a partir de `rdc_admin_producao_resp` |
+| "08 Produção por responsável" | **Produção** | Tabela com etapas, ativo, área, contrato, HH, valor e produtividade; agrupamento por responsável, contrato, disciplina, etapa, ativo, área, data ou situação; participação % e `etapas_sem_preco` sempre visíveis | Contrato e área vêm do RDC vinculado (data + responsável + OM + TAG + disciplina) |
 | "06 Registros RDC" + modal de detalhe | **Detalhamento** | Tabela agrupável, seleção em lote → `rdc_admin_editar`, modal com histórico/validação → `rdc_validar`, fotos com GPS/lightbox, mão de obra por função (pico e HH por função, de `qtd_*` das atividades) | — |
 | Botão "Atualizar carga produção" | ação global (acessível de qualquer tela, não é uma tela de storytelling) | Fluxo idêntico: `rdc_admin_mc_status` (diff) → parse XLSX client-side → `rdc_admin_mc_importar` por planilha alterada | Reestilizado; lógica de parsing portada para `domain/xlsxCarga.ts` |
 
@@ -18,13 +18,13 @@ Reorganiza as 8 seções do `painel.html` antigo em 4 telas de storytelling (Pai
 
 - Período = **medição** (ciclo 21→20), escolhido por **Ano** + **Mês medição** na barra lateral; o mês é o de fechamento (21/01 a 20/02 = fevereiro). Abre na medição em curso. Não há mais datas livres nem atalhos (Hoje/7 dias/30 dias…), desde 2026-10-14.
 - Filtros globais (barra lateral) recarregam `rdc_admin_exportar` quando o período muda; os demais filtram em memória sobre o resultado já carregado.
-- Comparação (Produção × RDC / por responsável) mantém escopo de data **próprio**, lembrado por navegador, independente do filtro global.
+- Produção segue o período global e os filtros de área, responsável, contrato, disciplina e busca (status não se aplica). O escopo de data próprio da antiga Comparação foi removido em 2026-10-14 para que contrato e área do RDC cubram o mesmo período.
 - Falha de atualização nunca apaga dados bons: mantém o período e os dados anteriores, com aviso persistente; exportação fica desabilitada antes da primeira carga e durante atualização em curso.
 - Sub-filtros locais de um gráfico (ex.: disciplina no gráfico de série temporal) não retroagem sobre KPIs ou outras seções.
 
 ## Navegação
 
-4 telas (Painel executivo, Comparação, Desvios, Detalhamento) + Login, sem biblioteca de rotas — estado interno simples (aba ativa), já que é um painel interno de uma única sessão, sem necessidade de URLs profundas por tela.
+4 telas (Painel executivo, Produção, Desvios, Detalhamento) + Login, sem biblioteca de rotas — estado interno simples (aba ativa), já que é um painel interno de uma única sessão, sem necessidade de URLs profundas por tela.
 
 ## Padrão visual (2026-10-14)
 

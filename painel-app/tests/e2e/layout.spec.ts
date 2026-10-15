@@ -12,7 +12,7 @@ const VIEWPORTS = [
   { nome: 'celular', width: 390, height: 844 },
 ]
 
-const TELAS = ['Painel executivo', 'Comparação', 'Desvios', 'Detalhamento']
+const TELAS = ['Painel executivo', 'Produção', 'Desvios', 'Detalhamento']
 
 async function abrirTela(page: Page, tela: string) {
   const menu = page.getByRole('button', { name: 'Menu e filtros' })

@@ -214,6 +214,19 @@ function MaoDeObra({ atividades }: { atividades: AtividadeRow[] }) {
   )
 }
 
+/**
+ * Linha da identificação do RDC, no mesmo ritmo da tabela de mão de obra ao lado:
+ * rótulo em negrito na cor do texto, valor em tom mais suave, filete entre linhas.
+ */
+function Campo({ rotulo, alerta = false, className = '', children }: { rotulo: string; alerta?: boolean; className?: string; children: ReactNode }) {
+  return (
+    <>
+      <dt className="border-b border-border/70 py-1.5 pr-4 font-semibold text-text-primary">{rotulo}</dt>
+      <dd className={`min-w-0 border-b border-border/70 py-1.5 break-words ${alerta ? 'text-warning-text' : 'text-text-secondary'} ${className}`}>{children}</dd>
+    </>
+  )
+}
+
 const HORA_MS = 3_600_000
 
 /** Dia da semana por extenso da data do RDC (a data é dia civil, sem fuso). */
@@ -493,37 +506,35 @@ function Detalhe({
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
         <div className="grid grid-cols-1 gap-4 @[44rem]/detalhe:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
-          <div className="flex min-w-0 flex-col gap-3">
+          <section
+            aria-labelledby="identificacao-titulo"
+            className="flex min-w-0 flex-col gap-2.5 rounded-card border border-border bg-chart-background p-3"
+          >
+            <h4 id="identificacao-titulo" className="text-xs font-semibold tracking-wide text-text-secondary uppercase">
+              Identificação do RDC
+            </h4>
             <Responsavel nome={rdc.responsavel} tamanho="lg" comFuncao />
-            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
-              <dt className="text-text-secondary">Ativo</dt>
-              <dd className="min-w-0 break-words">
+            <dl className="grid grid-cols-[auto_minmax(0,1fr)] border-t border-border text-sm [&>*:nth-last-child(-n+2)]:border-b-0">
+              <Campo rotulo="Ativo">
                 {rdc.ativo}
-                {rdc.ativo_descricao && <span className="block text-xs text-text-secondary">{rdc.ativo_descricao}</span>}
-              </dd>
-              <dt className="text-text-secondary">OM</dt>
-              <dd className="tabular">{rdc.om}</dd>
-              <dt className="text-text-secondary">Contrato</dt>
-              <dd className={rdc.contrato_nome ? '' : 'text-warning-text'}>{rdc.contrato_nome ?? 'Sem contrato'}</dd>
-              <dt className="text-text-secondary">Área</dt>
-              <dd>{rdc.area ?? '—'}</dd>
-              <dt className="text-text-secondary">PTS</dt>
-              <dd>{pts}</dd>
-              <dt className="text-text-secondary">Bloqueio</dt>
-              <dd>{bloqueio}</dd>
-              <dt className="text-text-secondary">Validado por</dt>
-              <dd>
+                {rdc.ativo_descricao && <span className="block text-xs">{rdc.ativo_descricao}</span>}
+              </Campo>
+              <Campo rotulo="OM" className="tabular">
+                {rdc.om}
+              </Campo>
+              <Campo rotulo="Contrato" alerta={!rdc.contrato_nome}>
+                {rdc.contrato_nome ?? 'Sem contrato'}
+              </Campo>
+              <Campo rotulo="Área">{rdc.area ?? '—'}</Campo>
+              <Campo rotulo="PTS">{pts}</Campo>
+              <Campo rotulo="Bloqueio">{bloqueio}</Campo>
+              <Campo rotulo="Validado por">
                 {rdc.validado_por ?? '—'}
-                {rdc.validado_em && <span className="ml-1 text-xs text-text-secondary">em {fmtDH(rdc.validado_em)}</span>}
-              </dd>
-              {rdc.obs_validacao && (
-                <>
-                  <dt className="text-text-secondary">Motivo</dt>
-                  <dd className="text-text-primary">{rdc.obs_validacao}</dd>
-                </>
-              )}
+                {rdc.validado_em && <span className="ml-1 text-xs">em {fmtDH(rdc.validado_em)}</span>}
+              </Campo>
+              {rdc.obs_validacao && <Campo rotulo="Motivo">{rdc.obs_validacao}</Campo>}
             </dl>
-          </div>
+          </section>
           <MaoDeObra atividades={atividades} />
         </div>
 

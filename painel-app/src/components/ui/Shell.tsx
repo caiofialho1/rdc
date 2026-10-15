@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import { useAuth } from '../../auth/AuthProvider'
 import { FilterProvider } from '../../filters/FilterContext'
 import CargaProducao from '../CargaProducao'
-import Comparacao from '../../screens/Comparacao'
+import Producao from '../../screens/Producao'
 import Desvios from '../../screens/Desvios'
 import Detalhamento from '../../screens/Detalhamento'
 import Executivo from '../../screens/Executivo'
@@ -15,7 +15,7 @@ import logoPpl from '../../assets/ppl-logo.png'
 const TELAS = [
   // Tela inicial: layout do protótipo Stitch "Painel Executivo" com dados reais (substituiu Contexto).
   { chave: 'executivo', rotulo: 'Painel executivo', Componente: Executivo },
-  { chave: 'comparacao', rotulo: 'Comparação', Componente: Comparacao },
+  { chave: 'producao', rotulo: 'Produção', Componente: Producao },
   { chave: 'desvios', rotulo: 'Desvios', Componente: Desvios },
   { chave: 'detalhamento', rotulo: 'Detalhamento', Componente: Detalhamento },
 ] as const satisfies ReadonlyArray<{ chave: TelaChave; rotulo: string; Componente: unknown }>

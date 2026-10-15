@@ -41,12 +41,25 @@ test('Painel executivo calcula HH trabalhado e mostra a emissão diária do reco
   await expect(page.getByRole('navigation', { name: 'Telas do painel' }).getByRole('button', { name: 'Desempenho' })).toHaveCount(0)
 })
 
-test('Comparação mostra as 3 situações de reconciliação produção × RDC', async ({ page }) => {
+test('Produção: KPIs de produtividade, contrato/área do RDC, situação e agrupamento', async ({ page }) => {
   await logar(page)
-  await page.getByRole('button', { name: 'Comparação' }).click()
-  await expect(page.getByText('Produção com RDC').first()).toBeVisible()
-  await expect(page.getByText('Produção sem RDC — investigar')).toBeVisible()
-  await expect(page.getByText('linha(s) com produção sem preço cadastrado')).toBeVisible()
+  await page.getByRole('navigation', { name: 'Telas do painel' }).getByRole('button', { name: 'Produção', exact: true }).click()
+  // PRODUCAO_RESP_OK: Maria Souza, LAV 10 m² com 8 HH -> 1,25 m²/HH; REC FAB 50 kg sem RDC e sem preço
+  await expect(page.getByRole('group', { name: 'Produtividade PAC' })).toContainText('1,25')
+  await expect(page.getByRole('group', { name: 'Produtividade REC e TEL' })).toContainText('Nenhuma produção em kg com HH vinculado')
+  await expect(page.getByText('1 registro(s) com produção sem preço, fora do total')).toBeVisible()
+  const tabela = page.getByRole('region', { name: 'Produção detalhada' })
+  await expect(tabela.getByRole('cell', { name: 'ROTINA' })).toBeVisible()
+  await expect(tabela.getByRole('cell', { name: 'Área 1' })).toBeVisible()
+  await expect(tabela.getByText('sem preço: FAB')).toBeVisible()
+  // situação: filtra e conta por ativo × OM × disciplina × dia
+  await tabela.getByRole('button', { name: /Produção sem RDC 1/ }).click()
+  await expect(tabela.getByRole('cell', { name: 'ROTINA' })).toHaveCount(0)
+  await tabela.getByRole('button', { name: /Todas as situações 2/ }).click()
+  // agrupamento por contrato com detalhe expansível
+  await tabela.getByLabel('Agrupar por').selectOption({ label: 'Contrato' })
+  await tabela.getByRole('button', { name: 'ROTINA' }).click()
+  await expect(tabela.getByRole('cell', { name: 'TAG-100 OM OM-123', exact: true })).toBeVisible()
 })
 
 test('Exportar Excel baixa um arquivo .xlsx com o recorte carregado', async ({ page }) => {

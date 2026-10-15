@@ -23,7 +23,7 @@ const ROTULOS_FILTRO: Record<keyof FiltrosSecundarios, string> = {
  * não foi aplicado (ver docs/INFORMATION_ARCHITECTURE.md).
  */
 const NOTA_ESCOPO: Partial<Record<TelaChave, string>> = {
-  comparacao: 'Produção usa o escopo de datas próprio de cada seção; área, responsável, contrato, status e busca não se aplicam.',
+  producao: 'Produção segue o período e os filtros de área, responsável, contrato, disciplina e busca (status não se aplica). Área e contrato vêm do RDC vinculado: com esses filtros, a produção sem RDC sai do recorte.',
 }
 
 /**
