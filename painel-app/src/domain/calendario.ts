@@ -21,6 +21,18 @@ export function diasDoIntervalo(ini: string, fim: string): DiaCalendario[] {
   return out
 }
 
+/**
+ * Número da semana ISO 8601 (semana começa na segunda; a semana 1 é a que contém a primeira
+ * quinta-feira do ano). Ex.: 14/10/2026 → 42; 01/01/2027 (sexta) → 53, ainda de 2026.
+ */
+export function semanaIso(iso: string): number {
+  const d = new Date(`${iso.slice(0, 10)}T12:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + 3 - ((d.getUTCDay() + 6) % 7)) // quinta-feira da mesma semana
+  const quinta1 = new Date(Date.UTC(d.getUTCFullYear(), 0, 4))
+  quinta1.setUTCDate(quinta1.getUTCDate() + 3 - ((quinta1.getUTCDay() + 6) % 7))
+  return 1 + Math.round((d.getTime() - quinta1.getTime()) / (7 * 86_400_000))
+}
+
 /** Só estende o mês corrente, e só quando o filtro já inclui hoje. */
 export function estenderFimMesSeAplicavel(fim: string, hojeIso: string): string {
   const hojeData = new Date(`${hojeIso}T12:00:00`)

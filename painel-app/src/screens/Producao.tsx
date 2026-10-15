@@ -9,6 +9,7 @@ import { useUltimoSucesso } from '../api/useUltimoSucesso'
 import type { Situacao } from '../api/schemas'
 import { useAuth } from '../auth/AuthProvider'
 import { Card, Kpi, Secao } from '../components/exec/ExecUi'
+import ProdutividadeDiaria from '../components/ProdutividadeDiaria'
 import Banner from '../components/ui/Banner'
 import EstadoTela from '../components/ui/EstadoTela'
 import { IconeArea, IconeBarras, IconePeso, IconeRazao, IconeValor } from '../components/ui/icons/KpiIcons'
@@ -545,6 +546,7 @@ export default function Producao() {
             <Ranking itens={ranking.etapa} unidade={unidade} vazio={`Nenhuma produção em ${u} com HH no recorte.`} />
           </Card>
         </div>
+        <ProdutividadeDiaria linhas={linhas} unidade={unidade} />
       </Secao>
 
       <Secao id="prod-tabela" titulo="Produção detalhada" sub="Um registro por responsável × ativo × OM × disciplina × dia. Contrato e área vêm do RDC; produção sem RDC não tem nenhum dos dois.">

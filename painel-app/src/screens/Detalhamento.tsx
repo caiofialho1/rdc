@@ -121,6 +121,32 @@ function Secao({ titulo, children }: { titulo: string; children: ReactNode }) {
   )
 }
 
+/**
+ * Mini rosca do % HH, com 14 px (cabe na altura da linha do texto). Arco em azul na fração
+ * da função; trilho cinza-claro completo quando a função não tem HH.
+ */
+function MiniRosca({ parte }: { parte: number }) {
+  const r = 5
+  const c = 2 * Math.PI * r
+  return (
+    <svg viewBox="0 0 14 14" width="14" height="14" aria-hidden="true" className="shrink-0">
+      <circle cx="7" cy="7" r={r} fill="none" stroke="var(--border)" strokeWidth="2.6" />
+      {parte > 0 && (
+        <circle
+          cx="7"
+          cy="7"
+          r={r}
+          fill="none"
+          stroke="var(--info)"
+          strokeWidth="2.6"
+          strokeDasharray={`${Math.max(parte * c, 0.6)} ${c}`}
+          transform="rotate(-90 7 7)"
+        />
+      )}
+    </svg>
+  )
+}
+
 /** Barra horizontal do % do HH do RDC (0–100%); o valor exato segue em texto na mesma linha. */
 function BarraHh({ parte, cor }: { parte: number; cor: string }) {
   return (
@@ -154,8 +180,8 @@ function MaoDeObra({ atividades }: { atividades: AtividadeRow[] }) {
           Mão de obra por função
         </h4>
         <p className="text-sm text-text-secondary">
-          <span className="tabular text-[16px] font-semibold text-text-primary">{fmtInteiro(efetivoMax)}</span> pessoas no pico ·{' '}
-          <span className="tabular text-[16px] font-semibold text-text-primary">{fmtHoras(hhTotal)}</span> HH
+          <span className="tabular text-[16px] font-semibold text-info">{fmtInteiro(efetivoMax)}</span> pessoas no pico ·{' '}
+          <span className="tabular text-[16px] font-semibold text-info">{fmtHoras(hhTotal)}</span> HH
         </p>
       </div>
       <table className="w-full table-fixed border-collapse text-sm">
@@ -164,7 +190,7 @@ function MaoDeObra({ atividades }: { atividades: AtividadeRow[] }) {
           <col />
           <col className="w-11" />
           <col className="w-13" />
-          <col className="w-[4.25rem]" />
+          <col className="w-[5.5rem]" />
         </colgroup>
         <thead>
           <tr className="border-b border-border text-[10px] text-text-secondary">
@@ -203,9 +229,19 @@ function MaoDeObra({ atividades }: { atividades: AtividadeRow[] }) {
                 <td className="py-1.5 pr-2">
                   <BarraHh parte={parte(l.hh)} cor={l.semFuncao ? 'bg-planned' : 'bg-actual'} />
                 </td>
-                <td className={`py-1.5 text-right ${zerada ? 'text-text-secondary' : 'font-semibold text-text-primary'}`}>{fmtInteiro(l.pico)}</td>
-                <td className={`py-1.5 text-right ${zerada ? 'text-text-secondary' : ''}`}>{fmtHoras(l.hh)}</td>
-                <td className="py-1.5 text-right text-text-secondary">{hhTotal > 0 ? fmtPercentual(parte(l.hh)) : '—'}</td>
+                {/* Onde há efetivo, os números ficam em azul; função zerada segue em cinza. */}
+                <td className={`py-1.5 text-right ${zerada ? 'text-text-secondary' : 'font-semibold text-info'}`}>{fmtInteiro(l.pico)}</td>
+                <td className={`py-1.5 text-right ${zerada ? 'text-text-secondary' : 'font-semibold text-info'}`}>{fmtHoras(l.hh)}</td>
+                <td className={`py-1.5 text-right ${zerada ? 'text-text-secondary' : 'font-semibold text-info'}`}>
+                  {hhTotal > 0 ? (
+                    <span className="inline-flex items-center justify-end gap-1.5 align-middle">
+                      <MiniRosca parte={parte(l.hh)} />
+                      {fmtPercentual(parte(l.hh))}
+                    </span>
+                  ) : (
+                    '—'
+                  )}
+                </td>
               </tr>
             )
           })}

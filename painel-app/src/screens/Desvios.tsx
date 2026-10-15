@@ -3,6 +3,7 @@ import { useExportar, useProducao } from '../api/queries'
 import { useUltimoSucesso } from '../api/useUltimoSucesso'
 import { useAuth } from '../auth/AuthProvider'
 import EChart from '../components/charts/EChart'
+import { EIXO_VALOR_SEM_ROTULO, SEM_SOBREPOSICAO, gradeSuave } from '../components/charts/padroes'
 import { useFotosRedondas } from '../components/charts/fotoRedonda'
 import Badge from '../components/ui/Badge'
 import Banner from '../components/ui/Banner'
@@ -62,11 +63,15 @@ export default function Desvios() {
       tooltip: {
         trigger: 'axis' as const,
         axisPointer: { type: 'shadow' as const },
-        valueFormatter: (v: number) => `${fmtHoras(v)} HH`,
+        formatter: (ps: Array<{ dataIndex: number }>) => {
+          const r = porResp[ps[0]?.dataIndex ?? 0]
+          if (!r) return ''
+          return `<strong>${r.responsavel.replace(/</g, '&lt;')}</strong><br/>HH trabalhado: ${fmtHoras(r.hhTrabalhado)} HH<br/>HH de impacto: ${fmtHoras(r.hhImpacto)} HH`
+        },
       },
-      legend: { top: 0, left: 0 },
-      grid: { left: 8, right: 24, top: 32, bottom: 8, containLabel: true },
-      xAxis: { type: 'value' as const, min: 0 },
+      legend: { top: 0, left: 0, data: ['HH trabalhado', 'HH de impacto'] },
+      grid: { left: 8, right: 72, top: 32, bottom: 8, containLabel: true },
+      xAxis: { type: 'value' as const, min: 0, ...EIXO_VALOR_SEM_ROTULO, splitLine: gradeSuave() },
       yAxis: {
         type: 'category' as const,
         inverse: true,
@@ -95,6 +100,29 @@ export default function Desvios() {
           barMaxWidth: 22,
           data: porResp.map((r) => r.hhImpacto),
           itemStyle: { color: cssVar('--impact'), borderRadius: [0, 2, 2, 0] },
+        },
+        {
+          // Série vazia no fim da pilha só para o rótulo: HH trabalhado e, se houver, "+impacto" em vermelho.
+          name: 'Rótulo',
+          type: 'bar' as const,
+          stack: 'hh',
+          barMaxWidth: 22,
+          silent: true,
+          data: porResp.map(() => 0),
+          labelLayout: SEM_SOBREPOSICAO,
+          label: {
+            show: true,
+            position: 'right' as const,
+            distance: 6,
+            formatter: (p: { dataIndex: number }) => {
+              const r = porResp[p.dataIndex]
+              return r.hhImpacto > 0 ? `{t|${fmtHoras(r.hhTrabalhado)}} {i|+${fmtHoras(r.hhImpacto)}}` : `{t|${fmtHoras(r.hhTrabalhado)}}`
+            },
+            rich: {
+              t: { fontSize: 10, fontWeight: 700, color: cssVar('--text-primary') },
+              i: { fontSize: 10, fontWeight: 700, color: cssVar('--impact') },
+            },
+          },
         },
       ],
     }

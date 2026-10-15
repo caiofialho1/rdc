@@ -354,3 +354,56 @@ export function contagemSituacao(linhas: LinhaProducao[]): Record<Situacao, numb
   for (const l of linhas) chaves[l.situacao].add(`${l.tag}|${l.om}|${l.disciplina}|${l.data}`)
   return { 'Produção com RDC': chaves['Produção com RDC'].size, 'Produção sem RDC': chaves['Produção sem RDC'].size, 'RDC sem produção': chaves['RDC sem produção'].size }
 }
+
+// ---------------------------------------------------------------------------
+// Produtividade diária
+// ---------------------------------------------------------------------------
+export interface PontoDiario {
+  /** Produção ÷ HH do dia; null quando o dia não tem produção com HH vinculado nessa série. */
+  indice: number | null
+  producao: number
+  hh: number
+}
+
+export interface ProdutividadeDiaria {
+  /** Dias (AAAA-MM-DD) com produção e HH vinculado na unidade, em ordem. */
+  dias: string[]
+  total: PontoDiario[]
+  /** Séries da dimensão, da que tem mais HH para a que tem menos; null sem quebra. */
+  series: Array<{ chave: string; hh: number; pontos: PontoDiario[] }> | null
+}
+
+function ponto(t: Totais, u: Unidade): PontoDiario {
+  return { indice: produtividade(t, u), producao: u === 'm2' ? t.m2ComHh : t.kgComHh, hh: u === 'm2' ? t.hhM2 : t.hhKg }
+}
+
+/**
+ * Produtividade dia a dia na unidade pedida, total e (opcionalmente) quebrada por dimensão.
+ * Mesmas regras do índice do período: só registros com produção e HH; por etapa, o HH do dia
+ * se repete em cada etapa executada naquele dia.
+ */
+export function produtividadeDiaria(linhas: LinhaProducao[], d: Dimensao | null, u: Unidade): ProdutividadeDiaria {
+  const daUnidade = linhas.filter((l) => l.unidade === u && l.data)
+  const porDia = new Map<string, LinhaProducao[]>()
+  for (const l of daUnidade) {
+    const dia = l.data!.slice(0, 10)
+    porDia.set(dia, [...(porDia.get(dia) ?? []), l])
+  }
+  const dias = [...porDia.keys()].filter((dia) => produtividade(totalizar(porDia.get(dia)!), u) != null).sort()
+  const total = dias.map((dia) => ponto(totalizar(porDia.get(dia)!), u))
+  if (!d) return { dias, total, series: null }
+
+  const series = agrupar(daUnidade, d)
+    .map((g) => ({ chave: g.chave, hh: u === 'm2' ? g.totais.hhM2 : g.totais.hhKg }))
+    .filter((g) => g.hh > 0)
+    .sort((a, b) => b.hh - a.hh)
+    .map(({ chave, hh }) => ({
+      chave,
+      hh,
+      pontos: dias.map((dia) => {
+        const g = agrupar(porDia.get(dia)!, d).find((x) => x.chave === chave)
+        return g ? ponto(g.totais, u) : { indice: null, producao: 0, hh: 0 }
+      }),
+    }))
+  return { dias, total, series }
+}

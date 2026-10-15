@@ -1,16 +1,16 @@
 import { useMemo } from 'react'
 import type { RdcRow } from '../api/schemas'
 import { isoDia } from '../domain/ciclo'
-import { classificarDia, diasDoIntervalo, estenderFimMesSeAplicavel, type ClassificacaoDia, type DiaCalendario } from '../domain/calendario'
+import { classificarDia, diasDoIntervalo, estenderFimMesSeAplicavel, semanaIso, type ClassificacaoDia, type DiaCalendario } from '../domain/calendario'
 import { fmtData } from '../domain/formatters'
 import Responsavel from './ui/Responsavel'
 
 const CORES: Record<ClassificacaoDia['tipo'], string> = {
-  ok: 'bg-primary text-white font-semibold',
+  ok: 'bg-success-bg text-success-text font-semibold',
   feriado: 'bg-info-border',
   fds: 'bg-planned/15',
   futuro: 'text-text-secondary',
-  no: 'bg-warning-bg text-warning-text font-semibold',
+  no: 'bg-danger-bg text-danger-text font-semibold',
 }
 
 const INICIAL_SEMANA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
@@ -32,10 +32,22 @@ function gruposDeMes(dias: DiaCalendario[]): Array<{ chave: string; rotulo: stri
   return grupos
 }
 
+/** Agrupa dias consecutivos da mesma semana ISO (segunda a domingo) para a linha de semanas. */
+function gruposDeSemana(dias: DiaCalendario[]): Array<{ chave: string; numero: number; qtd: number }> {
+  const grupos: Array<{ chave: string; numero: number; qtd: number }> = []
+  for (const d of dias) {
+    const numero = semanaIso(d.iso)
+    const ultimo = grupos[grupos.length - 1]
+    if (ultimo?.numero === numero) ultimo.qtd++
+    else grupos.push({ chave: d.iso, numero, qtd: 1 })
+  }
+  return grupos
+}
+
 function Legenda() {
   const itens: Array<[string, string, string]> = [
-    ['bg-primary text-white', '✓', 'RDC emitido (número = mais de um)'],
-    ['bg-warning-bg text-warning-text', '✕', 'Dia útil sem RDC'],
+    ['bg-success-bg text-success-text font-semibold', '✓', 'RDC emitido (número = mais de um)'],
+    ['bg-danger-bg text-danger-text font-semibold', '✕', 'Dia útil sem RDC'],
     ['bg-info-border', '', 'Feriado'],
     ['bg-planned/15', '', 'Fim de semana'],
     ['text-text-secondary border border-border', '–', 'Data futura'],
@@ -51,8 +63,10 @@ function Legenda() {
         </li>
       ))}
       <li className="flex items-center gap-1.5">
-        <span className="inline-block h-4 w-4 rounded-[2px] border border-border shadow-[inset_0_-2px_0_var(--info)]" aria-hidden="true" />
-        Hoje
+        <span className="relative inline-block h-4 w-4" aria-hidden="true">
+          <span className="absolute inset-y-0 left-1/2 w-[1.5px] -translate-x-1/2 bg-info" />
+        </span>
+        Hoje (linha azul)
       </li>
     </ul>
   )
@@ -68,6 +82,7 @@ export default function Calendario({ rdcs, ini, fim }: { rdcs: RdcRow[]; ini: st
   const fimEstendido = estenderFimMesSeAplicavel(fim, hoje)
   const dias = useMemo(() => diasDoIntervalo(ini, fimEstendido), [ini, fimEstendido])
   const meses = useMemo(() => gruposDeMes(dias), [dias])
+  const semanas = useMemo(() => gruposDeSemana(dias), [dias])
 
   const responsaveis = useMemo(() => [...new Set(rdcs.map((r) => r.responsavel))].sort((a, b) => a.localeCompare(b, 'pt-BR')), [rdcs])
 
@@ -83,7 +98,7 @@ export default function Calendario({ rdcs, ini, fim }: { rdcs: RdcRow[]; ini: st
   if (!responsaveis.length) return null
 
   const classeDia = (d: DiaCalendario, i: number) =>
-    `${d.dia === 1 && i > 0 ? 'cal-mes' : ''} ${d.iso === hoje ? 'cal-dia--hoje' : ''}`
+    `${d.dia === 1 && i > 0 ? 'cal-mes' : d.diaSemana === 1 && i > 0 ? 'cal-semana' : ''} ${d.iso === hoje ? 'cal-dia--hoje' : ''}`
 
   return (
     <>
@@ -92,7 +107,7 @@ export default function Calendario({ rdcs, ini, fim }: { rdcs: RdcRow[]; ini: st
           <caption className="sr-only">Emissão diária de RDC por responsável</caption>
           <thead>
             <tr>
-              <th rowSpan={2} scope="col" className="cal-resp font-semibold text-text-primary">
+              <th rowSpan={3} scope="col" className="cal-resp font-semibold text-text-primary">
                 Responsável
               </th>
               {meses.map((m, i) => (
@@ -107,17 +122,36 @@ export default function Calendario({ rdcs, ini, fim }: { rdcs: RdcRow[]; ini: st
               ))}
             </tr>
             <tr>
+              {semanas.map((s, i) => (
+                <th
+                  key={s.chave}
+                  colSpan={s.qtd}
+                  scope="colgroup"
+                  title={`Semana ${s.numero} (segunda a domingo)`}
+                  className={`px-1 text-left text-[10px] font-semibold text-text-secondary tabular ${i > 0 ? 'cal-semana' : ''}`}
+                >
+                  <span className="whitespace-nowrap">Sem {s.numero}</span>
+                </th>
+              ))}
+            </tr>
+            <tr>
               {dias.map((d, i) => (
                 <th
                   key={d.iso}
                   scope="col"
-                  title={`${fmtData(d.iso)}, ${NOME_SEMANA[d.diaSemana]}`}
+                  title={`${fmtData(d.iso)}, ${NOME_SEMANA[d.diaSemana]}${d.iso === hoje ? ' (hoje)' : ''}`}
                   className={`cal-dia pb-1 text-center font-normal ${d.diaSemana === 0 || d.diaSemana === 6 ? 'text-text-secondary' : 'text-text-primary'} ${classeDia(d, i)}`}
                 >
                   <span className="block text-[11px] leading-tight tabular">{d.dia}</span>
-                  <span className="block text-[10px] leading-tight text-text-secondary" aria-hidden="true">
-                    {INICIAL_SEMANA[d.diaSemana]}
-                  </span>
+                  {d.iso === hoje ? (
+                    <span className="cal-hoje-rotulo" aria-hidden="true">
+                      Hoje
+                    </span>
+                  ) : (
+                    <span className="block text-[10px] leading-tight text-text-secondary" aria-hidden="true">
+                      {INICIAL_SEMANA[d.diaSemana]}
+                    </span>
+                  )}
                 </th>
               ))}
             </tr>

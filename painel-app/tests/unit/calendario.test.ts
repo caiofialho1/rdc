@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { classificarDia, diasDoIntervalo, estenderFimMesSeAplicavel } from '../../src/domain/calendario'
+import { classificarDia, diasDoIntervalo, estenderFimMesSeAplicavel, semanaIso } from '../../src/domain/calendario'
 
 describe('diasDoIntervalo', () => {
   it('gera um dia por data do intervalo, inclusive', () => {
@@ -47,5 +47,19 @@ describe('classificarDia', () => {
   it('dia futuro sem RDC não conta como falta', () => {
     const c = classificarDia({ iso: '2026-10-20', diaSemana: 2, dia: 20, mes: 10 }, 0, hoje)
     expect(c.tipo).toBe('futuro')
+  })
+})
+
+describe('semanaIso', () => {
+  it('semana começa na segunda (ISO 8601)', () => {
+    expect(semanaIso('2026-09-21')).toBe(39) // segunda
+    expect(semanaIso('2026-09-27')).toBe(39) // domingo da mesma semana
+    expect(semanaIso('2026-09-28')).toBe(40) // segunda seguinte
+    expect(semanaIso('2026-10-14')).toBe(42)
+  })
+  it('virada de ano segue a regra da primeira quinta-feira', () => {
+    expect(semanaIso('2026-01-01')).toBe(1) // quinta
+    expect(semanaIso('2027-01-01')).toBe(53) // sexta: ainda semana 53 de 2026
+    expect(semanaIso('2027-01-04')).toBe(1)
   })
 })

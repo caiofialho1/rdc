@@ -13,6 +13,7 @@ import type { RdcRow } from '../api/schemas'
 import { useAuth } from '../auth/AuthProvider'
 import Calendario from '../components/Calendario'
 import EChart from '../components/charts/EChart'
+import { EIXO_VALOR_SEM_ROTULO, SEM_SOBREPOSICAO, gradeSuave } from '../components/charts/padroes'
 import EstadoTela from '../components/ui/EstadoTela'
 import { IconeBarras, IconeBloqueio, IconeEspera, IconeImpacto, IconeRegistros } from '../components/ui/icons/KpiIcons'
 import { Card, Kpi, Secao } from '../components/exec/ExecUi'
@@ -28,7 +29,7 @@ import {
   rankingResponsaveis,
   rdcsPorStatus,
 } from '../domain/diagnostico'
-import { estenderFimMesSeAplicavel } from '../domain/calendario'
+import { estenderFimMesSeAplicavel, semanaIso } from '../domain/calendario'
 import { isoDia } from '../domain/ciclo'
 import { filtrar } from '../domain/filtros'
 import { fmtData, fmtHoras, fmtInteiro, fmtNumero, fmtPercentual } from '../domain/formatters'
@@ -133,13 +134,41 @@ export default function Executivo({ irPara }: TelaProps) {
     [recorte],
   )
 
-  const opcaoDiaria = useMemo(
-    () => ({
-      tooltip: { trigger: 'axis' as const, axisPointer: { type: 'shadow' as const }, valueFormatter: (v: number) => `${fmtHoras(v)} HH` },
-      legend: { top: 0, right: 0 },
-      grid: { left: 8, right: 8, top: 40, bottom: 8, containLabel: true },
-      xAxis: { type: 'category' as const, data: dias.map((d) => ddmm(d.data)), axisTick: { show: false } },
-      yAxis: { type: 'value' as const, min: 0, name: 'HH', nameGap: 12 },
+  const opcaoDiaria = useMemo(() => {
+    // Com muitos dias, o rótulo gira na vertical para caber sobre a barra.
+    const vertical = dias.length > 8
+    return {
+      tooltip: {
+        trigger: 'axis' as const,
+        axisPointer: { type: 'shadow' as const },
+        formatter: (ps: Array<{ dataIndex: number }>) => {
+          const d = dias[ps[0]?.dataIndex ?? 0]
+          if (!d) return ''
+          return `<strong>${fmtData(d.data)}</strong><br/>HH trabalhado: ${fmtHoras(d.hhTrabalhado)} HH<br/>HH de impacto: ${fmtHoras(d.hhImpacto)} HH`
+        },
+      },
+      legend: { top: 0, right: 0, data: ['HH trabalhado', 'HH de impacto'] },
+      grid: { left: 8, right: 8, top: vertical ? 72 : 44, bottom: 26, containLabel: true },
+      xAxis: [
+        { type: 'category' as const, data: dias.map((d) => ddmm(d.data)), axisTick: { show: false }, splitLine: gradeSuave() },
+        {
+          // Eixo semanal (semana ISO, começa na segunda): rótulo só no 1º dia de cada semana com RDC.
+          type: 'category' as const,
+          position: 'bottom' as const,
+          offset: 20,
+          data: dias.map((d) => `Sem ${semanaIso(d.data)}`),
+          axisLine: { show: false },
+          axisTick: { show: false },
+          splitLine: { show: false },
+          axisLabel: {
+            interval: (i: number) => i === 0 || semanaIso(dias[i].data) !== semanaIso(dias[i - 1].data),
+            fontSize: 10,
+            fontWeight: 600,
+            color: cssVar('--exec-outline'),
+          },
+        },
+      ],
+      yAxis: { type: 'value' as const, min: 0, ...EIXO_VALOR_SEM_ROTULO },
       series: [
         { name: 'HH trabalhado', type: 'bar' as const, stack: 'hh', barMaxWidth: 28, data: dias.map((d) => d.hhTrabalhado), itemStyle: { color: cssVar('--exec-ink-2') } },
         {
@@ -150,10 +179,33 @@ export default function Executivo({ irPara }: TelaProps) {
           data: dias.map((d) => d.hhImpacto),
           itemStyle: { color: cssVar('--exec-impact'), borderRadius: [2, 2, 0, 0] },
         },
+        {
+          // Série vazia no topo da pilha só para o rótulo: HH trabalhado e, se houver, "+impacto" em vermelho.
+          name: 'Rótulo',
+          type: 'bar' as const,
+          stack: 'hh',
+          barMaxWidth: 28,
+          silent: true,
+          data: dias.map(() => 0),
+          labelLayout: SEM_SOBREPOSICAO,
+          label: {
+            show: true,
+            position: 'top' as const,
+            distance: 4,
+            ...(vertical ? { rotate: 90, align: 'left' as const, verticalAlign: 'middle' as const } : {}),
+            formatter: (p: { dataIndex: number }) => {
+              const d = dias[p.dataIndex]
+              return d.hhImpacto > 0 ? `{t|${fmtHoras(d.hhTrabalhado)}} {i|+${fmtHoras(d.hhImpacto)}}` : `{t|${fmtHoras(d.hhTrabalhado)}}`
+            },
+            rich: {
+              t: { fontSize: 10, fontWeight: 700, color: cssVar('--exec-ink') },
+              i: { fontSize: 10, fontWeight: 700, color: cssVar('--exec-impact') },
+            },
+          },
+        },
       ],
-    }),
-    [dias],
-  )
+    }
+  }, [dias])
 
   const opcaoPareto = useMemo(
     () => ({
@@ -167,11 +219,17 @@ export default function Executivo({ irPara }: TelaProps) {
         },
       },
       legend: { top: 0, right: 0 },
-      grid: { left: 8, right: 8, top: 40, bottom: 8, containLabel: true },
-      xAxis: { type: 'category' as const, data: pareto.map((p) => p.descricao), axisTick: { show: false }, axisLabel: { interval: 0, width: 84, overflow: 'truncate' as const, fontSize: 10 } },
+      grid: { left: 8, right: 8, top: 44, bottom: 8, containLabel: true },
+      xAxis: {
+        type: 'category' as const,
+        data: pareto.map((p) => p.descricao),
+        axisTick: { show: false },
+        axisLabel: { interval: 0, width: 84, overflow: 'truncate' as const, fontSize: 10 },
+        splitLine: gradeSuave(),
+      },
       yAxis: [
-        { type: 'value' as const, min: 0, name: 'h', nameGap: 12 },
-        { type: 'value' as const, min: 0, max: 100, interval: 20, splitLine: { show: false }, axisLabel: { formatter: (v: number) => `${fmtNumero(v)}%` } },
+        { type: 'value' as const, min: 0, ...EIXO_VALOR_SEM_ROTULO },
+        { type: 'value' as const, min: 0, max: 100, ...EIXO_VALOR_SEM_ROTULO },
       ],
       series: [
         {
@@ -180,7 +238,8 @@ export default function Executivo({ irPara }: TelaProps) {
           barMaxWidth: 40,
           data: pareto.map((p) => p.horas),
           itemStyle: { color: cssVar('--exec-impact'), borderRadius: [3, 3, 0, 0] },
-          label: { show: pareto.length <= 6, position: 'top' as const, fontSize: 10, fontWeight: 700, color: cssVar('--exec-impact'), formatter: (p: { value: number }) => `${fmtHoras(p.value)}h` },
+          labelLayout: SEM_SOBREPOSICAO,
+          label: { show: true, position: 'top' as const, fontSize: 10, fontWeight: 700, color: cssVar('--exec-impact'), formatter: (p: { value: number }) => `${fmtHoras(p.value)} h` },
         },
         {
           name: '% acumulado',

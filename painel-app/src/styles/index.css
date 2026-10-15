@@ -510,11 +510,42 @@ body {
   text-align: center;
   vertical-align: middle;
 }
-.cal-dia--hoje {
-  box-shadow: inset 0 -2px 0 var(--info);
+/* Hoje: linha vertical azul, fina e contínua, atravessando as linhas dos responsáveis;
+   o rótulo "Hoje" fica na vertical, no cabeçalho, logo acima da linha. O símbolo da
+   célula (✓, número, ✕) fica por cima da linha. */
+.cal-tabela tbody .cal-dia--hoje::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1.5px;
+  transform: translateX(-50%);
+  background: var(--info);
+  pointer-events: none;
+}
+.cal-tabela tbody .cal-dia > span[aria-hidden='true'] {
+  position: relative;
+  z-index: 1;
+}
+.cal-hoje-rotulo {
+  display: block;
+  margin: 2px auto 0;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--info);
 }
 .cal-mes {
   border-left: 1px solid var(--blue-soft);
+}
+/* Início de semana (segunda-feira): divisória mais leve que a de mês. */
+.cal-semana {
+  border-left: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
 }
 
 /* ---- Tela "Executivo (teste)": visual do protótipo Stitch, prefixo exec- ---- */

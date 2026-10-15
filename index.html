@@ -159,7 +159,7 @@ input.control[type=date],input.control[type=time]{-webkit-appearance:none;appear
 input.control::-webkit-date-and-time-value{text-align:left;margin:0}
 input.control::-webkit-calendar-picker-indicator{margin-left:2px}
 @media (max-width:360px){.row,.periodo,.toolbar{grid-template-columns:1fr;gap:0}}
-/* PTS e bloqueio */
+/* Horas improdutivas (PTS e bloqueio) */
 .chips.yn{grid-template-columns:repeat(2,1fr)}
 .sub-block{border-top:1px dashed var(--line);margin-top:4px;padding-top:12px}
 /* GPS */
@@ -225,6 +225,27 @@ input.control::-webkit-calendar-picker-indicator{margin-left:2px}
 .dia.ok{background:var(--ok-bg);color:var(--ok-ink)}
 .dia.fds{background:#F2F4F7;color:#9AA7B5}
 .legenda{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+/* Matriz de emissão (Responsáveis): responsável × dia, célula = status do RDC */
+.mtz-card{padding:0;overflow:hidden}
+.mtz-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.mtz{border-collapse:separate;border-spacing:0;font-size:12px}
+.mtz th,.mtz td{padding:0;text-align:center;border-bottom:1px solid var(--divider)}
+.mtz thead th{font-weight:700;color:var(--text);padding:6px 0 4px;background:#fff;min-width:28px}
+.mtz thead th small{display:block;font-size:10px;font-weight:600;color:var(--muted)}
+.mtz thead th.dom,.mtz thead th.dom small{color:#9AA7B5}
+.mtz thead th.hoje{color:var(--blue)}
+.mtz .mtz-resp{position:sticky;left:0;z-index:1;background:#fff;text-align:left;padding:4px 8px;min-width:96px;max-width:96px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700;color:var(--text);border-right:1px solid var(--line)}
+.mtz td{height:30px}
+.mtz td span{display:flex;align-items:center;justify-content:center;width:24px;height:24px;margin:0 auto;border-radius:5px;font-weight:800;font-size:12px}
+.mtz-card .st-ok{background:var(--ok-bg);color:var(--ok-ink)}
+.mtz-card .st-wait{background:var(--warn-bg);color:var(--warn-ink)}
+.mtz-card .st-rev{background:#EAF2FC;color:#1F5FAF}
+.mtz-card .st-can{background:var(--surface-2);color:var(--muted)}
+.mtz-card .st-no{background:var(--danger-bg);color:var(--danger)}
+.mtz-card .st-fds{background:#F2F4F7;color:#9AA7B5}
+.mtz-card .st-fut{color:#9AA7B5;font-weight:600}
+.legenda.mtz-leg{padding:8px 12px 12px;margin:0}
+.legenda.mtz-leg i{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;font-style:normal;font-size:10px;font-weight:800}
 .legenda i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:4px}
 /* carrossel de fotos */
 .thumb img,.rv-thumbs img{cursor:zoom-in}
@@ -413,7 +434,7 @@ label.lbl{font-size:14px;font-weight:500;color:var(--text)}
       <div class="passos-barra"><span id="passosBarra"></span></div>
       <ol>
         <li><button type="button" data-ir="1"><i>1</i>Identificação</button></li>
-        <li><button type="button" data-ir="2"><i>2</i>PTS e bloqueio</button></li>
+        <li><button type="button" data-ir="2"><i>2</i>Horas improdutivas</button></li>
         <li><button type="button" data-ir="3"><i>3</i>Atividades</button></li>
         <li><button type="button" data-ir="4"><i>4</i>Impactos</button></li>
       </ol>
@@ -433,7 +454,7 @@ label.lbl{font-size:14px;font-weight:500;color:var(--text)}
     </div>
 
     <div class="passo" data-passo="2">
-    <div class="section-title">2. PTS e bloqueio</div>
+    <div class="section-title">2. Horas improdutivas</div>
     <div class="card" id="cardPts">
       <div class="field"><label class="lbl">Teve PTS? *</label>
         <div class="chips yn" data-yn="pts"><button type="button" class="chip" data-val="S">Sim</button><button type="button" class="chip" data-val="N">Não</button></div>
@@ -480,7 +501,7 @@ label.lbl{font-size:14px;font-weight:500;color:var(--text)}
   <section class="screen" id="scrRevisao">
     <div class="section-title">Identificação</div>
     <div class="card" id="rvHeader"></div>
-    <div class="section-title">PTS e bloqueio</div>
+    <div class="section-title">Horas improdutivas</div>
     <div class="card" id="rvPts"></div>
     <div class="section-title">Atividades</div>
     <div class="card" id="rvActivities"></div>
@@ -523,6 +544,7 @@ label.lbl{font-size:14px;font-weight:500;color:var(--text)}
       </div>
     </div>
     <div class="kpis" id="rKpis"></div>
+    <div id="rMatriz"></div>
     <div class="section-title">Por responsável</div>
     <div id="rLista"><div class="card note">Carregando…</div></div>
     <p class="note">HH trabalhado = efetivo × duração das atividades. HH de impacto = duração do impacto × maior efetivo do RDC (a equipe parada). RDC cancelados e versões substituídas não entram. Toque num responsável para ver os RDC dele.</p>
@@ -533,7 +555,7 @@ label.lbl{font-size:14px;font-weight:500;color:var(--text)}
     <div class="card status-card" id="dtStatus"></div>
     <div class="section-title">Identificação</div>
     <div class="card" id="dtHeader"></div>
-    <div class="section-title">PTS e bloqueio</div>
+    <div class="section-title">Horas improdutivas</div>
     <div class="card" id="dtPts"></div>
     <div class="section-title">Atividades</div>
     <div class="card" id="dtActivities"></div>
@@ -859,11 +881,11 @@ const DISCIPLINAS = {
     'MONTAGEM DE ANDAIME','DESMONTAGEM DE ANDAIME','MONTAGEM DE TUBO-VIDA','DESMONTAGEM DE TUBO-VIDA','OUTROS'] }
 };
 const TIPOS_ANDAIME = ['APOIADO','SUSPENSO','BALANÇO'];
-// Tipos de impacto (lista definida pelo Planejamento em 2026-10-14). O tipo é gravado em
+// Tipos de impacto (lista definida pelo Planejamento em 2026-10-14; ALMOÇO saiu: não é impacto). O tipo é gravado em
 // TipoImpacto; só OUTROS pede um texto curto e grava "OUTROS — texto". Cada impacto tem
 // início e fim. RDC antigo reabre com o tipo equivalente da lista nova quando ele existe;
 // os demais (texto livre ou tipo da lista antiga) reabrem como OUTROS com o texto original.
-const TIPOS_IMPACTO = ['CHUVA','ALMOÇO','LIBERAÇÃO DE PTS','EQUIPAMENTO COM DEFEITO','DOCUMENTAÇÃO',
+const TIPOS_IMPACTO = ['CHUVA','LIBERAÇÃO DE PTS','EQUIPAMENTO COM DEFEITO','DOCUMENTAÇÃO',
   'FALTA DE MATERIAL','MOBILIZAÇÃO','IMPACTO VALE','IMPACTO OUTRA CONTRATADA','OUTROS'];
 const IMPACTO_OUTROS = 'OUTROS';
 const OUTROS_MAX = 120;
@@ -1415,7 +1437,7 @@ function fillHeader() {
 function renderContrato() {
   $('fContrato').innerHTML = CONTRATOS.map(([n, num]) => `<button type="button" class="chip${draft.contrato === num ? ' sel' : ''}" data-contrato="${num}" aria-pressed="${draft.contrato === num}">${esc(n)}<small>${num}</small></button>`).join('');
 }
-// PTS e bloqueio: perguntas Sim/Não; os horários só aparecem com "Sim"
+// Horas improdutivas (PTS e bloqueio): perguntas Sim/Não; os horários só aparecem com "Sim"
 function esperaPts(sol, abe) {
   const a = toMin(sol), b = toMin(abe);
   if (a == null || b == null) return null;
@@ -2277,6 +2299,61 @@ function periodoAtalho(p) {
   $('rIni').value = isoDia(ini); $('rFim').value = isoDia(fim);
   carregarResp(p);
 }
+// RDC de um status dentro do período. rdc_listar não filtra por data: pagina pelo recebimento,
+// do mais novo ao mais antigo, até passar do início do período (no máximo 10 páginas de 200).
+async function rdcsPorStatus(status, ini, fim) {
+  const out = [];
+  for (let pg = 0; pg < 10; pg++) {
+    const page = await sbRpc('rdc_listar', { p_busca: null, p_status: status, p_limite: 200, p_offset: pg * 200 });
+    for (const r of page) if (r.data_rdc >= ini && r.data_rdc <= fim) out.push(r);
+    if (page.length < 200 || String(page[page.length - 1].recebido_em).slice(0, 10) < ini) break;
+  }
+  return out;
+}
+
+// Matriz responsável × dia com o status da emissão. Com mais de um RDC no dia, mostra a
+// quantidade na cor do status mais pendente (revisão > aguardando > validado).
+const SEMANA_INI = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+function matrizEmissao(pessoas, dias, rows, status) {
+  if (dias.length === 1) return '';
+  if (dias.length > 62) return '<div class="section-title">Emissão de RDC por dia</div><div class="card note">A matriz mostra até 62 dias. Escolha um período menor.</div>';
+  const hoje = isoDia(new Date());
+  const cel = new Map();
+  const revisao = new Set((status ? status[0] : []).map(r => r.codigo));
+  for (const r of rows) {
+    const codigos = Array.isArray(r.codigos) ? r.codigos : [];
+    cel.set(`${r.responsavel}|${r.data_rdc}`, { q: r.qtd_rdc, wait: r.aguardando || 0, rev: codigos.filter(c => revisao.has(c)).length, can: 0 });
+  }
+  for (const r of status ? status[1] : []) {
+    const k = `${r.responsavel}|${r.data_rdc}`;
+    if (!cel.has(k)) cel.set(k, { q: 0, wait: 0, rev: 0, can: 0 });
+    cel.get(k).can++;
+  }
+  const celula = (c, d) => {
+    if (c && c.q > 0) {
+      const [cls, sim, txt] = c.rev ? ['st-rev', '↺', 'Em revisão'] : c.wait ? ['st-wait', '●', 'Aguardando validação'] : ['st-ok', '✓', status ? 'Validado' : 'Emitido'];
+      return [cls, c.q > 1 ? c.q : sim, `${c.q} RDC · ${txt}`];
+    }
+    if (c && c.can) return ['st-can', '⊘', 'RDC cancelado'];
+    if (d.iso > hoje) return ['st-fut', '–', 'Data futura'];
+    if (d.dom) return ['st-fds', '', 'Domingo'];
+    return ['st-no', '✕', 'Sem RDC'];
+  };
+  const cab = dias.map(d => {
+    const dow = new Date(d.iso + 'T12:00:00').getDay();
+    return `<th class="${d.dom ? 'dom' : ''} ${d.iso === hoje ? 'hoje' : ''}" title="${fmtDate(d.iso)}${d.iso === hoje ? ' (hoje)' : ''}">${d.n}<small>${SEMANA_INI[dow]}</small></th>`;
+  }).join('');
+  const corpo = pessoas.map(p => `<tr><th class="mtz-resp" scope="row" title="${esc(p.nome)}">${esc(p.nome.split(' ').slice(0, 2).join(' '))}</th>${dias.map(d => {
+    const [cls, sim, txt] = celula(cel.get(`${p.nome}|${d.iso}`), d);
+    return `<td title="${fmtDate(d.iso)} · ${esc(txt)}"><span class="${cls}" aria-label="${fmtDate(d.iso)}: ${esc(txt)}">${sim}</span></td>`;
+  }).join('')}</tr>`).join('');
+  const leg = [['st-ok', '✓', 'Validado'], ['st-wait', '●', 'Aguardando validação'], ['st-rev', '↺', 'Em revisão'], ['st-can', '⊘', 'Cancelado'], ['st-no', '✕', 'Sem RDC'], ['st-fds', '', 'Domingo']]
+    .map(([c, s, t]) => `<span><i class="${c}" style="border-radius:3px">${s}</i>${t}</span>`).join('');
+  return `<div class="section-title">Emissão de RDC por dia</div>
+    <div class="card mtz-card"><div class="mtz-wrap"><table class="mtz"><thead><tr><th class="mtz-resp">Responsável</th>${cab}</tr></thead><tbody>${corpo}</tbody></table></div>
+    <div class="legenda mtz-leg">${leg}</div>${status ? '' : '<p class="note" style="padding:0 12px 12px">Não foi possível consultar revisões e cancelamentos; “✓” indica só RDC emitido.</p>'}</div>`;
+}
+
 function openResp() { go('scrResp'); if (!$('rIni').value) periodoAtalho('hoje'); else carregarResp(); }
 let rSeq = 0;
 async function carregarResp(atalho) {
@@ -2284,9 +2361,12 @@ async function carregarResp(atalho) {
   const ini = $('rIni').value, fim = $('rFim').value, lista = $('rLista');
   const dias = [];
   for (let d = new Date(ini + 'T12:00:00'); ini && fim && isoDia(d) <= fim && dias.length <= 366; d.setDate(d.getDate() + 1)) dias.push({ iso: isoDia(d), dom: d.getDay() === 0, n: d.getDate() });
+  $('rMatriz').innerHTML = '';
   if (!ini || !fim || !dias.length || dias.length > 366) { $('rKpis').innerHTML = ''; lista.innerHTML = '<div class="card note">Escolha um período de até 1 ano.</div>'; return; }
   lista.innerHTML = '<div class="card note">Carregando…</div>';
   const seq = ++rSeq;
+  // revisões e cancelamentos do período, em paralelo (só para a matriz; falha não impede o resto)
+  const pStatus = Promise.all([rdcsPorStatus('Em revisão', ini, fim), rdcsPorStatus('Cancelado', ini, fim)]).catch(() => null);
   let rows;
   try { rows = await sbRpc('rdc_painel_responsaveis', { p_ini: ini, p_fim: fim }); }
   catch (e) {
@@ -2295,6 +2375,7 @@ async function carregarResp(atalho) {
     lista.innerHTML = `<div class="card note">${esc(!navigator.onLine ? 'Sem conexão — o painel precisa de internet.' : semV8(e) || 'Não foi possível consultar: ' + e.message)}</div>`;
     return;
   }
+  const status = await pStatus;
   if (seq !== rSeq) return;
 
   // por responsável: líderes cadastrados + quem mais aparecer nos RDC
@@ -2318,12 +2399,12 @@ async function carregarResp(atalho) {
   lista.innerHTML = pessoas.map(p => {
     const pill = umDia ? (p.qtd ? '<span class="pill ok">Emitiu</span>' : '<span class="pill rev">Não emitiu</span>')
       : `<span class="pill ${!p.faltas ? 'ok' : p.qtd ? 'wait' : 'rev'}">${diasUteis.length - p.faltas} de ${diasUteis.length} dias</span>`;
-    const strip = !umDia && dias.length <= 31 ? `<div class="dias">${dias.map(d => `<span class="dia ${p.dias.has(d.iso) ? 'ok' : d.dom ? 'fds' : ''}" title="${fmtDate(d.iso)}">${d.n}</span>`).join('')}</div>` : '';
     return `<div class="card resp-card" data-resp="${esc(p.nome)}" role="button" tabindex="0">
       <div class="resp-head">${avatarLider(p.nome)}<div><b>${esc(p.nome)}</b><span>${esc(funcaoLider(p.nome) || '—')}</span></div>${pill}</div>
       <div class="resp-nums"><div><b>${p.qtd}</b>RDC</div><div><b>${fmtH(p.hh) || '0 h'}</b>HH trabalhado</div><div><b>${fmtH(p.hhimp) || '0 h'}</b>HH impacto${p.himp ? ` (${fmtH(p.himp)} parado)` : ''}</div></div>
-      ${strip}</div>`;
-  }).join('') + (!umDia && dias.length <= 31 ? '<div class="legenda"><span><i style="background:var(--ok-bg)"></i>com RDC</span><span><i style="background:var(--danger-bg)"></i>sem RDC</span><span><i style="background:#F2F4F7"></i>domingo</span></div>' : '');
+      </div>`;
+  }).join('');
+  $('rMatriz').innerHTML = matrizEmissao(pessoas, dias, rows, status);
 }
 
 /* ===================== SINCRONIZAÇÃO SHAREPOINT (administrador) ===================== */

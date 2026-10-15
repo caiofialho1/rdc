@@ -7,6 +7,7 @@ import {
   filtrarProducao,
   omChave,
   produtividade,
+  produtividadeDiaria,
   rankingProdutividade,
   tagChave,
   totalizar,
@@ -172,5 +173,42 @@ describe('filtrarProducao', () => {
     expect(filtrarProducao(linhas, { area: '840K' })).toHaveLength(1)
     expect(filtrarProducao(linhas, { disciplina: 'TEL/COB' })).toHaveLength(1)
     expect(filtrarProducao(linhas, { busca: 'rotina' })).toHaveLength(1)
+  })
+})
+
+describe('produtividadeDiaria', () => {
+  const linhas = enriquecer(
+    [
+      prod({ data: '2026-10-01', responsavel: 'Ana', lav: 40, homem_hora: 8 }),
+      prod({ data: '2026-10-01', responsavel: 'Bia', st3: 10, homem_hora: 10 }),
+      prod({ data: '2026-10-02', responsavel: 'Ana', lav: 30, st3: 6, homem_hora: 6 }),
+      prod({ data: '2026-10-03', responsavel: 'Sem RDC', situacao: 'Produção sem RDC', lav: 99, homem_hora: null }),
+      prod({ data: '2026-10-02', disciplina: 'REC', unidade: 'kg', fab: 100, homem_hora: 4 }),
+    ],
+    [],
+    [],
+  )
+
+  it('total por dia só com produção e HH; dia sem HH fica de fora', () => {
+    const r = produtividadeDiaria(linhas, null, 'm2')
+    expect(r.dias).toEqual(['2026-10-01', '2026-10-02'])
+    expect(r.total.map((p) => p.indice)).toEqual([50 / 18, 36 / 6])
+    expect(r.series).toBeNull()
+  })
+
+  it('por responsável: série ausente no dia é nula, não zero; ordem pelo HH', () => {
+    const r = produtividadeDiaria(linhas, 'responsavel', 'm2')
+    expect(r.series!.map((s) => s.chave)).toEqual(['Ana', 'Bia'])
+    expect(r.series![1].pontos.map((p) => p.indice)).toEqual([1, null])
+  })
+
+  it('por etapa, o HH do dia se repete em cada etapa', () => {
+    const r = produtividadeDiaria(linhas, 'etapa', 'm2')
+    const st3 = r.series!.find((s) => s.chave === 'ST3')!
+    expect(st3.pontos[1]).toEqual({ indice: 1, producao: 6, hh: 6 })
+  })
+
+  it('kg não se mistura com m²', () => {
+    expect(produtividadeDiaria(linhas, null, 'kg').total.map((p) => p.indice)).toEqual([25])
   })
 })
