@@ -14,6 +14,7 @@ import type { RdcRow, StatusRdc } from '../api/schemas'
 import { useAuth } from '../auth/AuthProvider'
 import Calendario from '../components/Calendario'
 import DetalheRdc from '../components/DetalheRdc'
+import HistogramaFuncoes from '../components/HistogramaFuncoes'
 import Banner from '../components/ui/Banner'
 import { useDialogo } from '../components/ui/useDialogo'
 import EChart from '../components/charts/EChart'
@@ -70,6 +71,11 @@ const ROTULO_STATUS: Record<RdcRow['status'], string> = {
   Cancelado: 'Cancelado',
 }
 const POR_PAGINA = [10, 25, 50, 100]
+type Visao = 'tabela' | 'histograma'
+const VISOES: Array<[Visao, string]> = [
+  ['tabela', 'Tabela de RDC'],
+  ['histograma', 'Histograma por função'],
+]
 type Coluna = 'codigo' | 'data_rdc' | 'contrato' | 'ativo' | 'responsavel' | 'status'
 const ORDEM_STATUS: StatusRdc[] = ['Enviado', 'Em revisão', 'Validado', 'Rascunho', 'Substituído', 'Cancelado']
 const ddmm = (iso: string) => fmtData(iso).slice(0, 5)
@@ -123,6 +129,7 @@ export default function Executivo() {
   const editar = useEditar(admin)
   const [ordem, setOrdem] = useState<{ coluna: Coluna; dir: 1 | -1 }>({ coluna: 'data_rdc', dir: -1 })
   const [aberto, setAberto] = useState<string | null>(null)
+  const [visao, setVisao] = useState<Visao>('tabela')
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set())
   const [contratoLote, setContratoLote] = useState('')
   // Contagem por status com todos os outros filtros aplicados, menos o próprio status.
@@ -683,185 +690,210 @@ export default function Executivo() {
       <Secao
         id="exec-detalhe"
         titulo="Detalhamento dos diários de campo (RDC)"
-        sub="Clique numa linha (ou Enter) para abrir o RDC: atividades, equipe, fotos, edição e validação. ↑ ↓ percorrem as linhas."
+        sub={
+          visao === 'tabela'
+            ? 'Clique numa linha (ou Enter) para abrir o RDC: atividades, equipe, fotos, edição e validação. ↑ ↓ percorrem as linhas.'
+            : `Mão de obra por função e por dia · ${periodo}. Contrato, área, responsável e disciplina seguem os filtros do topo.`
+        }
+        extra={
+          <div className="flex overflow-hidden rounded-control border border-[var(--exec-border)] text-xs font-semibold" role="group" aria-label="Visualizar o detalhamento como">
+            {VISOES.map(([v, rotulo]) => (
+              <button
+                key={v}
+                type="button"
+                aria-pressed={visao === v}
+                onClick={() => setVisao(v)}
+                className={`min-h-8 px-3 ${visao === v ? 'bg-[var(--exec-ink)] text-white' : 'bg-white text-[var(--exec-text-2)] hover:bg-[var(--exec-surface-low)]'}`}
+              >
+                {rotulo}
+              </button>
+            ))}
+          </div>
+        }
       >
-        <div className="exec-card exec-card--tabela">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--exec-border)] px-4 py-3">
-            {statusPresentes.length > 1 ? (
-              <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrar por status">
-                {[undefined, ...statusPresentes].map((st) => {
-                  const ativoFiltro = secundarios.status === st
-                  const n = st ? (contagemStatus.get(st) ?? 0) : totalSemStatus
-                  return (
-                    <button
-                      key={st ?? 'todos'}
-                      type="button"
-                      aria-pressed={ativoFiltro}
-                      onClick={() => {
-                        definirSecundario('status', st)
-                        setPagina(0)
-                      }}
-                      className={`flex min-h-8 items-center gap-1.5 rounded-control border px-2.5 text-xs font-semibold ${
-                        ativoFiltro ? 'border-[var(--exec-ink)] bg-[var(--exec-ink)] text-white' : 'border-[var(--exec-border)] bg-white text-[var(--exec-text-2)] hover:text-[var(--exec-ink)]'
-                      }`}
-                    >
-                      {st ? ROTULO_STATUS[st] : 'Todos'}
-                      <span className={`tabular ${ativoFiltro ? 'text-white' : 'text-[var(--exec-ink)]'}`}>{fmtInteiro(n)}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            ) : (
-              <span />
-            )}
-            {selecionados.size > 0 && (
-              <div className="flex flex-wrap items-center gap-2 text-sm" role="group" aria-label="Ação em lote">
-                <span className="text-[var(--exec-text-2)]">{fmtInteiro(selecionados.size)} selecionado(s)</span>
-                <input
-                  aria-label="Número do contrato para os selecionados"
-                  placeholder="Número do contrato"
-                  value={contratoLote}
-                  onChange={(e) => setContratoLote(e.target.value)}
-                  className="se-input w-44"
-                />
-                <button type="button" onClick={aplicarContratoLote} disabled={!contratoLote || editar.isPending} className="se-button se-button--sm">
-                  {editar.isPending ? 'Definindo…' : 'Definir contrato'}
-                </button>
-                <button type="button" onClick={() => setSelecionados(new Set())} className="se-link text-xs">
-                  Limpar seleção
-                </button>
-              </div>
-            )}
+        {visao === 'histograma' ? (
+          <div className="exec-card exec-card--tabela">
+            <HistogramaFuncoes recorte={recorte} ini={ini} fim={fim} hoje={hoje} />
           </div>
-          {editar.isError && (
-            <div className="px-4 pt-3">
-              <Banner tipo="erro">Não foi possível definir o contrato dos selecionados. Confira o número e tente de novo.</Banner>
+        ) : (
+          <div className="exec-card exec-card--tabela">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--exec-border)] px-4 py-3">
+              {statusPresentes.length > 1 ? (
+                <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrar por status">
+                  {[undefined, ...statusPresentes].map((st) => {
+                    const ativoFiltro = secundarios.status === st
+                    const n = st ? (contagemStatus.get(st) ?? 0) : totalSemStatus
+                    return (
+                      <button
+                        key={st ?? 'todos'}
+                        type="button"
+                        aria-pressed={ativoFiltro}
+                        onClick={() => {
+                          definirSecundario('status', st)
+                          setPagina(0)
+                        }}
+                        className={`flex min-h-8 items-center gap-1.5 rounded-control border px-2.5 text-xs font-semibold ${
+                          ativoFiltro ? 'border-[var(--exec-ink)] bg-[var(--exec-ink)] text-white' : 'border-[var(--exec-border)] bg-white text-[var(--exec-text-2)] hover:text-[var(--exec-ink)]'
+                        }`}
+                      >
+                        {st ? ROTULO_STATUS[st] : 'Todos'}
+                        <span className={`tabular ${ativoFiltro ? 'text-white' : 'text-[var(--exec-ink)]'}`}>{fmtInteiro(n)}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : (
+                <span />
+              )}
+              {selecionados.size > 0 && (
+                <div className="flex flex-wrap items-center gap-2 text-sm" role="group" aria-label="Ação em lote">
+                  <span className="text-[var(--exec-text-2)]">{fmtInteiro(selecionados.size)} selecionado(s)</span>
+                  <input
+                    aria-label="Número do contrato para os selecionados"
+                    placeholder="Número do contrato"
+                    value={contratoLote}
+                    onChange={(e) => setContratoLote(e.target.value)}
+                    className="se-input w-44"
+                  />
+                  <button type="button" onClick={aplicarContratoLote} disabled={!contratoLote || editar.isPending} className="se-button se-button--sm">
+                    {editar.isPending ? 'Definindo…' : 'Definir contrato'}
+                  </button>
+                  <button type="button" onClick={() => setSelecionados(new Set())} className="se-link text-xs">
+                    Limpar seleção
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-          <div className="max-h-[36rem] overflow-auto" role="region" aria-label="Tabela de RDC (rolável)" tabIndex={0}>
-            <table className="exec-tabela min-w-[1100px]">
-              <caption className="sr-only">RDC do recorte</caption>
-              <thead>
-                <tr>
-                  <th scope="col" className="fixa w-10">
-                    <span className="sr-only">Selecionar</span>
-                  </th>
-                  {cabOrdenavel('codigo', 'Código RDC')}
-                  {cabOrdenavel('data_rdc', 'Data')}
-                  {cabOrdenavel('contrato', 'Contrato')}
-                  {cabOrdenavel('ativo', 'Ativo / área')}
-                  {cabOrdenavel('responsavel', 'Responsável')}
-                  <th scope="col">Disciplina</th>
-                  <th scope="col" className="num">Fotos (GPS)</th>
-                  <th scope="col">PTS / bloqueio</th>
-                  {cabOrdenavel('status', 'Status')}
-                </tr>
-              </thead>
-              <tbody>
-                {visiveis.map((r) => {
-                  const f = fotosRdc.get(r.codigo)
-                  return (
-                    <tr
-                      key={r.codigo}
-                      data-codigo={r.codigo}
-                      tabIndex={0}
-                      aria-selected={aberto === r.codigo}
-                      onClick={() => setAberto(r.codigo)}
-                      onKeyDown={(e) => navegar(e, r.codigo)}
-                      className="cursor-pointer aria-selected:bg-[var(--exec-info-bg)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--exec-info)]"
-                    >
-                      <td className="fixa" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          aria-label={`Selecionar ${r.codigo}`}
-                          checked={selecionados.has(r.codigo)}
-                          onChange={() => alternarSelecao(r.codigo)}
-                        />
-                      </td>
-                      <th scope="row" className="font-bold whitespace-nowrap tabular">
-                        {r.codigo}
-                      </th>
-                      <td className="font-bold whitespace-nowrap tabular">{fmtData(r.data_rdc)}</td>
-                      <td className="whitespace-nowrap">
-                        <span className="tabular font-bold">{r.contrato ?? '—'}</span>
-                        {r.contrato_nome && <span className="block text-[10px] text-[var(--exec-outline)]">{r.contrato_nome}</span>}
-                      </td>
-                      <td>
-                        <span className="font-medium">{r.ativo}</span>
-                        <span className="block text-[10px] text-[var(--exec-outline)]">{[r.ativo_descricao, r.area].filter(Boolean).join(' · ') || '—'}</span>
-                      </td>
-                      <td>
-                        <Responsavel nome={r.responsavel} />
-                        <span className="mt-0.5 block text-[10px] text-[var(--exec-outline)]">Efetivo máx.: {fmtInteiro(r.efetivo_max)}</span>
-                      </td>
-                      <td>
-                        <span className="flex flex-wrap gap-1">
-                          {(discRdc.get(r.codigo) ?? []).map((d) => (
-                            <span key={d} className="exec-chip">
-                              {d}
-                            </span>
-                          ))}
-                          {!discRdc.has(r.codigo) && '—'}
-                        </span>
-                      </td>
-                      <td className="num">{f ? `${fmtInteiro(f.total)} (${fmtInteiro(f.comGps)} GPS)` : '0'}</td>
-                      <td>
-                        <PtsBloqueio rdc={r} />
-                      </td>
-                      <td>
-                        <span className={`exec-chip ${CHIP_STATUS[r.status]}`}>{ROTULO_STATUS[r.status]}</span>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-            {linhas.length === 0 && <p className="p-6 text-center text-sm text-[var(--exec-text-2)]">Nenhum RDC no recorte.</p>}
-          </div>
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--exec-border)] bg-[var(--exec-surface-low)] px-4 py-3 text-[12px]">
-            <span className="text-[var(--exec-text-2)]">
-              Exibindo{' '}
-              <strong className="tabular text-[var(--exec-ink)]">
-                {linhas.length ? `${fmtInteiro(paginaAtual * porPagina + 1)} - ${fmtInteiro(paginaAtual * porPagina + visiveis.length)}` : '0'}
-              </strong>{' '}
-              de <strong className="tabular text-[var(--exec-ink)]">{fmtInteiro(linhas.length)}</strong> RDC
-            </span>
-            <div className="flex flex-wrap items-center gap-2">
-              <label className="flex items-center gap-2 text-xs text-[var(--exec-text-2)]">
-                Linhas por página:
-                <select
-                  className="se-input w-auto py-1"
-                  value={porPagina}
-                  onChange={(e) => {
-                    setPorPagina(Number(e.target.value))
-                    setPagina(0)
-                  }}
-                >
-                  {POR_PAGINA.map((n) => (
-                    <option key={n}>{n}</option>
-                  ))}
-                </select>
-              </label>
-              <nav aria-label="Paginação da tabela" className="flex items-center gap-1">
-                <button type="button" className="se-button se-button--outline se-button--sm" disabled={paginaAtual === 0} onClick={() => setPagina(paginaAtual - 1)} aria-label="Página anterior">
-                  ‹
-                </button>
-                <span className="px-2 text-xs tabular" aria-current="page">
-                  {fmtInteiro(paginaAtual + 1)} / {fmtInteiro(totalPaginas)}
-                </span>
-                <button
-                  type="button"
-                  className="se-button se-button--outline se-button--sm"
-                  disabled={paginaAtual >= totalPaginas - 1}
-                  onClick={() => setPagina(paginaAtual + 1)}
-                  aria-label="Próxima página"
-                >
-                  ›
-                </button>
-              </nav>
+            {editar.isError && (
+              <div className="px-4 pt-3">
+                <Banner tipo="erro">Não foi possível definir o contrato dos selecionados. Confira o número e tente de novo.</Banner>
+              </div>
+            )}
+            <div className="max-h-[36rem] overflow-auto" role="region" aria-label="Tabela de RDC (rolável)" tabIndex={0}>
+              <table className="exec-tabela min-w-[1100px]">
+                <caption className="sr-only">RDC do recorte</caption>
+                <thead>
+                  <tr>
+                    <th scope="col" className="fixa w-10">
+                      <span className="sr-only">Selecionar</span>
+                    </th>
+                    {cabOrdenavel('codigo', 'Código RDC')}
+                    {cabOrdenavel('data_rdc', 'Data')}
+                    {cabOrdenavel('contrato', 'Contrato')}
+                    {cabOrdenavel('ativo', 'Ativo / área')}
+                    {cabOrdenavel('responsavel', 'Responsável')}
+                    <th scope="col">Disciplina</th>
+                    <th scope="col" className="num">Fotos (GPS)</th>
+                    <th scope="col">PTS / bloqueio</th>
+                    {cabOrdenavel('status', 'Status')}
+                  </tr>
+                </thead>
+                <tbody>
+                  {visiveis.map((r) => {
+                    const f = fotosRdc.get(r.codigo)
+                    return (
+                      <tr
+                        key={r.codigo}
+                        data-codigo={r.codigo}
+                        tabIndex={0}
+                        aria-selected={aberto === r.codigo}
+                        onClick={() => setAberto(r.codigo)}
+                        onKeyDown={(e) => navegar(e, r.codigo)}
+                        className="cursor-pointer aria-selected:bg-[var(--exec-info-bg)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--exec-info)]"
+                      >
+                        <td className="fixa" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            aria-label={`Selecionar ${r.codigo}`}
+                            checked={selecionados.has(r.codigo)}
+                            onChange={() => alternarSelecao(r.codigo)}
+                          />
+                        </td>
+                        <th scope="row" className="font-bold whitespace-nowrap tabular">
+                          {r.codigo}
+                        </th>
+                        <td className="font-bold whitespace-nowrap tabular">{fmtData(r.data_rdc)}</td>
+                        <td className="whitespace-nowrap">
+                          <span className="tabular font-bold">{r.contrato ?? '—'}</span>
+                          {r.contrato_nome && <span className="block text-[10px] text-[var(--exec-outline)]">{r.contrato_nome}</span>}
+                        </td>
+                        <td>
+                          <span className="font-medium">{r.ativo}</span>
+                          <span className="block text-[10px] text-[var(--exec-outline)]">{[r.ativo_descricao, r.area].filter(Boolean).join(' · ') || '—'}</span>
+                        </td>
+                        <td>
+                          <Responsavel nome={r.responsavel} />
+                          <span className="mt-0.5 block text-[10px] text-[var(--exec-outline)]">Efetivo máx.: {fmtInteiro(r.efetivo_max)}</span>
+                        </td>
+                        <td>
+                          <span className="flex flex-wrap gap-1">
+                            {(discRdc.get(r.codigo) ?? []).map((d) => (
+                              <span key={d} className="exec-chip">
+                                {d}
+                              </span>
+                            ))}
+                            {!discRdc.has(r.codigo) && '—'}
+                          </span>
+                        </td>
+                        <td className="num">{f ? `${fmtInteiro(f.total)} (${fmtInteiro(f.comGps)} GPS)` : '0'}</td>
+                        <td>
+                          <PtsBloqueio rdc={r} />
+                        </td>
+                        <td>
+                          <span className={`exec-chip ${CHIP_STATUS[r.status]}`}>{ROTULO_STATUS[r.status]}</span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              {linhas.length === 0 && <p className="p-6 text-center text-sm text-[var(--exec-text-2)]">Nenhum RDC no recorte.</p>}
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--exec-border)] bg-[var(--exec-surface-low)] px-4 py-3 text-[12px]">
+              <span className="text-[var(--exec-text-2)]">
+                Exibindo{' '}
+                <strong className="tabular text-[var(--exec-ink)]">
+                  {linhas.length ? `${fmtInteiro(paginaAtual * porPagina + 1)} - ${fmtInteiro(paginaAtual * porPagina + visiveis.length)}` : '0'}
+                </strong>{' '}
+                de <strong className="tabular text-[var(--exec-ink)]">{fmtInteiro(linhas.length)}</strong> RDC
+              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="flex items-center gap-2 text-xs text-[var(--exec-text-2)]">
+                  Linhas por página:
+                  <select
+                    className="se-input w-auto py-1"
+                    value={porPagina}
+                    onChange={(e) => {
+                      setPorPagina(Number(e.target.value))
+                      setPagina(0)
+                    }}
+                  >
+                    {POR_PAGINA.map((n) => (
+                      <option key={n}>{n}</option>
+                    ))}
+                  </select>
+                </label>
+                <nav aria-label="Paginação da tabela" className="flex items-center gap-1">
+                  <button type="button" className="se-button se-button--outline se-button--sm" disabled={paginaAtual === 0} onClick={() => setPagina(paginaAtual - 1)} aria-label="Página anterior">
+                    ‹
+                  </button>
+                  <span className="px-2 text-xs tabular" aria-current="page">
+                    {fmtInteiro(paginaAtual + 1)} / {fmtInteiro(totalPaginas)}
+                  </span>
+                  <button
+                    type="button"
+                    className="se-button se-button--outline se-button--sm"
+                    disabled={paginaAtual >= totalPaginas - 1}
+                    onClick={() => setPagina(paginaAtual + 1)}
+                    aria-label="Próxima página"
+                  >
+                    ›
+                  </button>
+                </nav>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </Secao>
 
       {rdcAberto && recorte && (

@@ -194,3 +194,31 @@ test('Atualizar carga produção: cópia duplicada já gravada é removida sem a
   await expect(page.getByText('Removida do banco (conteúdo repetido): b-copia.xlsx|MC_PAC')).toBeVisible()
   await expect(page.getByText(/^Erro —/)).toHaveCount(0)
 })
+
+test('Detalhamento: histograma de mão de obra por função e por dia, com filtros', async ({ page }) => {
+  await logar(page)
+  const secao = page.getByRole('region', { name: 'Detalhamento dos diários de campo (RDC)' })
+  await secao.getByRole('group', { name: 'Visualizar o detalhamento como' }).getByRole('button', { name: 'Histograma por função' }).click()
+  await secao.getByRole('group', { name: 'Dias' }).getByRole('button', { name: 'Só dias com RDC' }).click()
+  // ATIVIDADE_1 (RDC_1, 01/10): 2 pintores × 240 min; RDC_2 (02/10) sem atividade com pintor
+  const matriz = secao.getByRole('region', { name: 'Tabela função × dia (rolável)' })
+  const pintor = matriz.getByRole('row', { name: /^Pintor/ })
+  await expect(pintor.getByRole('cell')).toHaveText(['2', '0', '2'])
+  await secao.getByRole('group', { name: 'Medir por' }).getByRole('button', { name: 'HH' }).click()
+  await expect(pintor.getByRole('cell')).toHaveText(['8,0', '0,0', '8,0'])
+  // desligar uma função tira a linha da tabela
+  await secao.getByRole('group', { name: 'Funções exibidas' }).getByRole('button', { name: 'Pintor' }).click()
+  await expect(matriz.getByRole('row', { name: /^Pintor/ })).toHaveCount(0)
+  await secao.getByRole('button', { name: 'Mostrar todas' }).click()
+  // função sem ninguém no período vira uma linha, não um gráfico vazio
+  await expect(secao.getByText('Sem efetivo no recorte:')).toBeVisible()
+  await secao.getByRole('group', { name: 'Medir por' }).getByRole('button', { name: 'Efetivo (pessoas)' }).click()
+  await secao.getByRole('group', { name: 'Dias' }).getByRole('button', { name: 'Todos os dias' }).click()
+  for (const vp of [{ nome: 'desktop', width: 1440, height: 900 }, { nome: 'celular', width: 390, height: 844 }]) {
+    await page.setViewportSize(vp)
+    await page.waitForTimeout(200)
+    const transborda = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)
+    expect(transborda, `${vp.nome}: página mais larga que a janela`).toBe(false)
+    await secao.screenshot({ path: `test-results/visual/${vp.nome}-histograma-funcoes.png` })
+  }
+})

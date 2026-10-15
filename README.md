@@ -124,6 +124,13 @@ O que muda no app:
 
 **HH de impacto** = duração do impacto × maior efetivo entre as atividades do RDC (a equipe que ficou parada).
 
+## Atualização v16: almoço nas horas improdutivas
+
+1. Rode `supabase/migracao_v16_almoco.sql` no SQL Editor **antes** de publicar o `index.html` novo (sem ela o RDC é gravado, mas o almoço é descartado).
+2. Se a cópia para o SharePoint estiver ligada, publique de novo a Edge Function `sync-sharepoint`: ela cria as colunas `Almoco`, `AlmocoInicio` e `AlmocoFim`.
+
+Na etapa 2 (Horas improdutivas) o líder responde **Teve almoço?** (sim/não, obrigatório); com "Sim", informa início e fim e o app mostra a duração. O almoço aparece na revisão, no detalhe do RDC e no "Editar dados" do administrador. Não é impacto: não entra no HH de impacto. No Power BI, `vw_rdc_resumo` ganha `almoco`, `almoco_inicio_local`, `almoco_fim_local` e `almoco_min`.
+
 ## Edição de RDC pelo administrador (v9)
 
 Rode `supabase/migracao_v9_admin_editar.sql`. Ela pode rodar de novo sem problema. No detalhe do RDC (app, como administrador) há dois botões:

@@ -118,6 +118,10 @@ alter table public.rdc_cabecalho add column if not exists bloqueio_hora   timest
 alter table public.rdc_cabecalho add column if not exists contrato        text;   -- número do contrato (ex.: 5900111362)
 alter table public.rdc_cabecalho add column if not exists contrato_nome   text;   -- TELHADO, ROTINA, GALPÃO
 create index if not exists ix_cab_contrato on public.rdc_cabecalho (contrato);
+-- v16: almoço nas horas improdutivas (sim/não, início e fim)
+alter table public.rdc_cabecalho add column if not exists almoco        boolean;
+alter table public.rdc_cabecalho add column if not exists almoco_inicio timestamptz;
+alter table public.rdc_cabecalho add column if not exists almoco_fim    timestamptz;
 
 alter table public.rdc_fotos add column if not exists latitude   double precision check (latitude  between -90  and 90);
 alter table public.rdc_fotos add column if not exists longitude  double precision check (longitude between -180 and 180);
@@ -186,6 +190,7 @@ declare
   v_rev    int   := 0;
   v_pts    boolean := (c->>'Pts')::boolean;
   v_bloq   boolean := (c->>'Bloqueio')::boolean;
+  v_alm    boolean := (c->>'Almoco')::boolean;
   n_atv    int   := jsonb_array_length(coalesce(payload->'atividades', '[]'::jsonb));
   n_imp    int   := jsonb_array_length(coalesce(payload->'impactos',   '[]'::jsonb));
   n_fot    int   := jsonb_array_length(coalesce(payload->'fotos',      '[]'::jsonb));
@@ -204,6 +209,9 @@ begin
   end if;
   if v_bloq and (coalesce(trim(c->>'BloqueioAtivo'), '') = '' or nullif(c->>'BloqueioHora', '') is null) then
     raise exception 'Informe o ativo e o horário do bloqueio';
+  end if;
+  if v_alm and (nullif(c->>'AlmocoInicio', '') is null or nullif(c->>'AlmocoFim', '') is null) then
+    raise exception 'Informe o início e o fim do almoço';
   end if;
 
   -- idempotente: se o aparelho reenviar o mesmo RDC, não duplica
@@ -229,7 +237,7 @@ begin
 
   insert into rdc_cabecalho (codigo, responsavel, data_rdc, ativo, om, status, enviado_por, qtd_atividades, qtd_impactos, qtd_fotos, area, ativo_descricao, responsavel_funcao,
                              revisao, revisao_de, pts, pts_solicitacao, pts_abertura, bloqueio, bloqueio_ativo, bloqueio_hora, contrato, contrato_nome,
-                             validado_por, validado_em, obs_validacao, editado_por, editado_em)
+                             almoco, almoco_inicio, almoco_fim, validado_por, validado_em, obs_validacao, editado_por, editado_em)
   values (
     v_codigo,
     left(trim(c->>'Responsavel'), 120),
@@ -251,6 +259,9 @@ begin
     case when v_bloq then (c->>'BloqueioHora')::timestamptz end,
     nullif(left(trim(c->>'Contrato'), 20), ''),
     nullif(left(trim(c->>'ContratoNome'), 60), ''),
+    v_alm,
+    case when v_alm then (c->>'AlmocoInicio')::timestamptz end,
+    case when v_alm then (c->>'AlmocoFim')::timestamptz end,
     case when v_status <> 'Enviado' then v_ant.validado_por end,
     case when v_status <> 'Enviado' then v_ant.validado_em end,
     case when v_status <> 'Enviado' then v_ant.obs_validacao end,
@@ -477,6 +488,7 @@ as $$
     'ValidadoPor', c.validado_por, 'ValidadoEm', c.validado_em, 'ObsValidacao', c.obs_validacao,
     'Pts', c.pts, 'PtsSolicitacao', c.pts_solicitacao, 'PtsAbertura', c.pts_abertura,
     'Bloqueio', c.bloqueio, 'BloqueioAtivo', c.bloqueio_ativo, 'BloqueioHora', c.bloqueio_hora,
+    'Almoco', c.almoco, 'AlmocoInicio', c.almoco_inicio, 'AlmocoFim', c.almoco_fim,
     'Contrato', c.contrato, 'ContratoNome', c.contrato_nome, 'EditadoPor', c.editado_por, 'EditadoEm', c.editado_em,
     'atividades', coalesce((
       select jsonb_agg(jsonb_build_object(
@@ -572,6 +584,8 @@ begin
         'qtd_atividades', c.qtd_atividades, 'qtd_impactos', c.qtd_impactos, 'qtd_fotos', c.qtd_fotos,
         'pts', c.pts, 'pts_solicitacao', c.pts_solicitacao, 'pts_abertura', c.pts_abertura, 'espera_pts_min', m.espera_pts_min,
         'bloqueio', c.bloqueio, 'bloqueio_ativo', c.bloqueio_ativo, 'bloqueio_hora', c.bloqueio_hora,
+        'almoco', c.almoco, 'almoco_inicio', c.almoco_inicio, 'almoco_fim', c.almoco_fim,
+        'almoco_min', case when c.almoco_inicio is not null and c.almoco_fim is not null then round(extract(epoch from (c.almoco_fim - c.almoco_inicio)) / 60)::int end,
         'contrato', c.contrato, 'contrato_nome', c.contrato_nome, 'editado_por', c.editado_por, 'editado_em', c.editado_em,
         'min_atividades', m.min_atividades, 'hh_min', m.hh_min, 'efetivo_max', m.efetivo_max,
         'min_impacto', m.min_impacto, 'hh_impacto_min', m.hh_impacto_min) order by c.data_rdc, c.recebido_em)
@@ -608,8 +622,9 @@ grant execute on function public.rdc_admin_exportar(text, text, date, date) to a
 -- ---------------------------------------------------------------------
 -- 2f. Edição de dados pelo administrador, no próprio RDC (sem nova versão): um ou vários RDC de uma vez.
 -- p_campos: só as chaves que mudam, entre: contrato, contrato_nome, responsavel, responsavel_funcao, data_rdc,
---           area, ativo, ativo_descricao, om, pts, pts_solicitacao, pts_abertura, bloqueio, bloqueio_ativo, bloqueio_hora
--- Mudar a data desloca os horários de atividades, impactos, PTS e bloqueio pelo mesmo número de dias.
+--           area, ativo, ativo_descricao, om, pts, pts_solicitacao, pts_abertura, bloqueio, bloqueio_ativo, bloqueio_hora,
+--           almoco, almoco_inicio, almoco_fim
+-- Mudar a data desloca os horários de atividades, impactos, PTS, bloqueio e almoço pelo mesmo número de dias.
 create or replace function public.rdc_admin_editar(p_nome text, p_senha text, p_codigos text[], p_campos jsonb, p_motivo text default null)
 returns jsonb
 language plpgsql
@@ -619,7 +634,8 @@ as $$
 declare
   v      text := _rdc_admin_verificar(p_nome, p_senha);
   ok     text[] := array['contrato', 'contrato_nome', 'responsavel', 'responsavel_funcao', 'data_rdc', 'area', 'ativo',
-                         'ativo_descricao', 'om', 'pts', 'pts_solicitacao', 'pts_abertura', 'bloqueio', 'bloqueio_ativo', 'bloqueio_hora'];
+                         'ativo_descricao', 'om', 'pts', 'pts_solicitacao', 'pts_abertura', 'bloqueio', 'bloqueio_ativo', 'bloqueio_hora',
+                         'almoco', 'almoco_inicio', 'almoco_fim'];
   k      text;
   cod    text;
   c      rdc_cabecalho%rowtype;
@@ -629,6 +645,7 @@ declare
   mudou  boolean;
   np     boolean;
   nb     boolean;
+  na     boolean;
 begin
   if v is null then return jsonb_build_object('ok', false, 'erro', 'Sessão de administrador inválida. Entre novamente.'); end if;
   if v = 'bloqueado' then return jsonb_build_object('ok', false, 'erro', 'Muitas tentativas. Aguarde 15 minutos.'); end if;
@@ -653,6 +670,7 @@ begin
     dias := case when p_campos ? 'data_rdc' then (p_campos->>'data_rdc')::date - c.data_rdc else 0 end;
     np   := case when p_campos ? 'pts'      then (p_campos->>'pts')::boolean      else c.pts end;
     nb   := case when p_campos ? 'bloqueio' then (p_campos->>'bloqueio')::boolean else c.bloqueio end;
+    na   := case when p_campos ? 'almoco'   then (p_campos->>'almoco')::boolean   else c.almoco end;
 
     -- um único update por RDC (cada update gera uma cópia para o SharePoint); "Não" limpa os horários
     update rdc_cabecalho set
@@ -679,6 +697,13 @@ begin
       bloqueio_hora      = case when nb is not true then null
                                 when p_campos ? 'bloqueio_hora' then (p_campos->>'bloqueio_hora')::timestamptz
                                 else bloqueio_hora + make_interval(days => dias) end,
+      almoco             = na,
+      almoco_inicio      = case when na is not true then null
+                                when p_campos ? 'almoco_inicio' then (p_campos->>'almoco_inicio')::timestamptz
+                                else almoco_inicio + make_interval(days => dias) end,
+      almoco_fim         = case when na is not true then null
+                                when p_campos ? 'almoco_fim' then (p_campos->>'almoco_fim')::timestamptz
+                                else almoco_fim + make_interval(days => dias) end,
       editado_por = v, editado_em = now()
     where codigo = cod;
     if dias <> 0 then
@@ -690,6 +715,7 @@ begin
     select * into d from rdc_cabecalho where codigo = cod;
     if d.pts and (d.pts_solicitacao is null or d.pts_abertura is null) then raise exception 'Informe os horários da PTS (%)', cod; end if;
     if d.bloqueio and (d.bloqueio_ativo is null or d.bloqueio_hora is null) then raise exception 'Informe o ativo e o horário do bloqueio (%)', cod; end if;
+    if d.almoco and (d.almoco_inicio is null or d.almoco_fim is null) then raise exception 'Informe o início e o fim do almoço (%)', cod; end if;
 
     mudou := false;
     for k in select jsonb_object_keys(p_campos) loop
@@ -946,7 +972,11 @@ select c.codigo as rdc, c.data_rdc, c.responsavel, c.ativo, c.om, c.recebido_em,
        (c.bloqueio_hora   at time zone 'America/Fortaleza') as bloqueio_hora_local,
        m.efetivo_max,
        round(m.hh_impacto_min / 60.0, 2) as homem_hora_impacto,
-       c.contrato, c.contrato_nome
+       c.contrato, c.contrato_nome,
+       c.almoco,
+       (c.almoco_inicio   at time zone 'America/Fortaleza') as almoco_inicio_local,
+       (c.almoco_fim      at time zone 'America/Fortaleza') as almoco_fim_local,
+       case when c.almoco_inicio is not null and c.almoco_fim is not null then round(extract(epoch from (c.almoco_fim - c.almoco_inicio)) / 60)::int end as almoco_min
 from rdc_cabecalho c
 join vw_rdc_metricas m on m.codigo = c.codigo
 where c.status not in ('Substituído', 'Cancelado');
@@ -1064,6 +1094,7 @@ as $$
       'ValidadoEm', _rdc_iso(c.validado_em), 'ObsValidacao', coalesce(c.obs_validacao, ''),
       'Pts', c.pts, 'PtsSolicitacao', _rdc_iso(c.pts_solicitacao), 'PtsAbertura', _rdc_iso(c.pts_abertura),
       'Bloqueio', c.bloqueio, 'BloqueioAtivo', c.bloqueio_ativo, 'BloqueioHora', _rdc_iso(c.bloqueio_hora),
+      'Almoco', c.almoco, 'AlmocoInicio', _rdc_iso(c.almoco_inicio), 'AlmocoFim', _rdc_iso(c.almoco_fim),
       'Contrato', c.contrato, 'ContratoNome', c.contrato_nome),
     'atividades', coalesce((
       select jsonb_agg(jsonb_build_object(

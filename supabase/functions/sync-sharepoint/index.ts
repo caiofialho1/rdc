@@ -102,7 +102,8 @@ const col = (name: string, tipo: Record<string, unknown>) => ({ name, ...tipo })
 const COLUNAS_NOVAS: Record<string, Record<string, unknown>[]> = {
   [LISTAS.cabecalho]: [col('Pts', { boolean: {} }), col('PtsSolicitacao', { dateTime: { format: 'dateTime' } }),
     col('PtsAbertura', { dateTime: { format: 'dateTime' } }), col('Bloqueio', { boolean: {} }), col('BloqueioAtivo', { text: {} }),
-    col('BloqueioHora', { dateTime: { format: 'dateTime' } }), col('Contrato', { text: {} }), col('ContratoNome', { text: {} })],
+    col('BloqueioHora', { dateTime: { format: 'dateTime' } }), col('Contrato', { text: {} }), col('ContratoNome', { text: {} }),
+    col('Almoco', { boolean: {} }), col('AlmocoInicio', { dateTime: { format: 'dateTime' } }), col('AlmocoFim', { dateTime: { format: 'dateTime' } })],
   [LISTAS.atividades]: [col('Contrato', { text: {} })],
   [LISTAS.impactos]: [col('Contrato', { text: {} })],
   [LISTAS.fotos]: [col('Latitude', { number: {} }), col('Longitude', { number: {} }), col('PrecisaoM', { number: {} }), col('GpsFonte', { text: {} })],

@@ -159,7 +159,7 @@ input.control[type=date],input.control[type=time]{-webkit-appearance:none;appear
 input.control::-webkit-date-and-time-value{text-align:left;margin:0}
 input.control::-webkit-calendar-picker-indicator{margin-left:2px}
 @media (max-width:360px){.row,.periodo,.toolbar{grid-template-columns:1fr;gap:0}}
-/* Horas improdutivas (PTS e bloqueio) */
+/* Horas improdutivas (PTS, bloqueio e almoço) */
 .chips.yn{grid-template-columns:repeat(2,1fr)}
 .sub-block{border-top:1px dashed var(--line);margin-top:4px;padding-top:12px}
 /* GPS */
@@ -473,6 +473,16 @@ label.lbl{font-size:14px;font-weight:500;color:var(--text)}
         <div class="field"><label class="lbl" for="fBloqAtivo">Ativo bloqueado *</label><input class="control" id="fBloqAtivo" data-h="bloqueioAtivo" list="dlBloqAtivo" placeholder="TAG ou descrição do ativo" autocapitalize="characters"><datalist id="dlBloqAtivo"></datalist></div>
         <div class="field"><label class="lbl" for="fBloqHora">Horário do bloqueio *</label><input class="control" type="time" id="fBloqHora" data-h="bloqueioHora"></div>
       </div>
+      <div class="field" style="margin-top:6px"><label class="lbl">Teve almoço? *</label>
+        <div class="chips yn" data-yn="almoco"><button type="button" class="chip" data-val="S">Sim</button><button type="button" class="chip" data-val="N">Não</button></div>
+      </div>
+      <div class="sub-block hidden" id="wrapAlmoco">
+        <div class="row">
+          <div class="field"><label class="lbl" for="fAlmIni">Início *</label><input class="control" type="time" id="fAlmIni" data-h="almocoInicio"></div>
+          <div class="field"><label class="lbl" for="fAlmFim">Fim *</label><input class="control" type="time" id="fAlmFim" data-h="almocoFim"></div>
+        </div>
+        <div class="dur" id="almocoDur"></div>
+      </div>
     </div>
     </div>
 
@@ -574,7 +584,7 @@ label.lbl{font-size:14px;font-weight:500;color:var(--text)}
         <button class="btn ghost" id="btnEditarDados" data-ic="pencil">Editar dados</button>
         <button class="btn ghost" id="btnEditarTudo" data-ic="pencil">Editar tudo</button>
       </div>
-      <p class="note">“Editar dados” (contrato, data, OM, PTS, bloqueio) altera este RDC no lugar. “Editar tudo” (atividades, fotos, impactos) grava uma nova versão no lugar desta, mantendo a situação (validado continua validado).</p>
+      <p class="note">“Editar dados” (contrato, data, OM, PTS, bloqueio, almoço) altera este RDC no lugar. “Editar tudo” (atividades, fotos, impactos) grava uma nova versão no lugar desta, mantendo a situação (validado continua validado).</p>
       <div style="border-top:1px solid var(--divider);margin-top:16px;padding-top:12px;text-align:center">
         <button class="link-danger" id="btnApagarRdc"></button>
         <p class="note" id="apagarNota">Remove o RDC, as versões anteriores e as fotos. Não pode ser desfeito.</p>
@@ -601,6 +611,11 @@ label.lbl{font-size:14px;font-weight:500;color:var(--text)}
       <div id="eWrapBloq">
         <div class="field"><label class="lbl" for="eBloqAtivo">Ativo bloqueado</label><input class="control" id="eBloqAtivo" list="dlBloqAtivo" autocapitalize="characters"></div>
         <div class="field"><label class="lbl" for="eBloqHora">Horário do bloqueio</label><input class="control" type="time" id="eBloqHora"></div>
+      </div>
+      <div class="field"><label class="lbl" for="eAlm">Teve almoço?</label><select class="control" id="eAlm"><option value="">Não informado</option><option value="S">Sim</option><option value="N">Não</option></select></div>
+      <div class="row" id="eWrapAlm">
+        <div class="field"><label class="lbl" for="eAlmIni">Início do almoço</label><input class="control" type="time" id="eAlmIni"></div>
+        <div class="field"><label class="lbl" for="eAlmFim">Fim do almoço</label><input class="control" type="time" id="eAlmFim"></div>
       </div>
       <div class="field"><label class="lbl" for="eMotivo">Motivo da edição <span class="opt-lbl">(opcional)</span></label><textarea class="control" id="eMotivo" placeholder="Ex.: contrato não informado no envio"></textarea></div>
       <div class="btn-row wide">
@@ -970,6 +985,7 @@ const SCHEMA = () => ({
     // validação e revisão (mesmas colunas de rdc_cabecalho no Supabase)
     num('Revisao'), txt('RevisaoDe'), txt('SubstituidoPor'), txt('ValidadoPor'), dt('ValidadoEm'), mtxt('ObsValidacao'),
     bool('Pts'), dt('PtsSolicitacao'), dt('PtsAbertura'), bool('Bloqueio'), txt('BloqueioAtivo'), dt('BloqueioHora'),
+    bool('Almoco'), dt('AlmocoInicio'), dt('AlmocoFim'),
     txt('Contrato'), txt('ContratoNome')],
   [CFG.lists.atividades]: [txt('RDC_ID'), num('Ordem'), choice('Disciplina', Object.keys(DISCIPLINAS)), txt('Servico'),
     choice('TipoAndaime', TIPOS_ANDAIME), mtxt('DescricaoOutros'), mtxt('Observacao'),
@@ -1203,10 +1219,12 @@ function buildRecord(d) {
     AtivoDescricao: d.ativoOutro ? 'OUTRO (não listado)' : descTag(d.ativo),
     Status: 'Rascunho', EnviadoPor: (account && (account.username || account.name)) || d.responsavel.trim(),
     QtdAtividades: atividades.length, QtdImpactos: impactos.length, QtdFotos: fotos.length,
-    Pts: d.pts === 'S', Bloqueio: d.bloqueio === 'S',
+    Pts: d.pts === 'S', Bloqueio: d.bloqueio === 'S', Almoco: d.almoco === 'S',
     ...(d.pts === 'S' ? { PtsSolicitacao: toISO(d.data, d.ptsSolicitacao),
       PtsAbertura: toISO(d.data, d.ptsAbertura, toMin(d.ptsAbertura) < toMin(d.ptsSolicitacao)) } : {}),
     ...(d.bloqueio === 'S' ? { BloqueioAtivo: d.bloqueioAtivo.trim(), BloqueioHora: toISO(d.data, d.bloqueioHora) } : {}),
+    ...(d.almoco === 'S' ? { AlmocoInicio: toISO(d.data, d.almocoInicio),
+      AlmocoFim: toISO(d.data, d.almocoFim, toMin(d.almocoFim) <= toMin(d.almocoInicio)) } : {}),
     ...(d.revisaoDe ? { RevisaoDe: d.revisaoDe } : {}) // revisão liberada pelo administrador
   };
   return { code, createdAt: now.toISOString(), header, atividades, impactos, fotos, progress: {}, ...(d.adminEdit ? { adminEdit: true } : {}) };
@@ -1337,6 +1355,7 @@ function newDraft() {
   if (!nomeContrato(contrato)) contrato = '';
   return { responsavel: last, contrato, data: todayISO(), area: '', ativo: '', ativoOutro: false, om: '',
     pts: '', ptsSolicitacao: '', ptsAbertura: '', bloqueio: '', bloqueioAtivo: '', bloqueioHora: '',
+    almoco: '', almocoInicio: '', almocoFim: '',
     atividades: [newActivity()], impactos: [] };
 }
 let saveTimer;
@@ -1437,7 +1456,7 @@ function fillHeader() {
 function renderContrato() {
   $('fContrato').innerHTML = CONTRATOS.map(([n, num]) => `<button type="button" class="chip${draft.contrato === num ? ' sel' : ''}" data-contrato="${num}" aria-pressed="${draft.contrato === num}">${esc(n)}<small>${num}</small></button>`).join('');
 }
-// Horas improdutivas (PTS e bloqueio): perguntas Sim/Não; os horários só aparecem com "Sim"
+// Horas improdutivas (PTS, bloqueio e almoço): perguntas Sim/Não; os horários só aparecem com "Sim"
 function esperaPts(sol, abe) {
   const a = toMin(sol), b = toMin(abe);
   if (a == null || b == null) return null;
@@ -1447,6 +1466,10 @@ function atualizarEsperaPts() {
   const m = esperaPts(draft.ptsSolicitacao, draft.ptsAbertura);
   $('ptsEspera').innerHTML = m != null ? `Espera pela PTS: <b>${fmtDur(m)}</b>${toMin(draft.ptsAbertura) < toMin(draft.ptsSolicitacao) ? ' (abriu no dia seguinte)' : ''}` : '';
 }
+function atualizarDurAlmoco() {
+  const m = duration(draft.almocoInicio, draft.almocoFim);
+  $('almocoDur').innerHTML = m != null ? `Duração do almoço: <b>${fmtDur(m)}</b>${toMin(draft.almocoFim) <= toMin(draft.almocoInicio) ? ' (termina no dia seguinte)' : ''}` : '';
+}
 function renderPts() {
   document.querySelectorAll('[data-yn]').forEach(g => g.querySelectorAll('.chip').forEach(b => {
     const on = draft[g.dataset.yn] === b.dataset.val;
@@ -1454,7 +1477,8 @@ function renderPts() {
   }));
   $('wrapPts').classList.toggle('hidden', draft.pts !== 'S');
   $('wrapBloq').classList.toggle('hidden', draft.bloqueio !== 'S');
-  atualizarEsperaPts();
+  $('wrapAlmoco').classList.toggle('hidden', draft.almoco !== 'S');
+  atualizarEsperaPts(); atualizarDurAlmoco();
 }
 // Escolha do responsável por foto; o <select> escondido continua sendo o campo do formulário
 function fillRespGrid() {
@@ -1636,6 +1660,7 @@ function bindForm() {
     draft[el.dataset.h] = el.value;
     if (el.dataset.h === 'responsavel') localStorage.setItem('rdc-responsavel', el.value);
     if (el.dataset.h === 'ptsSolicitacao' || el.dataset.h === 'ptsAbertura') atualizarEsperaPts();
+    if (el.dataset.h === 'almocoInicio' || el.dataset.h === 'almocoFim') atualizarDurAlmoco();
     saveDraft();
   }));
   $('fBloqAtivo').addEventListener('change', e => { draft.bloqueioAtivo = e.target.value = e.target.value.toUpperCase(); saveDraft(); });
@@ -1645,7 +1670,7 @@ function bindForm() {
     draft[k] = b.dataset.val;
     if (k === 'bloqueio' && b.dataset.val === 'S' && !draft.bloqueioAtivo && draft.ativo) $('fBloqAtivo').value = draft.bloqueioAtivo = draft.ativo;
     renderPts(); saveDraft();
-    if (b.dataset.val === 'S') $(k === 'pts' ? 'fPtsSol' : 'fBloqHora').focus();
+    if (b.dataset.val === 'S') $({ pts: 'fPtsSol', bloqueio: 'fBloqHora', almoco: 'fAlmIni' }[k]).focus();
   });
   $('fRespGrid').addEventListener('click', e => {
     const b = e.target.closest('[data-lider]');
@@ -1781,6 +1806,9 @@ function validate(so) {
     if (d.pts === 'S' && (!d.ptsSolicitacao || !d.ptsAbertura)) return e(2, 'Informe o horário de solicitação e de abertura da PTS.', $('cardPts'));
     if (!d.bloqueio) return e(2, 'Informe se teve bloqueio (sim ou não).', $('cardPts'));
     if (d.bloqueio === 'S' && (!(d.bloqueioAtivo || '').trim() || !d.bloqueioHora)) return e(2, 'Informe o ativo bloqueado e o horário do bloqueio.', $('cardPts'));
+    if (!d.almoco) return e(2, 'Informe se teve almoço (sim ou não).', $('cardPts'));
+    if (d.almoco === 'S' && (!d.almocoInicio || !d.almocoFim)) return e(2, 'Informe o início e o fim do almoço.', $('cardPts'));
+    if (d.almoco === 'S' && d.almocoInicio === d.almocoFim) return e(2, 'O fim do almoço precisa ser diferente do início.', $('cardPts'));
   }
   if (!so || so === 3) {
     if (!d.atividades.length) return e(3, 'Adicione pelo menos uma atividade.', $('btnAddAtv'));
@@ -1840,12 +1868,14 @@ function avancarPasso() {
 
 /* ===================== REVISÃO ===================== */
 let galRev = [];
-// Linhas de PTS e bloqueio (revisão e detalhe); horários em "HH:MM"
+// Linhas de PTS, bloqueio e almoço (revisão e detalhe); horários em "HH:MM"
 function ptsRows(p) {
   const rows = [['PTS', p.pts == null ? '—' : p.pts ? 'Sim' : 'Não']];
   if (p.pts) rows.push(['Solicitação da PTS', p.sol || '—'], ['Abertura da PTS', p.abe || '—'], ['Espera pela PTS', p.espera != null ? fmtDur(p.espera) : '—']);
   rows.push(['Bloqueio', p.bloqueio == null ? '—' : p.bloqueio ? 'Sim' : 'Não']);
   if (p.bloqueio) rows.push(['Ativo bloqueado', p.ativo || '—'], ['Horário do bloqueio', p.hora || '—']);
+  rows.push(['Almoço', p.almoco == null ? '—' : p.almoco ? 'Sim' : 'Não']);
+  if (p.almoco) rows.push(['Início do almoço', p.almIni || '—'], ['Fim do almoço', p.almFim || '—'], ['Duração do almoço', p.almDur != null ? fmtDur(p.almDur) : '—']);
   return rows.map(([k, v]) => `<div class="rv-row"><span>${k}</span><strong>${esc(v)}</strong></div>`).join('');
 }
 function review() {
@@ -1863,7 +1893,8 @@ function review() {
   const espera = esperaPts(d.ptsSolicitacao, d.ptsAbertura);
   $('rvPts').innerHTML = ptsRows({
     pts: d.pts === 'S', sol: d.ptsSolicitacao, abe: d.ptsAbertura, espera,
-    bloqueio: d.bloqueio === 'S', ativo: d.bloqueioAtivo, hora: d.bloqueioHora
+    bloqueio: d.bloqueio === 'S', ativo: d.bloqueioAtivo, hora: d.bloqueioHora,
+    almoco: d.almoco === 'S', almIni: d.almocoInicio, almFim: d.almocoFim, almDur: duration(d.almocoInicio, d.almocoFim)
   });
   $('rvActivities').innerHTML = d.atividades.map((a, i) => `<div class="rv-block">
       <h4>ATIVIDADE ${pad(i + 1)} · ${esc(a.disciplina)}</h4>
@@ -2076,7 +2107,8 @@ function renderDetalhe() {
   const minutos = (a, b) => a && b ? Math.round((Date.parse(b) - Date.parse(a)) / 60000) : null;
   $('dtPts').innerHTML = ptsRows({
     pts: d.Pts, sol: fmtHora(d.PtsSolicitacao), abe: fmtHora(d.PtsAbertura), espera: minutos(d.PtsSolicitacao, d.PtsAbertura),
-    bloqueio: d.Bloqueio, ativo: d.BloqueioAtivo, hora: fmtHora(d.BloqueioHora)
+    bloqueio: d.Bloqueio, ativo: d.BloqueioAtivo, hora: fmtHora(d.BloqueioHora),
+    almoco: d.Almoco, almIni: fmtHora(d.AlmocoInicio), almFim: fmtHora(d.AlmocoFim), almDur: minutos(d.AlmocoInicio, d.AlmocoFim)
   });
   // carrossel com todas as fotos do RDC, na ordem das atividades
   galDet = d.atividades.flatMap(a => a.fotos.map((f, j) => ({
@@ -2180,6 +2212,7 @@ function eAtivos(area, ativo) {
 function eVisibilidade() {
   $('eWrapPts').classList.toggle('hidden', $('ePts').value !== 'S');
   $('eWrapBloq').classList.toggle('hidden', $('eBloq').value !== 'S');
+  $('eWrapAlm').classList.toggle('hidden', $('eAlm').value !== 'S');
 }
 function abrirEdicaoDados() {
   const d = detalhe, sn = v => v == null ? '' : v ? 'S' : 'N';
@@ -2195,6 +2228,7 @@ function abrirEdicaoDados() {
   $('eArea').value = area; eAtivos(area, d.Ativo);
   $('ePts').value = sn(d.Pts); $('ePtsSol').value = fmtHora(d.PtsSolicitacao); $('ePtsAbe').value = fmtHora(d.PtsAbertura);
   $('eBloq').value = sn(d.Bloqueio); $('eBloqAtivo').value = d.BloqueioAtivo || ''; $('eBloqHora').value = fmtHora(d.BloqueioHora);
+  $('eAlm').value = sn(d.Almoco); $('eAlmIni').value = fmtHora(d.AlmocoInicio); $('eAlmFim').value = fmtHora(d.AlmocoFim);
   $('eMotivo').value = '';
   eVisibilidade();
   $('dtEditar').classList.remove('hidden'); $('dtAdmin').classList.add('hidden');
@@ -2229,6 +2263,14 @@ function camposEditados() {
   if (bl !== blAntes) c.bloqueio = bl === '' ? null : bl === 'S';
   if (bl === 'S' && (bl !== blAntes || bAtivo !== (d.BloqueioAtivo || '') || bHora !== fmtHora(d.BloqueioHora))) {
     c.bloqueio_ativo = bAtivo; c.bloqueio_hora = toISO(data, bHora);
+  }
+  const al = $('eAlm').value, aIni = $('eAlmIni').value, aFim = $('eAlmFim').value;
+  const alAntes = d.Almoco == null ? '' : d.Almoco ? 'S' : 'N';
+  if (al === 'S' && (!aIni || !aFim)) throw new Error('Informe o início e o fim do almoço.');
+  if (al === 'S' && aIni === aFim) throw new Error('O fim do almoço precisa ser diferente do início.');
+  if (al !== alAntes) c.almoco = al === '' ? null : al === 'S';
+  if (al === 'S' && (al !== alAntes || aIni !== fmtHora(d.AlmocoInicio) || aFim !== fmtHora(d.AlmocoFim))) {
+    c.almoco_inicio = toISO(data, aIni); c.almoco_fim = toISO(data, aFim, toMin(aFim) <= toMin(aIni));
   }
   return c;
 }
@@ -2273,12 +2315,13 @@ async function iniciarRevisao(btn, adminEdit) {
         ...(f.Latitude != null ? { gps: { lat: f.Latitude, lng: f.Longitude, acc: f.PrecisaoM, fonte: f.GpsFonte } } : {})
       })))
     });
-    const sn = v => v == null ? '' : v ? 'S' : 'N'; // RDC antigo (sem PTS/bloqueio) pede a resposta de novo
+    const sn = v => v == null ? '' : v ? 'S' : 'N'; // RDC antigo (sem PTS/bloqueio/almoço) pede a resposta de novo
     draft = {
       responsavel: d.Responsavel, contrato: d.Contrato || '', data: d.DataRDC, area: (d.Area || '').split(' - ')[0], ativo: d.Ativo,
       ativoOutro: d.AtivoDescricao === 'OUTRO (não listado)', om: d.OM, atividades,
       pts: sn(d.Pts), ptsSolicitacao: fmtHora(d.PtsSolicitacao), ptsAbertura: fmtHora(d.PtsAbertura),
       bloqueio: sn(d.Bloqueio), bloqueioAtivo: d.BloqueioAtivo || '', bloqueioHora: fmtHora(d.BloqueioHora),
+      almoco: sn(d.Almoco), almocoInicio: fmtHora(d.AlmocoInicio), almocoFim: fmtHora(d.AlmocoFim),
       impactos: d.impactos.map(x => ({ id: uid(), ...lerImpacto(x.TipoImpacto), horaInicio: fmtHora(x.InicioImpacto), horaFim: fmtHora(x.FimImpacto) })),
       revisaoDe: d.Title, revisaoMotivo: adminEdit ? '' : d.ObsValidacao || '', ...(adminEdit ? { adminEdit: true } : {})
     };
@@ -2582,7 +2625,7 @@ async function boot() {
   $('btnEditarDados').onclick = abrirEdicaoDados;
   $('btnFecharEdicao').onclick = () => { $('dtEditar').classList.add('hidden'); $('dtAdmin').classList.remove('hidden'); };
   $('btnSalvarEdicao').onclick = salvarEdicaoDados;
-  $('ePts').onchange = $('eBloq').onchange = eVisibilidade;
+  $('ePts').onchange = $('eBloq').onchange = $('eAlm').onchange = eVisibilidade;
   $('eArea').onchange = () => eAtivos($('eArea').value, '');
   $('eAtivo').onchange = () => { $('eWrapOutro').classList.toggle('hidden', $('eAtivo').value !== ATIVO_OUTRO); if ($('eAtivo').value === ATIVO_OUTRO) $('eAtivoOutro').focus(); };
   $('btnAdminEntrar').onclick = () => requireAdmin(() => { renderDetalhe(); go('scrDetalhe'); });
