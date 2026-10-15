@@ -5,10 +5,13 @@ import type { StatusRdc } from '../../api/schemas'
 import { useUltimoSucesso } from '../../api/useUltimoSucesso'
 import { useAuth } from '../../auth/AuthProvider'
 import { planilhasExportacao } from '../../domain/exportacao'
+import { observacoesRdo, type LinhaObsRdo } from '../../domain/observacoesRdo'
 import { filtrar, valoresUnicos, type FiltrosSecundarios } from '../../domain/filtros'
 import { fmtData } from '../../domain/formatters'
 import { anosDisponiveis, medicaoAtual, medicaoDoMes } from '../../domain/ciclo'
 import { useFilters } from '../../filters/FilterContext'
+
+const COLUNAS_OBS_RDO: Array<keyof LinhaObsRdo> = ['Data', 'Hora', 'Equipamento', 'OM', 'Horario_Solicitacao', 'Horario_Abertura', 'Impacto', 'Descricao_Macro_RDO']
 
 export interface ItemNav {
   chave: string
@@ -84,6 +87,17 @@ export default function Sidebar({ telas, telaAtiva, onSelecionar, onFechar }: Si
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(linhas.length ? linhas : [{}]), nome)
     }
     XLSX.writeFile(wb, `RDC_${ini}_a_${fim}.xlsx`)
+  }
+
+  /** Observações no formato do RDO: uma linha por RDC, texto longo continuado em "(cont.)". */
+  function exportarObservacoesRdo() {
+    if (!recorte) return
+    const linhas = observacoesRdo(recorte)
+    const ws = XLSX.utils.json_to_sheet(linhas.length ? linhas : [{}], { header: COLUNAS_OBS_RDO })
+    ws['!cols'] = [{ wch: 11 }, { wch: 9 }, { wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 10 }, { wch: 26 }, { wch: 140 }]
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Observacoes_RDO')
+    XLSX.writeFile(wb, `Observacoes_RDO_${ini}_a_${fim}.xlsx`)
   }
 
   return (
@@ -203,6 +217,9 @@ export default function Sidebar({ telas, telaAtiva, onSelecionar, onFechar }: Si
 
         <button type="button" onClick={exportarExcel} disabled={!recorte || carregando} className="se-button w-full text-center">
           Exportar Excel
+        </button>
+        <button type="button" onClick={exportarObservacoesRdo} disabled={!recorte || carregando} className="se-button se-button--outline w-full text-center">
+          Exportar observações RDO
         </button>
       </div>
     </aside>

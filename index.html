@@ -859,17 +859,20 @@ const DISCIPLINAS = {
     'MONTAGEM DE ANDAIME','DESMONTAGEM DE ANDAIME','MONTAGEM DE TUBO-VIDA','DESMONTAGEM DE TUBO-VIDA','OUTROS'] }
 };
 const TIPOS_ANDAIME = ['APOIADO','SUSPENSO','BALANÇO'];
-// Tipos de impacto: taxonomia de eventos do Planejamento (sem os que não são impacto:
-// Produção/Execução e Conclusão de Atividade). O tipo é gravado em TipoImpacto; em
-// OUTROS grava "OUTROS — texto digitado". RDC antigo (texto livre) reabre como OUTROS.
-const TIPOS_IMPACTO = ['PTS / LIBERAÇÃO','BLOQUEIO / INTERDIÇÃO','CONDIÇÕES CLIMÁTICAS','FALHA DE EQUIPAMENTO',
-  'FALTA DE MATERIAL','FISCALIZAÇÃO','INTERFERÊNCIA OPERACIONAL','INDISPONIBILIDADE DE ÁREA','SEGURANÇA',
-  'AGUARDO / ESPERA','RECURSO HUMANO','ATRASO OPERACIONAL','PARALISAÇÃO','ALTERAÇÃO DE PROGRAMAÇÃO',
-  'MOBILIZAÇÃO / DESMOBILIZAÇÃO','OUTROS'];
+// Tipos de impacto (lista definida pelo Planejamento em 2026-10-14). O tipo é gravado em
+// TipoImpacto; só OUTROS pede um texto curto e grava "OUTROS — texto". Cada impacto tem
+// início e fim. RDC antigo reabre com o tipo equivalente da lista nova quando ele existe;
+// os demais (texto livre ou tipo da lista antiga) reabrem como OUTROS com o texto original.
+const TIPOS_IMPACTO = ['CHUVA','ALMOÇO','LIBERAÇÃO DE PTS','EQUIPAMENTO COM DEFEITO','DOCUMENTAÇÃO',
+  'FALTA DE MATERIAL','MOBILIZAÇÃO','IMPACTO VALE','IMPACTO OUTRA CONTRATADA','OUTROS'];
 const IMPACTO_OUTROS = 'OUTROS';
+const OUTROS_MAX = 120;
+const TIPOS_IMPACTO_ANTIGOS = { 'PTS / LIBERAÇÃO': 'LIBERAÇÃO DE PTS', 'FALHA DE EQUIPAMENTO': 'EQUIPAMENTO COM DEFEITO',
+  'MOBILIZAÇÃO / DESMOBILIZAÇÃO': 'MOBILIZAÇÃO' };
 const lerImpacto = txt => {
   const t = String(txt || '').trim();
   if (TIPOS_IMPACTO.includes(t)) return { tipo: t, outros: '' };
+  if (TIPOS_IMPACTO_ANTIGOS[t]) return { tipo: TIPOS_IMPACTO_ANTIGOS[t], outros: '' };
   const m = t.match(/^OUTROS\s*[—–-]\s*([\s\S]*)$/);
   if (m) return { tipo: IMPACTO_OUTROS, outros: m[1] };
   return t ? { tipo: IMPACTO_OUTROS, outros: t } : { tipo: '', outros: '' };
@@ -1504,7 +1507,7 @@ function impactHTML(x, i) {
     <div class="card-head"><span class="badge">Impacto ${pad(i + 1)}</span><button class="link-danger" data-act="del-imp">Excluir</button></div>
     <div class="field"><label class="lbl">Tipo de impacto *</label>
       <select class="control" data-f="tipo"><option value="">Selecione o tipo…</option>${TIPOS_IMPACTO.map(t => `<option ${x.tipo === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
-    ${x.tipo === IMPACTO_OUTROS ? `<div class="field"><label class="lbl">Descreva o impacto *</label><textarea class="control" data-f="outros" placeholder="Descreva o que afetou a execução">${esc(x.outros)}</textarea></div>` : ''}
+    ${x.tipo === IMPACTO_OUTROS ? `<div class="field"><label class="lbl">Qual impacto? * <span class="opt-lbl">(poucas palavras)</span></label><input class="control" data-f="outros" maxlength="${OUTROS_MAX}" placeholder="Ex.: falta de energia na área" value="${esc(x.outros)}"></div>` : ''}
     <div class="row">
       <div class="field"><label class="lbl">Início *</label><input type="time" class="control" data-f="horaInicio" value="${esc(x.horaInicio)}"></div>
       <div class="field"><label class="lbl">Fim *</label><input type="time" class="control" data-f="horaFim" value="${esc(x.horaFim)}"></div>

@@ -28,6 +28,15 @@ Reorganiza as 8 seções do `painel.html` antigo em 4 telas de storytelling (Pai
 
 ## Padrão visual (2026-10-14)
 
-Todas as telas seguem o visual do **Painel executivo**: a área de conteúdo (`main.tema-exec` em `Shell.tsx`) redefine os tokens de cor para a paleta `--exec-*` (grafite + dourado, vermelho só para impacto/desfavorável, verde para concluído) e aplica a estrutura de card, tabela e chip do Executivo. Gráficos leem as cores do mesmo contêiner (`styles/cssVar.ts`). Cabeçalho e lateral seguem a paleta do app mobile.
+Todas as telas seguem o visual do **Painel executivo**: a área de conteúdo (`main.tema-exec` em `Shell.tsx`) redefine os tokens de cor para a paleta `--exec-*` (grafite + verde do logotipo PPL `#B3CE52`, vermelho só para impacto/desfavorável, verde para concluído) e aplica a estrutura de card, tabela e chip do Executivo. Gráficos leem as cores do mesmo contêiner (`styles/cssVar.ts`). Cabeçalho e lateral seguem a paleta do app mobile.
 
 O **Detalhamento** é mestre-detalhe: tabela à esquerda e detalhe do RDC fixo à direita a partir de ~72rem de área útil (abaixo da tabela em telas menores), com filtro rápido por status, faixa de identificação, régua de métricas, mão de obra por função (as 7 funções sempre listadas, barra = participação no HH), linha do tempo do turno (atividades em grafite, impactos em vermelho, na mesma régua de horas) e ações de validação fixas no rodapé do painel.
+
+## Exportar observações RDO (2026-10-14)
+
+Botão na lateral, abaixo de "Exportar Excel". Gera `Observacoes_RDO_<início>_a_<fim>.xlsx` com o período e os filtros atuais, uma linha por RDC (cancelados e substituídos ficam fora), nas colunas Data, Hora, Equipamento, OM, Horario_Solicitacao, Horario_Abertura, Impacto e Descricao_Macro_RDO. Regras em `painel-app/src/domain/observacoesRdo.ts`:
+
+- Hora = horário em que o RDC chegou ao banco (`recebido_em`).
+- A descrição junta PTS (horários), serviços, executante, efetivo por função (pico), bloqueio, observações das atividades e impactos. Texto acima de 125 caracteres continua na linha seguinte: a linha termina em "(cont.)", a próxima começa com "(cont.)" e repete só Data, Equipamento e OM.
+- Impacto PTS: espera acima da meta de 40 min conta como "IMPACTO PTS" com a espera inteira, a menos que o encarregado tenha registrado um impacto "LIBERAÇÃO DE PTS" (vale o registrado). Demais impactos entram pelo tipo, somando os minutos.
+- Número da PTS e refeição ainda não existem no banco; entram quando a migração correspondente for autorizada.

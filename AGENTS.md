@@ -75,7 +75,8 @@ Utilizar como referência:
 |---|---|---|
 | primary | #111111 | Preto principal |
 | secondary | #303030 | Grafite |
-| accent | #A68A52 | Dourado corporativo |
+| accent | #B3CE52 | Verde do logotipo PPL (barras, linhas de referência, destaques gráficos) |
+| accent-text | #5C7A17 | Verde PPL escurecido para texto e rótulos (4,9:1 sobre branco); o #B3CE52 não é legível como texto |
 | text-secondary | #666666 | Textos secundários |
 | border | #E5E5E5 | Bordas e divisórias |
 | background | #F7F7F5 | Fundo do dashboard |

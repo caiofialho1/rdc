@@ -127,7 +127,7 @@ export default function CargaProducao({ aberto, onFechar }: { aberto: boolean; o
         className="max-h-[85vh] w-full max-w-lg overflow-auto"
       >
         <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 id="carga-titulo" className="text-[15px] font-semibold text-text-primary">
+          <h2 id="carga-titulo" className="text-[14px] font-semibold text-text-primary">
             Atualizar carga produção
           </h2>
           <button type="button" onClick={onFechar} className="se-link" data-autofoco>

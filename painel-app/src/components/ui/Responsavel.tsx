@@ -1,6 +1,6 @@
 import { fotoResponsavel, funcaoResponsavel, iniciais } from '../../domain/responsaveis'
 
-const TAMANHOS = { sm: 'h-6 w-6 text-[10px]', md: 'h-8 w-8 text-[11px]', lg: 'h-12 w-12 text-sm' } as const
+const TAMANHOS = { sm: 'h-6 w-6 text-[10px]', md: 'h-8 w-8 text-[10px]', lg: 'h-12 w-12 text-sm' } as const
 
 type Tamanho = keyof typeof TAMANHOS
 

@@ -1,6 +1,6 @@
 /**
  * Tela inicial "Painel executivo": layout do protótipo Stitch (KPIs →
- * pendências → diagnóstico → ranking → detalhamento, preto/dourado)
+ * pendências → diagnóstico → ranking → detalhamento, preto + verde PPL)
  * alimentado pelos mesmos dados reais e fórmulas das outras telas. Fica fora
  * do protótipo o que não existe no banco: metas, SLA, tolerâncias, turno,
  * número de PTS/LOTO e classificações de desempenho (BUSINESS_MODEL.md).
@@ -46,7 +46,7 @@ const NOME_DISCIPLINA: Record<string, string> = {
 const COR_DISCIPLINA: Record<string, `--${string}`> = {
   ANDAIME: '--exec-ink',
   REC: '--exec-graphite',
-  PAC: '--exec-gold',
+  PAC: '--exec-marca',
   'TEL/COB': '--exec-outline',
 }
 const CHIP_STATUS: Record<RdcRow['status'], string> = {
@@ -98,7 +98,7 @@ function PtsBloqueio({ rdc }: { rdc: RdcRow }) {
     )
   if (rdc.bloqueio === true)
     itens.push(
-      <span key="blq" className="exec-chip exec-chip--gold">
+      <span key="blq" className="exec-chip exec-chip--marca">
         Bloqueio{rdc.bloqueio_ativo ? ` · ${rdc.bloqueio_ativo}` : ''}
       </span>,
     )
@@ -168,7 +168,7 @@ export default function Executivo({ irPara }: TelaProps) {
       },
       legend: { top: 0, right: 0 },
       grid: { left: 8, right: 8, top: 40, bottom: 8, containLabel: true },
-      xAxis: { type: 'category' as const, data: pareto.map((p) => p.descricao), axisTick: { show: false }, axisLabel: { interval: 0, width: 84, overflow: 'truncate' as const, fontSize: 11 } },
+      xAxis: { type: 'category' as const, data: pareto.map((p) => p.descricao), axisTick: { show: false }, axisLabel: { interval: 0, width: 84, overflow: 'truncate' as const, fontSize: 10 } },
       yAxis: [
         { type: 'value' as const, min: 0, name: 'h', nameGap: 12 },
         { type: 'value' as const, min: 0, max: 100, interval: 20, splitLine: { show: false }, axisLabel: { formatter: (v: number) => `${fmtNumero(v)}%` } },
@@ -180,7 +180,7 @@ export default function Executivo({ irPara }: TelaProps) {
           barMaxWidth: 40,
           data: pareto.map((p) => p.horas),
           itemStyle: { color: cssVar('--exec-impact'), borderRadius: [3, 3, 0, 0] },
-          label: { show: pareto.length <= 6, position: 'top' as const, fontSize: 11, fontWeight: 700, color: cssVar('--exec-impact'), formatter: (p: { value: number }) => `${fmtHoras(p.value)}h` },
+          label: { show: pareto.length <= 6, position: 'top' as const, fontSize: 10, fontWeight: 700, color: cssVar('--exec-impact'), formatter: (p: { value: number }) => `${fmtHoras(p.value)}h` },
         },
         {
           name: '% acumulado',
@@ -193,8 +193,8 @@ export default function Executivo({ irPara }: TelaProps) {
           markLine: {
             silent: true,
             symbol: 'none',
-            lineStyle: { type: 'dashed' as const, color: cssVar('--exec-gold'), width: 1.5 },
-            label: { formatter: '80%', position: 'insideEndTop' as const, color: cssVar('--exec-gold'), fontSize: 11, fontWeight: 700 },
+            lineStyle: { type: 'dashed' as const, color: cssVar('--exec-marca'), width: 1.5 },
+            label: { formatter: '80%', position: 'insideEndTop' as const, color: cssVar('--exec-marca-text'), fontSize: 10, fontWeight: 700 },
             data: [{ yAxis: 80 }],
           },
         },
@@ -391,7 +391,7 @@ export default function Executivo({ irPara }: TelaProps) {
                   const cor = `var(${COR_DISCIPLINA[d] ?? '--exec-outline'})`
                   return (
                     <li key={d}>
-                      <div className="mb-1 flex flex-wrap items-center justify-between gap-x-3 text-[13px]">
+                      <div className="mb-1 flex flex-wrap items-center justify-between gap-x-3 text-[12px]">
                         <span className="flex items-center gap-1.5 font-semibold">
                           <span aria-hidden="true" className="h-2.5 w-2.5 rounded-[2px]" style={{ background: cor }} />
                           {NOME_DISCIPLINA[d] ?? d}
@@ -404,7 +404,7 @@ export default function Executivo({ irPara }: TelaProps) {
                         <span style={{ width: `${pct * 100}%`, background: cor }} />
                       </div>
                       {d === 'ANDAIME' && andaime.length > 0 && (
-                        <p className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 border-l-2 border-[var(--exec-border)] pl-4 text-[11px] text-[var(--exec-text-2)]">
+                        <p className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 border-l-2 border-[var(--exec-border)] pl-4 text-[10px] text-[var(--exec-text-2)]">
                           {andaime.map(([tipo, h]) => (
                             <span key={tipo}>
                               {tipo}: <strong className="tabular text-[var(--exec-ink)]">{fmtHoras(h)} HH</strong>
@@ -422,7 +422,7 @@ export default function Executivo({ irPara }: TelaProps) {
           <Card
             titulo="Pareto de ofensores de impacto"
             sub={`Tempo de impacto por tipo informado no RDC · ${fmtHoras(pareto.reduce((s, p) => s + p.horas, 0))} h no recorte`}
-            extra={<span className="exec-chip exec-chip--gold">Referência 80%</span>}
+            extra={<span className="exec-chip exec-chip--marca">Referência 80%</span>}
             rodape={
               primeiroAcima80 >= 0 && pareto.length > 1 ? (
                 <span className="font-semibold text-[var(--exec-info)]">
@@ -444,7 +444,7 @@ export default function Executivo({ irPara }: TelaProps) {
 
           <Card
             titulo="Espera média de PTS por área"
-            sub={`Média por área · escala de 0 a ${fmtInteiro(escalaEspera)} min; traço dourado = meta de ${META_ESPERA_PTS_MIN} min · só RDC com PTS e os dois horários`}
+            sub={`Média por área · escala de 0 a ${fmtInteiro(escalaEspera)} min; traço verde = meta de ${META_ESPERA_PTS_MIN} min · só RDC com PTS e os dois horários`}
             extra={<span className="exec-chip">Meta: máx. {META_ESPERA_PTS_MIN} min</span>}
             rodape={
               <span>
@@ -460,9 +460,9 @@ export default function Executivo({ irPara }: TelaProps) {
                 {esperaArea.map((e) => (
                   <li key={e.area} className="rounded-control border border-[var(--exec-border)] bg-[var(--exec-surface)] p-3">
                     <div className="mb-1.5 flex flex-wrap items-center justify-between gap-x-3">
-                      <span className="text-[13px] font-semibold">{e.area}</span>
+                      <span className="text-[12px] font-semibold">{e.area}</span>
                       <span className="flex items-center gap-2">
-                        <span className={`tabular text-[15px] font-bold ${e.mediaMin > META_ESPERA_PTS_MIN ? 'text-[var(--exec-impact)]' : ''}`}>
+                        <span className={`tabular text-[14px] font-bold ${e.mediaMin > META_ESPERA_PTS_MIN ? 'text-[var(--exec-impact)]' : ''}`}>
                           {e.mediaMin > META_ESPERA_PTS_MIN && <span aria-hidden="true">▲ </span>}
                           {fmtInteiro(e.mediaMin)} min
                         </span>
@@ -481,7 +481,7 @@ export default function Executivo({ irPara }: TelaProps) {
                       </div>
                       {/* Marca da meta (40 min) sobre o trilho */}
                       <span
-                        className="absolute -top-1 -bottom-1 w-0.5 rounded-full bg-[var(--exec-gold)]"
+                        className="absolute -top-1 -bottom-1 w-0.5 rounded-full bg-[var(--exec-marca)]"
                         style={{ left: `${(META_ESPERA_PTS_MIN / escalaEspera) * 100}%` }}
                       />
                     </div>
@@ -576,15 +576,15 @@ export default function Executivo({ irPara }: TelaProps) {
                       <td className="font-bold whitespace-nowrap tabular">{fmtData(r.data_rdc)}</td>
                       <td className="whitespace-nowrap">
                         <span className="tabular font-bold">{r.contrato ?? '—'}</span>
-                        {r.contrato_nome && <span className="block text-[11px] text-[var(--exec-outline)]">{r.contrato_nome}</span>}
+                        {r.contrato_nome && <span className="block text-[10px] text-[var(--exec-outline)]">{r.contrato_nome}</span>}
                       </td>
                       <td>
                         <span className="font-medium">{r.ativo}</span>
-                        <span className="block text-[11px] text-[var(--exec-outline)]">{[r.ativo_descricao, r.area].filter(Boolean).join(' · ') || '—'}</span>
+                        <span className="block text-[10px] text-[var(--exec-outline)]">{[r.ativo_descricao, r.area].filter(Boolean).join(' · ') || '—'}</span>
                       </td>
                       <td>
                         <Responsavel nome={r.responsavel} />
-                        <span className="mt-0.5 block text-[11px] text-[var(--exec-outline)]">Efetivo máx.: {fmtInteiro(r.efetivo_max)}</span>
+                        <span className="mt-0.5 block text-[10px] text-[var(--exec-outline)]">Efetivo máx.: {fmtInteiro(r.efetivo_max)}</span>
                       </td>
                       <td>
                         <span className="flex flex-wrap gap-1">
@@ -610,7 +610,7 @@ export default function Executivo({ irPara }: TelaProps) {
             </table>
             {linhas.length === 0 && <p className="p-6 text-center text-sm text-[var(--exec-text-2)]">Nenhum RDC no recorte.</p>}
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--exec-border)] bg-[var(--exec-surface-low)] px-4 py-3 text-[13px]">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--exec-border)] bg-[var(--exec-surface-low)] px-4 py-3 text-[12px]">
             <span className="text-[var(--exec-text-2)]">
               Exibindo{' '}
               <strong className="tabular text-[var(--exec-ink)]">

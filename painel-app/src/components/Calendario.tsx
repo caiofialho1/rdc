@@ -100,7 +100,7 @@ export default function Calendario({ rdcs, ini, fim }: { rdcs: RdcRow[]; ini: st
                   key={m.chave}
                   colSpan={m.qtd}
                   scope="colgroup"
-                  className={`px-1 pt-1.5 text-left text-[11px] font-semibold text-text-secondary ${i > 0 ? 'cal-mes' : ''}`}
+                  className={`px-1 pt-1.5 text-left text-[10px] font-semibold text-text-secondary ${i > 0 ? 'cal-mes' : ''}`}
                 >
                   <span className="whitespace-nowrap">{m.rotulo}</span>
                 </th>
@@ -114,7 +114,7 @@ export default function Calendario({ rdcs, ini, fim }: { rdcs: RdcRow[]; ini: st
                   title={`${fmtData(d.iso)}, ${NOME_SEMANA[d.diaSemana]}`}
                   className={`cal-dia pb-1 text-center font-normal ${d.diaSemana === 0 || d.diaSemana === 6 ? 'text-text-secondary' : 'text-text-primary'} ${classeDia(d, i)}`}
                 >
-                  <span className="block text-[12px] leading-tight tabular">{d.dia}</span>
+                  <span className="block text-[11px] leading-tight tabular">{d.dia}</span>
                   <span className="block text-[10px] leading-tight text-text-secondary" aria-hidden="true">
                     {INICIAL_SEMANA[d.diaSemana]}
                   </span>

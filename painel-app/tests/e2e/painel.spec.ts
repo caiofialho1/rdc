@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { expect, test } from '@playwright/test'
 import * as XLSX from 'xlsx'
@@ -68,6 +68,20 @@ test('Exportar Excel baixa um arquivo .xlsx com o recorte carregado', async ({ p
   expect(download.suggestedFilename()).toMatch(/^RDC_.*\.xlsx$/)
 })
 
+test('Exportar observações RDO gera a planilha no formato do RDO', async ({ page }) => {
+  await logar(page)
+  const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Exportar observações RDO' }).click()])
+  expect(download.suggestedFilename()).toMatch(/^Observacoes_RDO_.*\.xlsx$/)
+  const wb = XLSX.read(readFileSync(await download.path()))
+  const linhas = XLSX.utils.sheet_to_json<Record<string, string>>(wb.Sheets.Observacoes_RDO)
+  expect(Object.keys(linhas[0])).toEqual(['Data', 'Hora', 'Equipamento', 'OM', 'Horario_Solicitacao', 'Horario_Abertura', 'Impacto', 'Descricao_Macro_RDO'])
+  const maria = linhas.find((l) => l.Equipamento === 'TAG-100')!
+  expect(maria.Data).toBe('01/10/2026')
+  // RDC_1: espera de PTS de 30 min (dentro da meta de 40) e impacto "Chuva" registrado
+  expect(maria.Impacto).toBe('Sim — IMPACTO CHUVA')
+  expect(maria.Descricao_Macro_RDO).toContain('Executante: Maria Souza.')
+})
+
 test('Desvios lista os impactos do recorte', async ({ page }) => {
   await logar(page)
   await page.getByRole('button', { name: 'Desvios' }).click()
@@ -80,7 +94,7 @@ test('Detalhamento: selecionar um RDC "Enviado" e validá-lo', async ({ page }) 
   await page.getByRole('cell', { name: 'Maria Souza' }).click()
   await expect(page.getByRole('heading', { name: /RDC-/ })).toBeVisible()
   // mão de obra por função: 2 pintores × 4 h = 8,0 HH
-  await expect(page.getByLabel('Efetivo por função').getByText('Pintor 2')).toBeVisible()
+  await expect(page.getByLabel('Efetivo por função').getByRole('listitem')).toHaveText(/Pintor\s*2/)
   await expect(page.getByRole('row', { name: 'Pintor 2 8,0 100,0%' })).toBeVisible()
   // descrição da atividade executada: serviço + observação do encarregado
   await expect(page.getByText('Pintura de fundo')).toBeVisible()

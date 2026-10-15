@@ -77,14 +77,14 @@
 .se-page { background: var(--background); color: var(--text-primary); font-family: var(--font-ui); }
 .se-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: var(--space-4); }
 .se-chart { background: var(--chart-background); border: 1px solid var(--border); border-radius: var(--radius-card); padding: var(--space-4); }
-.se-button { background: var(--primary); color: #FFF; border: 1px solid var(--primary); border-radius: var(--radius-control); padding: 9px 14px; font: 600 13px var(--font-ui); cursor: pointer; }
+.se-button { background: var(--primary); color: #FFF; border: 1px solid var(--primary); border-radius: var(--radius-control); padding: 9px 14px; font: 600 12px var(--font-ui); cursor: pointer; }
 .se-button:hover { background: var(--primary-light); }
 .se-button:focus-visible { outline: 2px solid var(--info); outline-offset: 2px; }
-.se-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.se-table th { text-align: left; background: var(--surface-soft); color: var(--secondary); border-bottom: 1px solid var(--border); padding: 10px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; }
+.se-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.se-table th { text-align: left; background: var(--surface-soft); color: var(--secondary); border-bottom: 1px solid var(--border); padding: 10px 12px; font-size: 10px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; }
 .se-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
 .se-table tbody tr:nth-child(even) { background: var(--chart-background); }
-.se-kpi-value { font-size: clamp(24px, 2vw, 32px); font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.se-kpi-value { font-size: clamp(23px, 2vw, 31px); font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .se-muted { color: var(--text-secondary); }
 @media print {
   .se-page { background: #FFF; }
@@ -95,7 +95,7 @@
 
 /*
  * Tela "Executivo (teste)": paleta do protótipo Stitch (preto/grafite +
- * dourado, impacto em vermelho). Só essa tela usa os tokens --exec-*; as
+ * verde PPL, impacto em vermelho). Só essa tela usa os tokens --exec-*; as
  * demais seguem a paleta do app mobile acima.
  */
 :root {
@@ -103,8 +103,9 @@
   --exec-ink-2: #1e2229;
   --exec-graphite: #45474b;
   --exec-outline: #76777c;
-  --exec-gold: #a68a52;
-  --exec-gold-bg: #fbf8f0;
+  --exec-marca: #b3ce52; /* verde do logotipo PPL (preenchimentos) */
+  --exec-marca-text: #5c7a17; /* mesmo verde escurecido para texto: 4,9:1 sobre branco */
+  --exec-marca-bg: #f6f9ea;
   --exec-impact: #c53030;
   --exec-impact-bg: #fef2f2;
   --exec-impact-border: #fecaca;

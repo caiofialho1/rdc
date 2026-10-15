@@ -58,12 +58,12 @@ function comIdentidadeVisual(option: echarts.EChartsCoreOption): echarts.ECharts
       splitLine: { ...eixo.splitLine, lineStyle: { color: gridline, width: 1, ...eixo.splitLine?.lineStyle } },
       axisLabel: {
         color: textSecondary,
-        fontSize: 11,
+        fontSize: 10,
         hideOverlap: true,
         ...(valor ? { formatter: (v: number) => fmtNumero(v) } : {}),
         ...eixo.axisLabel,
       },
-      ...(valor && eixo.name ? { nameTextStyle: { color: textSecondary, fontSize: 11, ...(eixo.nameTextStyle as Obj) } } : {}),
+      ...(valor && eixo.name ? { nameTextStyle: { color: textSecondary, fontSize: 10, ...(eixo.nameTextStyle as Obj) } } : {}),
     }
   }
 
@@ -77,7 +77,7 @@ function comIdentidadeVisual(option: echarts.EChartsCoreOption): echarts.ECharts
     backgroundColor: o.backgroundColor ?? 'transparent',
     textStyle: { fontFamily: cssVar('--font-ui') || 'Inter, Arial, sans-serif', ...(o.textStyle as Obj) },
     ...(semAnimacao ? { animation: false } : {}),
-    ...(title ? { title: { ...title, textStyle: { fontSize: 14, fontWeight: 600, color: textPrimary, ...(title.textStyle as Obj) } } } : {}),
+    ...(title ? { title: { ...title, textStyle: { fontSize: 13, fontWeight: 600, color: textPrimary, ...(title.textStyle as Obj) } } } : {}),
     ...(legend
       ? {
           legend: {
@@ -85,7 +85,7 @@ function comIdentidadeVisual(option: echarts.EChartsCoreOption): echarts.ECharts
             itemHeight: 10,
             itemGap: 16,
             ...legend,
-            textStyle: { fontSize: 12, color: textSecondary, ...(legend.textStyle as Obj) },
+            textStyle: { fontSize: 11, color: textSecondary, ...(legend.textStyle as Obj) },
           },
         }
       : {}),
@@ -98,7 +98,7 @@ function comIdentidadeVisual(option: echarts.EChartsCoreOption): echarts.ECharts
             padding: [8, 10],
             confine: true,
             ...tooltip,
-            textStyle: { fontSize: 12, color: textPrimary, ...(tooltip.textStyle as Obj) },
+            textStyle: { fontSize: 11, color: textPrimary, ...(tooltip.textStyle as Obj) },
           },
         }
       : {}),

@@ -119,9 +119,9 @@ function Ranking({
               <span className="ml-1 text-xs font-medium text-[var(--exec-text-2)]">{u}/HH</span>
             </span>
             <span className="exec-barra" aria-hidden="true">
-              <span style={{ width: `${Math.max((i.indice / max) * 100, 1.5)}%`, background: 'var(--exec-gold)' }} />
+              <span style={{ width: `${Math.max((i.indice / max) * 100, 1.5)}%`, background: 'var(--exec-marca)', boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--exec-marca-text) 35%, transparent)' }} />
             </span>
-            <span className="text-right text-[11px] whitespace-nowrap text-[var(--exec-text-2)] tabular">
+            <span className="text-right text-[10px] whitespace-nowrap text-[var(--exec-text-2)] tabular">
               {qtd(i.producao)} {u} ÷ {fmtHoras(i.hh)} HH
             </span>
           </li>
@@ -198,7 +198,7 @@ function TabelaDetalhe({ linhas, descricoes }: { linhas: LinhaProducao[]; descri
                   <>
                     <Responsavel nome={l.responsavel} />
                     {l.participacao != null && l.participacao < 1 && (
-                      <span className="mt-0.5 block text-[11px] text-[var(--exec-text-2)] tabular">rateio {fmtPercentual(l.participacao)}</span>
+                      <span className="mt-0.5 block text-[10px] text-[var(--exec-text-2)] tabular">rateio {fmtPercentual(l.participacao)}</span>
                     )}
                   </>
                 )}
@@ -222,7 +222,7 @@ function TabelaDetalhe({ linhas, descricoes }: { linhas: LinhaProducao[]; descri
               </td>
               <td className="num">
                 {l.valor != null ? fmtMoeda(l.valor) : <span className="text-[var(--exec-text-2)]">—</span>}
-                {l.etapasSemPreco && <span className="mt-0.5 block text-[11px] font-semibold text-[var(--exec-alert)]">sem preço: {l.etapasSemPreco}</span>}
+                {l.etapasSemPreco && <span className="mt-0.5 block text-[10px] font-semibold text-[var(--exec-alert)]">sem preço: {l.etapasSemPreco}</span>}
               </td>
               <td className="num">{l.hh != null ? fmtHoras(l.hh) : <span className="text-[var(--exec-text-2)]">—</span>}</td>
               <td className="num">
@@ -375,7 +375,7 @@ function TabelaGrupos({ grupos, dimensao, descricoes }: { grupos: Grupo[]; dimen
                 <td className="num">{t.kg ? qtd(t.kg) : traco}</td>
                 <td className="num">
                   {porEtapa ? traco : fmtMoeda(t.valor)}
-                  {!porEtapa && t.semPreco > 0 && <span className="mt-0.5 block text-[11px] font-semibold text-[var(--exec-alert)]">{fmtInteiro(t.semPreco)} sem preço</span>}
+                  {!porEtapa && t.semPreco > 0 && <span className="mt-0.5 block text-[10px] font-semibold text-[var(--exec-alert)]">{fmtInteiro(t.semPreco)} sem preço</span>}
                 </td>
                 <td className="num">{fmtHoras(t.hh)}</td>
                 <td className="num font-semibold">{indiceOuTraco(pm2)}</td>
@@ -592,7 +592,7 @@ export default function Producao() {
               </select>
             </label>
           </div>
-          <p className="border-b border-[var(--exec-border)] px-4 py-2 text-[11px] text-[var(--exec-text-2)]">
+          <p className="border-b border-[var(--exec-border)] px-4 py-2 text-[10px] text-[var(--exec-text-2)]">
             Situação contada por ativo × OM × disciplina × dia, como na conciliação produção × RDC.
             {dimensao === 'etapa' && ' Por etapa, o HH de um registro aparece em cada etapa daquele dia e o valor não é separado por etapa na view — por isso o total de HH vem dos registros, sem repetição.'}
           </p>

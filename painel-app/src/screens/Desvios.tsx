@@ -76,7 +76,7 @@ export default function Desvios() {
         axisLabel: {
           formatter: (nome: string, i: number) =>
             `{nome|${nome}}  {f${i}|${fotoResponsavel(nome) ? '' : iniciais(nome)}}`,
-          rich: { ...avatares, nome: { fontSize: 12, width: 140, overflow: 'truncate' as const, align: 'right' as const } },
+          rich: { ...avatares, nome: { fontSize: 11, width: 140, overflow: 'truncate' as const, align: 'right' as const } },
         },
       },
       series: [

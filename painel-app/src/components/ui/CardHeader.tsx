@@ -15,7 +15,7 @@ export default function CardHeader({ titulo, subtitulo, acoes, nivel: Nivel = 'h
   return (
     <div className="se-card-header mb-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
       <div className="min-w-0">
-        <Nivel id={id} className="text-[15px] leading-snug font-semibold text-text-primary">
+        <Nivel id={id} className="text-[14px] leading-snug font-semibold text-text-primary">
           {titulo}
         </Nivel>
         {subtitulo && <p className="mt-0.5 text-xs text-text-secondary">{subtitulo}</p>}

@@ -11,6 +11,7 @@ import Card from '../components/ui/Card'
 import CardHeader from '../components/ui/CardHeader'
 import EstadoTela from '../components/ui/EstadoTela'
 import Lightbox from '../components/ui/Lightbox'
+import { IconeFuncao } from '../components/ui/icons/FuncaoIcons'
 import Responsavel from '../components/ui/Responsavel'
 import { descricaoAtividade, NOME_DISCIPLINA, type DescricaoAtividade } from '../domain/atividades'
 import { tomStatus } from '../domain/badges'
@@ -153,20 +154,20 @@ function MaoDeObra({ atividades }: { atividades: AtividadeRow[] }) {
           Mão de obra por função
         </h4>
         <p className="text-sm text-text-secondary">
-          <span className="tabular text-[17px] font-semibold text-text-primary">{fmtInteiro(efetivoMax)}</span> pessoas no pico ·{' '}
-          <span className="tabular text-[17px] font-semibold text-text-primary">{fmtHoras(hhTotal)}</span> HH
+          <span className="tabular text-[16px] font-semibold text-text-primary">{fmtInteiro(efetivoMax)}</span> pessoas no pico ·{' '}
+          <span className="tabular text-[16px] font-semibold text-text-primary">{fmtHoras(hhTotal)}</span> HH
         </p>
       </div>
       <table className="w-full table-fixed border-collapse text-sm">
         <colgroup>
-          <col className="w-[32%]" />
+          <col className="w-[38%]" />
           <col />
           <col className="w-11" />
           <col className="w-13" />
           <col className="w-[4.25rem]" />
         </colgroup>
         <thead>
-          <tr className="border-b border-border text-[11px] text-text-secondary">
+          <tr className="border-b border-border text-[10px] text-text-secondary">
             <th scope="col" className="pb-1 text-left font-medium">
               Função
             </th>
@@ -194,7 +195,10 @@ function MaoDeObra({ atividades }: { atividades: AtividadeRow[] }) {
                   className={`truncate py-1.5 pr-2 text-left font-normal ${l.semFuncao ? 'text-warning-text' : zerada ? 'text-text-secondary' : 'text-text-primary'}`}
                   title={l.funcao}
                 >
-                  {l.funcao}
+                  <span className="flex min-w-0 items-center gap-2">
+                    <IconeFuncao funcao={l.semFuncao ? 'Sem função' : l.funcao} apagado={zerada} />
+                    <span className="truncate">{l.funcao}</span>
+                  </span>
                 </th>
                 <td className="py-1.5 pr-2">
                   <BarraHh parte={parte(l.hh)} cor={l.semFuncao ? 'bg-planned' : 'bg-actual'} />
@@ -207,7 +211,7 @@ function MaoDeObra({ atividades }: { atividades: AtividadeRow[] }) {
           })}
         </tbody>
       </table>
-      <p className="mt-auto text-[11px] leading-snug text-text-secondary">
+      <p className="mt-auto text-[10px] leading-snug text-text-secondary">
         Barra = participação da função no HH do RDC. Pico = maior quantidade numa mesma atividade (a equipe se repete entre atividades, por isso não se soma).
       </p>
     </section>
@@ -238,11 +242,11 @@ function diaSemana(iso: string): string {
 function Metrica({ valor, unidade, rotulo }: { valor: string; unidade?: string; rotulo: string }) {
   return (
     <div className="min-w-0 px-3 py-2.5 first:pl-4">
-      <p className="tabular text-[18px] leading-tight font-semibold text-text-primary">
+      <p className="tabular text-[17px] leading-tight font-semibold text-text-primary">
         {valor}
         {unidade && <span className="ml-0.5 text-xs font-medium text-text-secondary">{unidade}</span>}
       </p>
-      <p className="mt-0.5 truncate text-[11px] text-text-secondary">{rotulo}</p>
+      <p className="mt-0.5 truncate text-[10px] text-text-secondary">{rotulo}</p>
     </div>
   )
 }
@@ -281,6 +285,32 @@ function Trilho({ ini, fim, escala, cor }: { ini: string; fim: string; escala: E
 }
 
 /**
+ * Efetivo da atividade empilhado por função, à esquerda da barra do turno: ícone, nome e
+ * quantidade. Pessoas sem função discriminada (RDC anterior à v3) aparecem à parte, em alerta.
+ */
+function Equipe({ funcoes, semFuncao: sem }: { funcoes: Array<{ funcao: string; qtd: number }>; semFuncao: number }) {
+  if (!funcoes.length && !sem) return <span className="text-[10px] text-text-secondary">Sem efetivo</span>
+  return (
+    <ul className="flex min-w-0 flex-col gap-1" aria-label="Efetivo por função">
+      {funcoes.map((f) => (
+        <li key={f.funcao} className="flex min-w-0 items-center gap-1.5 text-xs">
+          <IconeFuncao funcao={f.funcao} />
+          <span className="min-w-0 flex-1 leading-tight text-text-secondary">{f.funcao}</span>
+          <span className="font-semibold text-text-primary tabular">{fmtInteiro(f.qtd)}</span>
+        </li>
+      ))}
+      {sem > 0 && (
+        <li className="flex min-w-0 items-center gap-1.5 text-xs">
+          <IconeFuncao funcao="Sem função" />
+          <span className="min-w-0 flex-1 leading-tight text-warning-text">Sem função</span>
+          <span className="font-semibold text-warning-text tabular">{fmtInteiro(sem)}</span>
+        </li>
+      )}
+    </ul>
+  )
+}
+
+/**
  * O que o encarregado escreveu sobre a atividade: a descrição livre do serviço OUTROS e a
  * observação. O filete azul liga o texto à barra da atividade na régua. Sem texto no RDC,
  * nada é exibido — exceto OUTROS sem descrição, que é pendência do registro.
@@ -291,7 +321,7 @@ function Execucao({ d }: { d: DescricaoAtividade }) {
     <dl className="flex flex-col gap-1.5 rounded-[3px] border-l-2 border-actual bg-chart-background py-1.5 pr-3 pl-2.5">
       {(d.descricao || d.descricaoPendente) && (
         <div className="min-w-0">
-          <dt className="text-[11px] font-medium text-text-secondary">Serviço executado</dt>
+          <dt className="text-[10px] font-medium text-text-secondary">Serviço executado</dt>
           <dd className={`text-sm leading-snug break-words whitespace-pre-line ${d.descricao ? 'text-text-primary' : 'text-warning-text'}`}>
             {d.descricao ?? 'Serviço “OUTROS” registrado sem descrição.'}
           </dd>
@@ -299,7 +329,7 @@ function Execucao({ d }: { d: DescricaoAtividade }) {
       )}
       {d.observacao && (
         <div className="min-w-0">
-          <dt className="text-[11px] font-medium text-text-secondary">Observação</dt>
+          <dt className="text-[10px] font-medium text-text-secondary">Observação</dt>
           <dd className="text-sm leading-snug break-words whitespace-pre-line text-text-primary">{d.observacao}</dd>
         </div>
       )}
@@ -326,12 +356,15 @@ function Turno({ atividades, impactos }: { atividades: AtividadeRow[]; impactos:
   }
 
   return (
-    <section aria-labelledby="turno-titulo" className="border-t border-border pt-3">
+    <section
+      aria-labelledby="turno-titulo"
+      className="border-t border-border pt-3 [--equipe:7.75rem] @[34rem]/detalhe:[--equipe:10rem]"
+    >
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <h4 id="turno-titulo" className="text-xs font-semibold tracking-wide text-text-secondary uppercase">
           Turno · {fmtInteiro(ordenadas.length)} atividade(s){paradas.length > 0 && ` · ${fmtInteiro(paradas.length)} impacto(s)`}
         </h4>
-        <span className="flex items-center gap-3 text-[11px] text-text-secondary" aria-hidden="true">
+        <span className="flex items-center gap-3 text-[10px] text-text-secondary" aria-hidden="true">
           <span className="flex items-center gap-1">
             <span className="h-2 w-3 rounded-[2px] bg-actual" /> Atividade
           </span>
@@ -346,7 +379,11 @@ function Turno({ atividades, impactos }: { atividades: AtividadeRow[]; impactos:
       {escala && (
         <div className="grid grid-cols-[1.5rem_minmax(0,1fr)]" aria-hidden="true">
           <span />
-          <span className="relative mb-1 block h-4 text-[10px] text-text-secondary tabular">
+          <span
+            className={`relative mb-1 ml-[calc(var(--equipe)+0.75rem)] block h-4 text-[10px] text-text-secondary tabular ${
+              escala.marcas.length > 5 ? '[&>span:nth-child(even)]:hidden @[34rem]/detalhe:[&>span:nth-child(even)]:block' : ''
+            }`}
+          >
             {escala.marcas.map((t, i) => (
               <span
                 key={t}
@@ -383,24 +420,11 @@ function Turno({ atividades, impactos }: { atividades: AtividadeRow[]; impactos:
                     {fmtHora(a.inicio)}–{fmtHora(a.fim)} · {fmtHoras(a.duracao_min / 60)} h · {fmtInteiro(a.efetivo_total)} pessoa(s)
                   </span>
                 </div>
-                {escala && <Trilho ini={a.inicio} fim={a.fim} escala={escala} cor="bg-actual" />}
+                <div className="grid grid-cols-[var(--equipe)_minmax(0,1fr)] items-center gap-x-3">
+                  <Equipe funcoes={funcoes} semFuncao={naoDiscriminado} />
+                  {escala ? <Trilho ini={a.inicio} fim={a.fim} escala={escala} cor="bg-actual" /> : <span />}
+                </div>
                 <Execucao d={d} />
-                {(funcoes.length > 0 || naoDiscriminado > 0) && (
-                  <span className="flex flex-wrap gap-1" aria-label="Efetivo por função">
-                    {funcoes.map((f) => (
-                      <Badge key={f.funcao} tom="neutro">
-                        <span className="tabular">
-                          {f.funcao} {fmtInteiro(f.qtd)}
-                        </span>
-                      </Badge>
-                    ))}
-                    {naoDiscriminado > 0 && (
-                      <Badge tom="warning">
-                        <span className="tabular">Sem função {fmtInteiro(naoDiscriminado)}</span>
-                      </Badge>
-                    )}
-                  </span>
-                )}
               </div>
             </li>
           )
@@ -420,7 +444,12 @@ function Turno({ atividades, impactos }: { atividades: AtividadeRow[]; impactos:
                   {fmtHora(i.inicio)}–{fmtHora(i.fim)} · {fmtHoras(i.duracao_min / 60)} h
                 </span>
               </div>
-              {escala && <Trilho ini={i.inicio} fim={i.fim} escala={escala} cor="bg-impact" />}
+              {escala && (
+                <div className="grid grid-cols-[var(--equipe)_minmax(0,1fr)] items-center gap-x-3">
+                  <span className="text-[10px] text-text-secondary">Equipe parada</span>
+                  <Trilho ini={i.inicio} fim={i.fim} escala={escala} cor="bg-impact" />
+                </div>
+              )}
             </div>
           </li>
         ))}
@@ -480,11 +509,11 @@ function Detalhe({
       <header className="shrink-0 bg-primary px-4 py-3 text-white">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[11px] tracking-wide text-white/75 uppercase">
+            <p className="text-[10px] tracking-wide text-white/75 uppercase">
               RDC · <span className="tabular">{fmtData(rdc.data_rdc)}</span> · {diaSemana(rdc.data_rdc)}
               {rdc.revisao > 0 && ` · revisão ${fmtInteiro(rdc.revisao)}`}
             </p>
-            <h3 id={`detalhe-${rdc.codigo}`} className="mt-0.5 text-[15px] leading-snug font-semibold break-all">
+            <h3 id={`detalhe-${rdc.codigo}`} className="mt-0.5 text-[14px] leading-snug font-semibold break-all">
               {rdc.codigo}
             </h3>
           </div>
